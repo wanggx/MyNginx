@@ -19,7 +19,7 @@
 #define NGX_LOG_CRIT              3
 #define NGX_LOG_ERR               4
 #define NGX_LOG_WARN              5
-#define NGX_LOG_NOTICE            6
+#define NGX_LOG_NOTICE            6  /* 默认的日志级别 */
 #define NGX_LOG_INFO              7
 #define NGX_LOG_DEBUG             8
 
@@ -49,7 +49,7 @@ typedef void (*ngx_log_writer_pt) (ngx_log_t *log, ngx_uint_t level,
 
 
 struct ngx_log_s {
-    ngx_uint_t           log_level;
+    ngx_uint_t           log_level;  /* 日志级别 */
     ngx_open_file_t     *file;
 
     ngx_atomic_uint_t    connection;

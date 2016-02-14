@@ -1,0 +1,8 @@
+---- STDERR_FILENO Matches (7 in 3 files) ----
+Ngx_daemon.c (os\unix):    if (dup2(fd, STDERR_FILENO) == -1) {
+Ngx_daemon.c (os\unix):    if (fd > STDERR_FILENO) {
+Ngx_files.h (os\unix):#define ngx_stderr               STDERR_FILENO
+Ngx_files.h (os\unix):#define ngx_set_stderr(fd)       dup2(fd, STDERR_FILENO)
+Ngx_files.h (os\unix):#define ngx_set_stderr_n         "dup2(STDERR_FILENO)"
+Ngx_posix_init.c (os\unix):    if (dup2(pp[1], STDERR_FILENO) == -1) {
+Ngx_posix_init.c (os\unix):    if (pp[1] > STDERR_FILENO) {

@@ -191,6 +191,7 @@ main(int argc, char *const *argv)
         return 1;
     }
 
+    /* 参数如果解析失败，则直接返回 */
     if (ngx_get_options(argc, argv) != NGX_OK) {
         return 1;
     }
@@ -369,6 +370,7 @@ ngx_show_version_info()
 {
     ngx_write_stderr("nginx version: " NGINX_VER_BUILD NGX_LINEFEED);
 
+    /* 是否显示帮助 */
     if (ngx_show_help) {
         ngx_write_stderr(
             "Usage: nginx [-?hvVtTq] [-s signal] [-c filename] "
@@ -679,7 +681,7 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv)
     return pid;
 }
 
-
+/* 处理nginx的启动参数 */
 static ngx_int_t
 ngx_get_options(int argc, char *const *argv)
 {
@@ -694,7 +696,8 @@ ngx_get_options(int argc, char *const *argv)
             ngx_log_stderr(0, "invalid option: \"%s\"", argv[i]);
             return NGX_ERROR;
         }
-
+        
+        /* 命令的参数解析，如tar命令的tar -xzvf等等 */
         while (*p) {
 
             switch (*p++) {
