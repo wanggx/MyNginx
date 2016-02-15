@@ -14,11 +14,11 @@
 
 
 typedef struct {
-    void        *elts;
-    ngx_uint_t   nelts;
-    size_t       size;
-    ngx_uint_t   nalloc;
-    ngx_pool_t  *pool;
+    void        *elts;  /* 指向数据的指针 */
+    ngx_uint_t   nelts; /* 数组中元素的个数 */
+    size_t       size;  /* 数组中每个元素的大小 */
+    ngx_uint_t   nalloc; /* 数据容量 */
+    ngx_pool_t  *pool;   /* 用来分配内存的内存池 */
 } ngx_array_t;
 
 

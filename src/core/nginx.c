@@ -810,7 +810,7 @@ ngx_get_options(int argc, char *const *argv)
     return NGX_OK;
 }
 
-
+/* 保存启动参数 */
 static ngx_int_t
 ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
 {
