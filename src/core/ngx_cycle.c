@@ -996,7 +996,7 @@ ngx_delete_pidfile(ngx_cycle_t *cycle)
     }
 }
 
-
+/* 向主进程发送信号 */
 ngx_int_t
 ngx_signal_process(ngx_cycle_t *cycle, char *sig)
 {

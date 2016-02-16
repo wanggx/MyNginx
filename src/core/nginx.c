@@ -228,7 +228,7 @@ main(int argc, char *const *argv)
      * init_cycle->log is required for signal handlers and
      * ngx_process_options()
      */
-
+    /* 将数据清0 */
     ngx_memzero(&init_cycle, sizeof(ngx_cycle_t));
     init_cycle.log = log;
     ngx_cycle = &init_cycle;
@@ -831,7 +831,7 @@ ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
     if (ngx_argv == NULL) {
         return NGX_ERROR;
     }
-
+    /* 将argv中参数拷贝到ngx_argv当中 */
     for (i = 0; i < argc; i++) {
         len = ngx_strlen(argv[i]) + 1;
 
@@ -859,10 +859,12 @@ ngx_process_options(ngx_cycle_t *cycle)
     u_char  *p;
     size_t   len;
 
+    /* 如果设置了配置前缀 */
     if (ngx_prefix) {
+        /* 获取前缀长度 */
         len = ngx_strlen(ngx_prefix);
         p = ngx_prefix;
-
+        /* 在前缀字符串的最后面添加一个分隔符'/' */
         if (len && !ngx_path_separator(p[len - 1])) {
             p = ngx_pnalloc(cycle->pool, len + 1);
             if (p == NULL) {
@@ -873,6 +875,7 @@ ngx_process_options(ngx_cycle_t *cycle)
             p[len++] = '/';
         }
 
+        /* 设置配置前缀和前缀 */
         cycle->conf_prefix.len = len;
         cycle->conf_prefix.data = p;
         cycle->prefix.len = len;
@@ -887,6 +890,7 @@ ngx_process_options(ngx_cycle_t *cycle)
             return NGX_ERROR;
         }
 
+        /* 获取当前路径 */
         if (ngx_getcwd(p, NGX_MAX_PATH) == 0) {
             ngx_log_stderr(ngx_errno, "[emerg]: " ngx_getcwd_n " failed");
             return NGX_ERROR;
@@ -929,6 +933,7 @@ ngx_process_options(ngx_cycle_t *cycle)
          p > cycle->conf_file.data;
          p--)
     {
+        /* 寻找最后一个分隔符 */
         if (ngx_path_separator(*p)) {
             cycle->conf_prefix.len = p - ngx_cycle->conf_file.data + 1;
             cycle->conf_prefix.data = ngx_cycle->conf_file.data;

@@ -16,7 +16,9 @@ static ngx_atomic_t   temp_number = 0;
 ngx_atomic_t         *ngx_temp_number = &temp_number;
 ngx_atomic_int_t      ngx_random_number = 123456;
 
-
+/* 根据prefix和name生成全路径
+ * 返回结构表示是否成功  
+ */
 ngx_int_t
 ngx_get_full_name(ngx_pool_t *pool, ngx_str_t *prefix, ngx_str_t *name)
 {
@@ -26,6 +28,7 @@ ngx_get_full_name(ngx_pool_t *pool, ngx_str_t *prefix, ngx_str_t *name)
 
     rc = ngx_test_full_name(name);
 
+    /* 如果是全路径，则直接返回 */
     if (rc == NGX_OK) {
         return rc;
     }
@@ -54,7 +57,7 @@ ngx_get_full_name(ngx_pool_t *pool, ngx_str_t *prefix, ngx_str_t *name)
     return NGX_OK;
 }
 
-
+/* 判断是不是全路径 */
 static ngx_int_t
 ngx_test_full_name(ngx_str_t *name)
 {

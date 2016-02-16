@@ -69,6 +69,7 @@ struct ngx_queue_s {
 
 #if (NGX_DEBUG)
 
+/* 将x从队列中删除 */
 #define ngx_queue_remove(x)                                                   \
     (x)->next->prev = (x)->prev;                                              \
     (x)->prev->next = (x)->next;                                              \

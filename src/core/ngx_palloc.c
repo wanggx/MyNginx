@@ -43,7 +43,7 @@ ngx_create_pool(size_t size, ngx_log_t *log)
     return p;
 }
 
-
+/* 销毁内存池 */
 void
 ngx_destroy_pool(ngx_pool_t *pool)
 {
@@ -59,6 +59,7 @@ ngx_destroy_pool(ngx_pool_t *pool)
         }
     }
 
+    /* 释放大块内存 */
     for (l = pool->large; l; l = l->next) {
 
         ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, pool->log, 0, "free: %p", l->alloc);
@@ -86,6 +87,7 @@ ngx_destroy_pool(ngx_pool_t *pool)
 
 #endif
 
+    /* 将内存池依次释放 */
     for (p = pool, n = pool->d.next; /* void */; p = n, n = n->d.next) {
         ngx_free(p);
 
@@ -102,17 +104,19 @@ ngx_reset_pool(ngx_pool_t *pool)
     ngx_pool_t        *p;
     ngx_pool_large_t  *l;
 
+    /* 将内存池的所有大块内存都释放 */
     for (l = pool->large; l; l = l->next) {
         if (l->alloc) {
             ngx_free(l->alloc);
         }
     }
 
+    /* 重置内存池下一次可分配位置 */
     for (p = pool; p; p = p->d.next) {
         p->d.last = (u_char *) p + sizeof(ngx_pool_t);
         p->d.failed = 0;
     }
-
+    
     pool->current = pool;
     pool->chain = NULL;
     pool->large = NULL;

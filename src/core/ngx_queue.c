@@ -14,6 +14,7 @@
  * or the first element of the queue's second part otherwise
  */
 
+/* 返回队列中的正中间一个 */
 ngx_queue_t *
 ngx_queue_middle(ngx_queue_t *queue)
 {
@@ -47,6 +48,7 @@ ngx_queue_middle(ngx_queue_t *queue)
 
 /* the stable insertion sort */
 
+/* 将队列中数据进行排序 */
 void
 ngx_queue_sort(ngx_queue_t *queue,
     ngx_int_t (*cmp)(const ngx_queue_t *, const ngx_queue_t *))
@@ -55,6 +57,7 @@ ngx_queue_sort(ngx_queue_t *queue,
 
     q = ngx_queue_head(queue);
 
+    /* 如果只有一个元素则直接返回 */
     if (q == ngx_queue_last(queue)) {
         return;
     }

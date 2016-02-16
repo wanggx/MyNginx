@@ -100,6 +100,7 @@ void *ngx_memcpy(void *dst, const void *src, size_t n);
  * icc8 compile memcpy(d, s, 4) to the inline "mov"es or XMM moves.
  */
 #define ngx_memcpy(dst, src, n)   (void) memcpy(dst, src, n)
+/* 返回复制结尾处的内存地址 */
 #define ngx_cpymem(dst, src, n)   (((u_char *) memcpy(dst, src, n)) + (n))
 
 #endif

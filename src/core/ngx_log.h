@@ -70,7 +70,7 @@ struct ngx_log_s {
 
     char                *action;
 
-    ngx_log_t           *next;
+    ngx_log_t           *next;  /* 下一个日志 */
 };
 
 
