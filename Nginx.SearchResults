@@ -1,314 +1,69 @@
----- ngx_array_t Matches (318 in 83 files) ----
-Ngx_array.c (core):ngx_array_t *
-Ngx_array.c (core):    ngx_array_t *a;
-Ngx_array.c (core):    a = ngx_palloc(p, sizeof(ngx_array_t));
-Ngx_array.c (core):ngx_array_destroy(ngx_array_t *a)
-Ngx_array.c (core):    if ((u_char *) a + sizeof(ngx_array_t) == p->d.last) {
-Ngx_array.c (core):ngx_array_push(ngx_array_t *a)
-Ngx_array.c (core):ngx_array_push_n(ngx_array_t *a, ngx_uint_t n)
-Ngx_array.h (core):} ngx_array_t;
-Ngx_array.h (core):ngx_array_t *ngx_array_create(ngx_pool_t *p, ngx_uint_t n, size_t size);
-Ngx_array.h (core):void ngx_array_destroy(ngx_array_t *a);
-Ngx_array.h (core):void *ngx_array_push(ngx_array_t *a);
-Ngx_array.h (core):void *ngx_array_push_n(ngx_array_t *a, ngx_uint_t n);
-Ngx_array.h (core):ngx_array_init(ngx_array_t *array, ngx_pool_t *pool, ngx_uint_t n, size_t size)
-Ngx_conf_file.c (core):    ngx_array_t      **a;
-Ngx_conf_file.c (core):    a = (ngx_array_t **) (p + cmd->offset);
-Ngx_conf_file.c (core):    ngx_array_t      **a;
-Ngx_conf_file.c (core):    a = (ngx_array_t **) (p + cmd->offset);
-Ngx_conf_file.h (core):    ngx_array_t          *args;
-Ngx_cycle.c (core):ngx_array_t            ngx_old_cycles;
-Ngx_cycle.h (core):    ngx_array_t               listening;
-Ngx_cycle.h (core):    ngx_array_t               paths;
-Ngx_cycle.h (core):    ngx_array_t               config_dump;
-Ngx_cycle.h (core):     ngx_array_t              env;
-Ngx_cycle.h (core):extern ngx_array_t            ngx_old_cycles;
-Ngx_event.h (event):    ngx_array_t   debug_connection;
-Ngx_event_openssl.c (event):    ngx_str_t *key, ngx_array_t *passwords)
-Ngx_event_openssl.c (event):ngx_array_t *
-Ngx_event_openssl.c (event):    ngx_array_t         *passwords;
-Ngx_event_openssl.c (event):    ngx_array_t *passwords = data;
-Ngx_event_openssl.c (event):ngx_ssl_session_ticket_keys(ngx_conf_t *cf, ngx_ssl_t *ssl, ngx_array_t *paths)
-Ngx_event_openssl.c (event):    ngx_array_t                   *keys;
-Ngx_event_openssl.c (event):    ngx_array_t                   *keys;
-Ngx_event_openssl.c (event):ngx_ssl_session_ticket_keys(ngx_conf_t *cf, ngx_ssl_t *ssl, ngx_array_t *paths)
-Ngx_event_openssl.h (event):    ngx_str_t *cert, ngx_str_t *key, ngx_array_t *passwords);
-Ngx_event_openssl.h (event):ngx_array_t *ngx_ssl_read_password_file(ngx_conf_t *cf, ngx_str_t *file);
-Ngx_event_openssl.h (event):    ngx_array_t *paths);
-Ngx_files.c (os\unix):static ssize_t ngx_writev_file(ngx_file_t *file, ngx_array_t *vec, size_t size,
-Ngx_files.c (os\unix):    ngx_array_t    vec;
-Ngx_files.c (os\unix):ngx_writev_file(ngx_file_t *file, ngx_array_t *vec, size_t size, off_t offset)
-Ngx_hash.c (core):    ngx_array_t           curr_names, next_names;
-Ngx_hash.c (core):    ha->keys_hash = ngx_pcalloc(ha->temp_pool, sizeof(ngx_array_t) * ha->hsize);
-Ngx_hash.c (core):                                       sizeof(ngx_array_t) * ha->hsize);
-Ngx_hash.c (core):                                       sizeof(ngx_array_t) * ha->hsize);
-Ngx_hash.c (core):    ngx_array_t     *keys, *hwc;
-Ngx_hash.h (core):    ngx_array_t       keys;
-Ngx_hash.h (core):    ngx_array_t      *keys_hash;
-Ngx_hash.h (core):    ngx_array_t       dns_wc_head;
-Ngx_hash.h (core):    ngx_array_t      *dns_wc_head_hash;
-Ngx_hash.h (core):    ngx_array_t       dns_wc_tail;
-Ngx_hash.h (core):    ngx_array_t      *dns_wc_tail_hash;
-Ngx_http.c (http):    ngx_http_core_main_conf_t *cmcf, ngx_array_t *ports);
-Ngx_http.c (http):    ngx_array_t         headers_in;
-Ngx_http.c (http):    ngx_array_t *ports)
-Ngx_http.c (http):    ngx_array_t     **types;
-Ngx_http.c (http):    types = (ngx_array_t **) (p + cmd->offset);
-Ngx_http.c (http):ngx_http_merge_types(ngx_conf_t *cf, ngx_array_t **keys, ngx_hash_t *types_hash,
-Ngx_http.c (http):    ngx_array_t **prev_keys, ngx_hash_t *prev_types_hash,
-Ngx_http.c (http):ngx_http_set_default_types(ngx_conf_t *cf, ngx_array_t **types,
-Ngx_http.h (http):ngx_int_t ngx_http_parse_multi_header_lines(ngx_array_t *headers,
-Ngx_http.h (http):ngx_int_t ngx_http_parse_set_cookie_lines(ngx_array_t *headers,
-Ngx_http.h (http):char *ngx_http_merge_types(ngx_conf_t *cf, ngx_array_t **keys,
-Ngx_http.h (http):    ngx_hash_t *types_hash, ngx_array_t **prev_keys,
-Ngx_http.h (http):ngx_int_t ngx_http_set_default_types(ngx_conf_t *cf, ngx_array_t **types,
-Ngx_http_access_module.c (http\modules):    ngx_array_t      *rules;     /* array of ngx_http_access_rule_t */
-Ngx_http_access_module.c (http\modules):    ngx_array_t      *rules6;    /* array of ngx_http_access_rule6_t */
-Ngx_http_access_module.c (http\modules):    ngx_array_t      *rules_un;  /* array of ngx_http_access_rule_un_t */
-Ngx_http_addition_filter_module.c (http\modules):    ngx_array_t  *types_keys;
-Ngx_http_auth_request_module.c (http\modules):    ngx_array_t              *vars;
-Ngx_http_autoindex_module.c (http\modules):    ngx_array_t *entries);
-Ngx_http_autoindex_module.c (http\modules):    ngx_array_t *entries, ngx_str_t *callback);
-Ngx_http_autoindex_module.c (http\modules):    ngx_array_t *entries);
-Ngx_http_autoindex_module.c (http\modules):    ngx_array_t                     entries;
-Ngx_http_autoindex_module.c (http\modules):    ngx_memzero(&entries, sizeof(ngx_array_t));
-Ngx_http_autoindex_module.c (http\modules):ngx_http_autoindex_html(ngx_http_request_t *r, ngx_array_t *entries)
-Ngx_http_autoindex_module.c (http\modules):ngx_http_autoindex_json(ngx_http_request_t *r, ngx_array_t *entries,
-Ngx_http_autoindex_module.c (http\modules):ngx_http_autoindex_xml(ngx_http_request_t *r, ngx_array_t *entries)
-Ngx_http_browser_module.c (http\modules):    ngx_array_t                *modern_browsers;
-Ngx_http_browser_module.c (http\modules):    ngx_array_t                *ancient_browsers;
-Ngx_http_cache.h (http):    ngx_array_t                      keys;
-Ngx_http_cache.h (http):time_t ngx_http_file_cache_valid(ngx_array_t *cache_valid, ngx_uint_t status);
-Ngx_http_charset_filter_module.c (http\modules):    ngx_array_t                 charsets;       /* ngx_http_charset_t */
-Ngx_http_charset_filter_module.c (http\modules):    ngx_array_t                 tables;         /* ngx_http_charset_tables_t */
-Ngx_http_charset_filter_module.c (http\modules):    ngx_array_t                 recodes;        /* ngx_http_charset_recode_t */
-Ngx_http_charset_filter_module.c (http\modules):    ngx_array_t                *types_keys;
-Ngx_http_charset_filter_module.c (http\modules):static ngx_int_t ngx_http_add_charset(ngx_array_t *charsets, ngx_str_t *name);
-Ngx_http_charset_filter_module.c (http\modules):ngx_http_add_charset(ngx_array_t *charsets, ngx_str_t *name)
-Ngx_http_core_module.c (http):    ngx_addr_t *addr, u_char *xff, size_t xfflen, ngx_array_t *proxies,
-Ngx_http_core_module.c (http):    ngx_array_t               *cc;
-Ngx_http_core_module.c (http):    ngx_array_t *headers, ngx_str_t *value, ngx_array_t *proxies,
-Ngx_http_core_module.c (http):    u_char *xff, size_t xfflen, ngx_array_t *proxies, int recursive)
-Ngx_http_core_module.h (http):    ngx_array_t                handlers;
-Ngx_http_core_module.h (http):    ngx_array_t                servers;         /* ngx_http_core_srv_conf_t */
-Ngx_http_core_module.h (http):    ngx_array_t                variables;       /* ngx_http_variable_t */
-Ngx_http_core_module.h (http):    ngx_array_t               *ports;
-Ngx_http_core_module.h (http):    ngx_array_t                 server_names;
-Ngx_http_core_module.h (http):    ngx_array_t                addrs;     /* array of ngx_http_conf_addr_t */
-Ngx_http_core_module.h (http):    ngx_array_t                servers;  /* array of ngx_http_core_srv_conf_t */
-Ngx_http_core_module.h (http):    ngx_array_t               *lengths;
-Ngx_http_core_module.h (http):    ngx_array_t               *values;
-Ngx_http_core_module.h (http):    ngx_array_t  *root_lengths;
-Ngx_http_core_module.h (http):    ngx_array_t  *root_values;
-Ngx_http_core_module.h (http):    ngx_array_t  *types;
-Ngx_http_core_module.h (http):    ngx_array_t  *gzip_disable;            /* gzip_disable */
-Ngx_http_core_module.h (http):    ngx_array_t  *error_pages;             /* error_page */
-Ngx_http_core_module.h (http):    ngx_array_t *headers, ngx_str_t *value, ngx_array_t *proxies,
-Ngx_http_fastcgi_module.c (http\modules):    ngx_array_t                    caches;  /* ngx_http_file_cache_t * */
-Ngx_http_fastcgi_module.c (http\modules):    ngx_array_t                   *flushes;
-Ngx_http_fastcgi_module.c (http\modules):    ngx_array_t                   *lengths;
-Ngx_http_fastcgi_module.c (http\modules):    ngx_array_t                   *values;
-Ngx_http_fastcgi_module.c (http\modules):    ngx_array_t                   *params_source;
-Ngx_http_fastcgi_module.c (http\modules):    ngx_array_t                   *catch_stderr;
-Ngx_http_fastcgi_module.c (http\modules):    ngx_array_t                   *fastcgi_lengths;
-Ngx_http_fastcgi_module.c (http\modules):    ngx_array_t                   *fastcgi_values;
-Ngx_http_fastcgi_module.c (http\modules):    ngx_array_t                   *split_parts;
-Ngx_http_fastcgi_module.c (http\modules):    ngx_array_t                   headers_names, params_merged;
-Ngx_http_file_cache.c (http):ngx_http_file_cache_valid(ngx_array_t *cache_valid, ngx_uint_t status)
-Ngx_http_file_cache.c (http):    ngx_array_t            *caches;
-Ngx_http_file_cache.c (http):    caches = (ngx_array_t *) (confp + cmd->offset);
-Ngx_http_file_cache.c (http):    ngx_array_t             **a;
-Ngx_http_file_cache.c (http):    a = (ngx_array_t **) (p + cmd->offset);
-Ngx_http_geoip_module.c (http\modules):    ngx_array_t  *proxies;    /* array of ngx_cidr_t */
-Ngx_http_geoip_module.c (http\modules):    ngx_array_t         *xfwd;
-Ngx_http_geoip_module.c (http\modules):    ngx_array_t          *xfwd;
-Ngx_http_geo_module.c (http\modules):    ngx_array_t                     *proxies;
-Ngx_http_geo_module.c (http\modules):    ngx_array_t                     *proxies;
-Ngx_http_geo_module.c (http\modules):    ngx_array_t  *xfwd;
-Ngx_http_geo_module.c (http\modules):    ngx_array_t              *a;
-Ngx_http_geo_module.c (http\modules):                a = (ngx_array_t *) ctx.high.low[i];
-Ngx_http_geo_module.c (http\modules):    ngx_array_t           *a;
-Ngx_http_geo_module.c (http\modules):        a = (ngx_array_t *) ctx->high.low[h];
-Ngx_http_geo_module.c (http\modules):    ngx_array_t           *a;
-Ngx_http_geo_module.c (http\modules):        a = (ngx_array_t *) ctx->high.low[h];
-Ngx_http_gzip_filter_module.c (http\modules):    ngx_array_t         *types_keys;
-Ngx_http_headers_filter_module.c (http\modules):    ngx_array_t               *headers;
-Ngx_http_index_module.c (http\modules):    ngx_array_t             *lengths;
-Ngx_http_index_module.c (http\modules):    ngx_array_t             *values;
-Ngx_http_index_module.c (http\modules):    ngx_array_t             *indices;    /* array of ngx_http_index_t */
-Ngx_http_limit_conn_module.c (http\modules):    ngx_array_t                limits;
-Ngx_http_limit_req_module.c (http\modules):    ngx_array_t                  limits;
-Ngx_http_log_module.c (http\modules):    ngx_array_t                *flushes;
-Ngx_http_log_module.c (http\modules):    ngx_array_t                *ops;        /* array of ngx_http_log_op_t */
-Ngx_http_log_module.c (http\modules):    ngx_array_t                 formats;    /* array of ngx_http_log_fmt_t */
-Ngx_http_log_module.c (http\modules):    ngx_array_t                *lengths;
-Ngx_http_log_module.c (http\modules):    ngx_array_t                *values;
-Ngx_http_log_module.c (http\modules):    ngx_array_t                *logs;       /* array of ngx_http_log_t */
-Ngx_http_log_module.c (http\modules):    ngx_array_t *flushes, ngx_array_t *ops, ngx_array_t *args, ngx_uint_t s);
-Ngx_http_log_module.c (http\modules):ngx_http_log_compile_format(ngx_conf_t *cf, ngx_array_t *flushes,
-Ngx_http_log_module.c (http\modules):    ngx_array_t *ops, ngx_array_t *args, ngx_uint_t s)
-Ngx_http_log_module.c (http\modules):    ngx_array_t                 a;
-Ngx_http_map_module.c (http\modules):    ngx_array_t                *values_hash;
-Ngx_http_map_module.c (http\modules):    ngx_array_t                 var_values;
-Ngx_http_map_module.c (http\modules):    ngx_array_t                 regexes;
-Ngx_http_map_module.c (http\modules):    ctx.values_hash = ngx_pcalloc(pool, sizeof(ngx_array_t) * ctx.keys.hsize);
-Ngx_http_mp4_module.c (http\modules):    ngx_array_t           trak;
-Ngx_http_parse.c (http):ngx_http_parse_multi_header_lines(ngx_array_t *headers, ngx_str_t *name,
-Ngx_http_parse.c (http):ngx_http_parse_set_cookie_lines(ngx_array_t *headers, ngx_str_t *name,
-Ngx_http_perl_module.c (http\modules\perl):    ngx_array_t       *modules;
-Ngx_http_perl_module.c (http\modules\perl):    ngx_array_t       *requires;
-Ngx_http_perl_module.c (http\modules\perl):static ngx_int_t ngx_http_perl_run_requires(pTHX_ ngx_array_t *requires,
-Ngx_http_perl_module.c (http\modules\perl):ngx_http_perl_run_requires(pTHX_ ngx_array_t *requires, ngx_log_t *log)
-Ngx_http_perl_module.h (http\modules\perl):    ngx_array_t              *variables;  /* array of ngx_http_perl_var_t */
-Ngx_http_proxy_module.c (http\modules):    ngx_array_t                    caches;  /* ngx_http_file_cache_t * */
-Ngx_http_proxy_module.c (http\modules):    ngx_array_t                   *flushes;
-Ngx_http_proxy_module.c (http\modules):    ngx_array_t                   *lengths;
-Ngx_http_proxy_module.c (http\modules):    ngx_array_t                   *values;
-Ngx_http_proxy_module.c (http\modules):    ngx_array_t                   *body_flushes;
-Ngx_http_proxy_module.c (http\modules):    ngx_array_t                   *body_lengths;
-Ngx_http_proxy_module.c (http\modules):    ngx_array_t                   *body_values;
-Ngx_http_proxy_module.c (http\modules):    ngx_array_t                   *headers_source;
-Ngx_http_proxy_module.c (http\modules):    ngx_array_t                   *proxy_lengths;
-Ngx_http_proxy_module.c (http\modules):    ngx_array_t                   *proxy_values;
-Ngx_http_proxy_module.c (http\modules):    ngx_array_t                   *redirects;
-Ngx_http_proxy_module.c (http\modules):    ngx_array_t                   *cookie_domains;
-Ngx_http_proxy_module.c (http\modules):    ngx_array_t                   *cookie_paths;
-Ngx_http_proxy_module.c (http\modules):    ngx_array_t                   *ssl_passwords;
-Ngx_http_proxy_module.c (http\modules):    ngx_table_elt_t *h, u_char *value, ngx_array_t *rewrites);
-Ngx_http_proxy_module.c (http\modules):    u_char *value, ngx_array_t *rewrites)
-Ngx_http_proxy_module.c (http\modules):    ngx_array_t                   headers_names, headers_merged;
-Ngx_http_random_index_module.c (http\modules):    ngx_array_t                        names;
-Ngx_http_range_filter_module.c (http\modules):    ngx_array_t  ranges;
-Ngx_http_realip_module.c (http\modules):    ngx_array_t       *from;     /* array of ngx_cidr_t */
-Ngx_http_realip_module.c (http\modules):    ngx_array_t                 *xfwd;
-Ngx_http_referer_module.c (http\modules):    ngx_array_t             *regex;
-Ngx_http_referer_module.c (http\modules):    ngx_array_t             *server_name_regex;
-Ngx_http_request.c (http):    ngx_array_t       *headers;
-Ngx_http_request.c (http):    headers = (ngx_array_t *) ((char *) &r->headers_in + offset);
-Ngx_http_request.h (http):    ngx_array_t                       x_forwarded_for;
-Ngx_http_request.h (http):    ngx_array_t                       cookies;
-Ngx_http_request.h (http):    ngx_array_t                       cache_control;
-Ngx_http_request.h (http):    ngx_array_t                      *upstream_states;
-Ngx_http_rewrite_module.c (http\modules):    ngx_array_t  *codes;        /* uintptr_t */
-Ngx_http_scgi_module.c (http\modules):    ngx_array_t                caches;  /* ngx_http_file_cache_t * */
-Ngx_http_scgi_module.c (http\modules):    ngx_array_t               *flushes;
-Ngx_http_scgi_module.c (http\modules):    ngx_array_t               *lengths;
-Ngx_http_scgi_module.c (http\modules):    ngx_array_t               *values;
-Ngx_http_scgi_module.c (http\modules):    ngx_array_t               *params_source;
-Ngx_http_scgi_module.c (http\modules):    ngx_array_t               *scgi_lengths;
-Ngx_http_scgi_module.c (http\modules):    ngx_array_t               *scgi_values;
-Ngx_http_scgi_module.c (http\modules):    ngx_array_t                   headers_names, params_merged;
-Ngx_http_script.c (http):    ngx_array_t                 flushes, lengths, values, *pf, *pl, *pv;
-Ngx_http_script.c (http):ngx_http_test_predicates(ngx_http_request_t *r, ngx_array_t *predicates)
-Ngx_http_script.c (http):    ngx_array_t                       **a;
-Ngx_http_script.c (http):    a = (ngx_array_t **) (p + cmd->offset);
-Ngx_http_script.c (http):    ngx_array_t *indices)
-Ngx_http_script.c (http):ngx_http_script_start_code(ngx_pool_t *pool, ngx_array_t **codes, size_t size)
-Ngx_http_script.c (http):ngx_http_script_add_code(ngx_array_t *codes, size_t size, void *code)
-Ngx_http_script.h (http):    ngx_array_t               **flushes;
-Ngx_http_script.h (http):    ngx_array_t               **lengths;
-Ngx_http_script.h (http):    ngx_array_t               **values;
-Ngx_http_script.h (http):    ngx_array_t                *lengths;
-Ngx_http_script.h (http):    ngx_array_t                *lengths;
-Ngx_http_script.h (http):    ngx_array_t *predicates);
-Ngx_http_script.h (http):    ngx_array_t *indices);
-Ngx_http_script.h (http):void *ngx_http_script_start_code(ngx_pool_t *pool, ngx_array_t **codes,
-Ngx_http_script.h (http):void *ngx_http_script_add_code(ngx_array_t *codes, size_t size, void *code);
-Ngx_http_split_clients_module.c (http\modules):    ngx_array_t                 parts;
-Ngx_http_ssi_filter_module.c (http\modules):    ngx_array_t  *types_keys;
-Ngx_http_ssi_filter_module.c (http\modules):    ngx_array_t                 lengths, values;
-Ngx_http_ssi_filter_module.h (http\modules):    ngx_array_t               params;
-Ngx_http_ssi_filter_module.h (http\modules):    ngx_array_t              *blocks;
-Ngx_http_ssl_module.h (http\modules):    ngx_array_t                    *passwords;
-Ngx_http_ssl_module.h (http\modules):    ngx_array_t                    *session_ticket_keys;
-Ngx_http_sub_filter_module.c (http\modules):    ngx_array_t               *pairs;
-Ngx_http_sub_filter_module.c (http\modules):    ngx_array_t               *types_keys;
-Ngx_http_sub_filter_module.c (http\modules):    ngx_array_t               *matches;
-Ngx_http_sub_filter_module.c (http\modules):    ngx_array_t               *matches;
-Ngx_http_sub_filter_module.c (http\modules):        ctx->matches = ngx_pnalloc(r->pool, sizeof(ngx_array_t));
-Ngx_http_sub_filter_module.c (http\modules):        conf->matches = ngx_pnalloc(cf->pool, sizeof(ngx_array_t));
-Ngx_http_upstream.c (http):    ngx_array_t           *pa;
-Ngx_http_upstream.c (http):    ngx_array_t          *pa;
-Ngx_http_upstream.c (http):    ngx_array_t      *pa;
-Ngx_http_upstream.c (http):    pa = (ngx_array_t *) ((char *) &r->headers_out + offset);
-Ngx_http_upstream.c (http):    ngx_array_t                **a;
-Ngx_http_upstream.c (http):    a = (ngx_array_t **) (p + cmd->offset);
-Ngx_http_upstream.c (http):    ngx_array_t      hide_headers;
-Ngx_http_upstream.c (http):    ngx_array_t                     headers_in;
-Ngx_http_upstream.h (http):    ngx_array_t                      upstreams;
-Ngx_http_upstream.h (http):    ngx_array_t                     *servers;  /* ngx_http_upstream_server_t */
-Ngx_http_upstream.h (http):    ngx_array_t                     *hide_headers;
-Ngx_http_upstream.h (http):    ngx_array_t                     *pass_headers;
-Ngx_http_upstream.h (http):    ngx_array_t                     *cache_valid;
-Ngx_http_upstream.h (http):    ngx_array_t                     *cache_bypass;
-Ngx_http_upstream.h (http):    ngx_array_t                     *no_cache;
-Ngx_http_upstream.h (http):    ngx_array_t                     *store_lengths;
-Ngx_http_upstream.h (http):    ngx_array_t                     *store_values;
-Ngx_http_upstream.h (http):    ngx_array_t                      cache_control;
-Ngx_http_upstream.h (http):    ngx_array_t                      cookies;
-Ngx_http_upstream.h (http):    ngx_array_t                     *caches;
-Ngx_http_uwsgi_module.c (http\modules):    ngx_array_t                caches;  /* ngx_http_file_cache_t * */
-Ngx_http_uwsgi_module.c (http\modules):    ngx_array_t               *flushes;
-Ngx_http_uwsgi_module.c (http\modules):    ngx_array_t               *lengths;
-Ngx_http_uwsgi_module.c (http\modules):    ngx_array_t               *values;
-Ngx_http_uwsgi_module.c (http\modules):    ngx_array_t               *params_source;
-Ngx_http_uwsgi_module.c (http\modules):    ngx_array_t               *uwsgi_lengths;
-Ngx_http_uwsgi_module.c (http\modules):    ngx_array_t               *uwsgi_values;
-Ngx_http_uwsgi_module.c (http\modules):    ngx_array_t               *ssl_passwords;
-Ngx_http_uwsgi_module.c (http\modules):    ngx_array_t                   headers_names, params_merged;
-Ngx_http_v2.c (http\v2):    ngx_array_t  *cookies;
-Ngx_http_v2.c (http\v2):    ngx_array_t                *cookies;
-Ngx_http_v2.h (http\v2):    ngx_array_t                     *cookies;
-Ngx_http_variables.c (http):    ngx_array_t       *a;
-Ngx_http_variables.c (http):    a = (ngx_array_t *) ((char *) r + data);
-Ngx_http_xslt_filter_module.c (http\modules):    ngx_array_t                dtd_files;    /* ngx_http_xslt_file_t */
-Ngx_http_xslt_filter_module.c (http\modules):    ngx_array_t                sheet_files;  /* ngx_http_xslt_file_t */
-Ngx_http_xslt_filter_module.c (http\modules):    ngx_array_t                params;       /* ngx_http_xslt_param_t */
-Ngx_http_xslt_filter_module.c (http\modules):    ngx_array_t                sheets;       /* ngx_http_xslt_sheet_t */
-Ngx_http_xslt_filter_module.c (http\modules):    ngx_array_t               *types_keys;
-Ngx_http_xslt_filter_module.c (http\modules):    ngx_array_t               *params;       /* ngx_http_xslt_param_t */
-Ngx_http_xslt_filter_module.c (http\modules):    ngx_array_t                params;
-Ngx_http_xslt_filter_module.c (http\modules):    ngx_http_xslt_filter_ctx_t *ctx, ngx_array_t *params, ngx_uint_t final);
-Ngx_http_xslt_filter_module.c (http\modules):    ngx_array_t *params, ngx_uint_t final)
-Ngx_mail.c (mail):static ngx_int_t ngx_mail_add_ports(ngx_conf_t *cf, ngx_array_t *ports,
-Ngx_mail.c (mail):static char *ngx_mail_optimize_servers(ngx_conf_t *cf, ngx_array_t *ports);
-Ngx_mail.c (mail):    ngx_array_t                  ports;
-Ngx_mail.c (mail):ngx_mail_add_ports(ngx_conf_t *cf, ngx_array_t *ports,
-Ngx_mail.c (mail):ngx_mail_optimize_servers(ngx_conf_t *cf, ngx_array_t *ports)
-Ngx_mail.h (mail):    ngx_array_t             addrs;       /* array of ngx_mail_conf_addr_t */
-Ngx_mail.h (mail):    ngx_array_t             servers;     /* ngx_mail_core_srv_conf_t */
-Ngx_mail.h (mail):    ngx_array_t             listen;      /* ngx_mail_listen_t */
-Ngx_mail.h (mail):    ngx_array_t             args;
-Ngx_mail_auth_http_module.c (mail):    ngx_array_t                    *headers;
-Ngx_mail_core_module.c (mail):    ngx_array_t  *a;
-Ngx_mail_core_module.c (mail):    a = (ngx_array_t *) (p + cmd->offset);
-Ngx_mail_imap_module.h (mail):    ngx_array_t  capabilities;
-Ngx_mail_pop3_module.h (mail):    ngx_array_t  capabilities;
-Ngx_mail_smtp_module.h (mail):    ngx_array_t  capabilities;
-Ngx_mail_ssl_module.h (mail):    ngx_array_t     *passwords;
-Ngx_mail_ssl_module.h (mail):    ngx_array_t     *session_ticket_keys;
-Ngx_readv_chain.c (os\unix):    ngx_array_t    vec;
-Ngx_regex.c (core):ngx_regex_exec_array(ngx_array_t *a, ngx_str_t *s, ngx_log_t *log)
-Ngx_regex.h (core):ngx_int_t ngx_regex_exec_array(ngx_array_t *a, ngx_str_t *s, ngx_log_t *log);
-Ngx_resolver.h (core):    ngx_array_t               udp_connections;
-Ngx_stream.c (stream):static ngx_int_t ngx_stream_add_ports(ngx_conf_t *cf, ngx_array_t *ports,
-Ngx_stream.c (stream):static char *ngx_stream_optimize_servers(ngx_conf_t *cf, ngx_array_t *ports);
-Ngx_stream.c (stream):    ngx_array_t                    ports;
-Ngx_stream.c (stream):ngx_stream_add_ports(ngx_conf_t *cf, ngx_array_t *ports,
-Ngx_stream.c (stream):ngx_stream_optimize_servers(ngx_conf_t *cf, ngx_array_t *ports)
-Ngx_stream.h (stream):    ngx_array_t             addrs;       /* array of ngx_stream_conf_addr_t */
-Ngx_stream.h (stream):    ngx_array_t             servers;     /* ngx_stream_core_srv_conf_t */
-Ngx_stream.h (stream):    ngx_array_t             listen;      /* ngx_stream_listen_t */
-Ngx_stream_access_module.c (stream):    ngx_array_t      *rules;     /* array of ngx_stream_access_rule_t */
-Ngx_stream_access_module.c (stream):    ngx_array_t      *rules6;    /* array of ngx_stream_access_rule6_t */
-Ngx_stream_access_module.c (stream):    ngx_array_t      *rules_un;  /* array of ngx_stream_access_rule_un_t */
-Ngx_stream_limit_conn_module.c (stream):    ngx_array_t                limits;
-Ngx_stream_proxy_module.c (stream):    ngx_array_t                     *ssl_passwords;
-Ngx_stream_ssl_module.h (stream):    ngx_array_t     *passwords;
-Ngx_stream_ssl_module.h (stream):    ngx_array_t     *session_ticket_keys;
-Ngx_stream_upstream.h (stream):    ngx_array_t                        upstreams;
-Ngx_stream_upstream.h (stream):    ngx_array_t                       *servers;
-Ngx_thread_pool.c (core):    ngx_array_t               pools;
-Ngx_wsarecv_chain.c (os\win32):    ngx_array_t   vec;
-Ngx_wsasend_chain.c (os\win32):    ngx_array_t   vec;
-Ngx_wsasend_chain.c (os\win32):    ngx_array_t       vec;
+---- ngx_pagesize Matches (72 in 38 files) ----
+Ngx_alloc.c (os\unix):ngx_uint_t  ngx_pagesize;
+Ngx_alloc.c (os\win32):ngx_uint_t  ngx_pagesize;
+Ngx_alloc.h (os\unix):extern ngx_uint_t  ngx_pagesize;
+Ngx_alloc.h (os\win32):extern ngx_uint_t  ngx_pagesize;
+Ngx_buf.c (core):            aligned = (cl->buf->file_pos + size + ngx_pagesize - 1)
+Ngx_buf.c (core):                       & ~((off_t) ngx_pagesize - 1);
+Ngx_darwin_sendfile_chain.c (os\unix):    if (limit == 0 || limit > (off_t) (NGX_MAX_SIZE_T_VALUE - ngx_pagesize)) {
+Ngx_darwin_sendfile_chain.c (os\unix):        limit = NGX_MAX_SIZE_T_VALUE - ngx_pagesize;
+Ngx_event_openssl.c (event):    if (limit == 0 || limit > (off_t) (NGX_MAX_INT32_VALUE - ngx_pagesize)) {
+Ngx_event_openssl.c (event):        limit = NGX_MAX_INT32_VALUE - ngx_pagesize;
+Ngx_freebsd_sendfile_chain.c (os\unix):    if (limit == 0 || limit > (off_t) (NGX_MAX_SIZE_T_VALUE - ngx_pagesize)) {
+Ngx_freebsd_sendfile_chain.c (os\unix):        limit = NGX_MAX_SIZE_T_VALUE - ngx_pagesize;
+Ngx_http_core_module.c (http):                              (size_t) 2 * ngx_pagesize);
+Ngx_http_fastcgi_module.c (http\modules):                              (size_t) ngx_pagesize);
+Ngx_http_fastcgi_module.c (http\modules):                              8, ngx_pagesize);
+Ngx_http_gunzip_filter_module.c (http\modules):                              (128 * 1024) / ngx_pagesize, ngx_pagesize);
+Ngx_http_gzip_filter_module.c (http\modules):                              (128 * 1024) / ngx_pagesize, ngx_pagesize);
+Ngx_http_limit_conn_module.c (http\modules):            if (size < (ssize_t) (8 * ngx_pagesize)) {
+Ngx_http_limit_req_module.c (http\modules):            if (size < (ssize_t) (8 * ngx_pagesize)) {
+Ngx_http_memcached_module.c (http\modules):                              (size_t) ngx_pagesize);
+Ngx_http_proxy_module.c (http\modules):                              (size_t) ngx_pagesize);
+Ngx_http_proxy_module.c (http\modules):                              8, ngx_pagesize);
+Ngx_http_scgi_module.c (http\modules):                              (size_t) ngx_pagesize);
+Ngx_http_scgi_module.c (http\modules):                              8, ngx_pagesize);
+Ngx_http_ssl_module.c (http\modules):            if (n < (ngx_int_t) (8 * ngx_pagesize)) {
+Ngx_http_upstream_zone_module.c (http\modules):        if (size < (ssize_t) (8 * ngx_pagesize)) {
+Ngx_http_uwsgi_module.c (http\modules):                              (size_t) ngx_pagesize);
+Ngx_http_uwsgi_module.c (http\modules):                              8, ngx_pagesize);
+Ngx_http_write_filter_module.c (http):        && c->sent - sent >= limit - (off_t) (2 * ngx_pagesize))
+Ngx_linux_sendfile_chain.c (os\unix):    if (limit == 0 || limit > (off_t) (NGX_SENDFILE_MAXSIZE - ngx_pagesize)) {
+Ngx_linux_sendfile_chain.c (os\unix):        limit = NGX_SENDFILE_MAXSIZE - ngx_pagesize;
+Ngx_mail_imap_module.c (mail):                              (size_t) ngx_pagesize);
+Ngx_mail_proxy_module.c (mail):                              (size_t) ngx_pagesize);
+Ngx_mail_smtp_module.c (mail):                              (size_t) ngx_pagesize);
+Ngx_mail_ssl_module.c (mail):            if (n < (ngx_int_t) (8 * ngx_pagesize)) {
+Ngx_palloc.c (core):    slot = &ngx_cycle->cache[(size + ngx_pagesize - 1) / ngx_pagesize];
+Ngx_palloc.h (core):#define NGX_MAX_ALLOC_FROM_POOL  (ngx_pagesize - 1)
+Ngx_posix_init.c (os\unix):    ngx_pagesize = getpagesize();
+Ngx_posix_init.c (os\unix):    for (n = ngx_pagesize; n >>= 1; ngx_pagesize_shift++) { /* void */ }
+Ngx_radix_tree.c (core):        switch (ngx_pagesize / sizeof(ngx_radix_node_t)) {
+Ngx_radix_tree.c (core):        tree->start = ngx_pmemalign(tree->pool, ngx_pagesize, ngx_pagesize);
+Ngx_radix_tree.c (core):        tree->size = ngx_pagesize;
+Ngx_slab.c (core):        ngx_slab_max_size = ngx_pagesize / 2;
+Ngx_slab.c (core):        ngx_slab_exact_size = ngx_pagesize / (8 * sizeof(uintptr_t));
+Ngx_slab.c (core):    pages = (ngx_uint_t) (size / (ngx_pagesize + sizeof(ngx_slab_page_t)));
+Ngx_slab.c (core):                                 ngx_pagesize);
+Ngx_slab.c (core):    m = pages - (pool->end - pool->start) / ngx_pagesize;
+Ngx_slab.c (core):                                          + ((size % ngx_pagesize) ? 1 : 0));
+Ngx_slab.c (core):        n = ((uintptr_t) p & (ngx_pagesize - 1)) >> shift;
+Ngx_slab.c (core):                             ((uintptr_t) p & ~((uintptr_t) ngx_pagesize - 1));
+Ngx_slab.c (core):                (((uintptr_t) p & (ngx_pagesize - 1)) >> ngx_slab_exact_shift);
+Ngx_slab.c (core):        m = (uintptr_t) 1 << ((((uintptr_t) p & (ngx_pagesize - 1)) >> shift)
+Ngx_slab.c (core):        if ((uintptr_t) p & (ngx_pagesize - 1)) {
+Ngx_solaris_sendfilev_chain.c (os\unix):    if (limit == 0 || limit > (off_t) (NGX_MAX_SIZE_T_VALUE - ngx_pagesize)) {
+Ngx_solaris_sendfilev_chain.c (os\unix):        limit = NGX_MAX_SIZE_T_VALUE - ngx_pagesize;
+Ngx_solaris_sendfilev_chain.c (os\unix):                    aligned = (cl->buf->file_pos + size + ngx_pagesize - 1)
+Ngx_solaris_sendfilev_chain.c (os\unix):                               & ~((off_t) ngx_pagesize - 1);
+Ngx_stream_limit_conn_module.c (stream):            if (size < (ssize_t) (8 * ngx_pagesize)) {
+Ngx_stream_ssl_module.c (stream):            if (n < (ngx_int_t) (8 * ngx_pagesize)) {
+Ngx_stream_upstream_zone_module.c (stream):        if (size < (ssize_t) (8 * ngx_pagesize)) {
+Ngx_win32_init.c (os\win32):    ngx_pagesize = si.dwPageSize;
+Ngx_win32_init.c (os\win32):    for (n = ngx_pagesize; n >>= 1; ngx_pagesize_shift++) { /* void */ }
+Ngx_writev_chain.c (os\unix):    if (limit == 0 || limit > (off_t) (NGX_MAX_SIZE_T_VALUE - ngx_pagesize)) {
+Ngx_writev_chain.c (os\unix):        limit = NGX_MAX_SIZE_T_VALUE - ngx_pagesize;
+Ngx_wsasend_chain.c (os\win32):    if (limit == 0 || limit > (off_t) (NGX_MAX_UINT32_VALUE - ngx_pagesize)) {
+Ngx_wsasend_chain.c (os\win32):        limit = NGX_MAX_UINT32_VALUE - ngx_pagesize;
+Ngx_wsasend_chain.c (os\win32):        if (limit == 0 || limit > (off_t) (NGX_MAX_UINT32_VALUE - ngx_pagesize))
+Ngx_wsasend_chain.c (os\win32):            limit = NGX_MAX_UINT32_VALUE - ngx_pagesize;

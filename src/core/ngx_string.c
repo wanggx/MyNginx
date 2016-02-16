@@ -29,6 +29,7 @@ ngx_strlow(u_char *dst, u_char *src, size_t n)
 }
 
 
+/* 遇到字符串结尾则直接返回，否则在目的字符串结尾处添加结束标记 */
 u_char *
 ngx_cpystrn(u_char *dst, u_char *src, size_t n)
 {
@@ -53,6 +54,7 @@ ngx_cpystrn(u_char *dst, u_char *src, size_t n)
 }
 
 
+/* 将src中的数据拷贝到pool当中，同时返回在pool中的指针 */
 u_char *
 ngx_pstrdup(ngx_pool_t *pool, ngx_str_t *src)
 {

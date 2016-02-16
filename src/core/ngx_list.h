@@ -15,18 +15,22 @@
 
 typedef struct ngx_list_part_s  ngx_list_part_t;
 
+
+/* 一个长的链表会被分成很多部分，每个部分都存放nalloc个元素 
+ * 每一个部分里面内存是连续的 
+ */
 struct ngx_list_part_s {
-    void             *elts;
-    ngx_uint_t        nelts;
+    void             *elts;  /* 每个部分数据的内存地址 */
+    ngx_uint_t        nelts; /* 每个部分已用的元素个数超过nalloc则表示该部分已被用完 */
     ngx_list_part_t  *next;
 };
 
-
+/* 链表的头部 */
 typedef struct {
-    ngx_list_part_t  *last;
-    ngx_list_part_t   part;
-    size_t            size;
-    ngx_uint_t        nalloc;
+    ngx_list_part_t  *last;   /* 指向最后一个部分 */
+    ngx_list_part_t   part;   /* 第一个部分 */
+    size_t            size;   /* 链表中元素大小 */
+    ngx_uint_t        nalloc; /* 给链表分配元素的大小 */
     ngx_pool_t       *pool;
 } ngx_list_t;
 
