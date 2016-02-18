@@ -148,6 +148,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 #endif
 
     ls = cycle->listening.elts;
+	/* 遍历监听数组中的数值 */
     for (i = 0; i < cycle->listening.nelts; i++) {
 
         ls[i].sockaddr = ngx_palloc(cycle->pool, NGX_SOCKADDRLEN);
@@ -164,6 +165,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
             continue;
         }
 
+		/* 判断地址簇 */
         switch (ls[i].sockaddr->sa_family) {
 
 #if (NGX_HAVE_INET6)
@@ -210,6 +212,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 
         olen = sizeof(int);
 
+		/* 获取监听套接字的接收缓存大小 */
         if (getsockopt(ls[i].fd, SOL_SOCKET, SO_RCVBUF, (void *) &ls[i].rcvbuf,
                        &olen)
             == -1)
@@ -223,6 +226,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 
         olen = sizeof(int);
 
+		/* 获取监听套接字的发送缓存大小 */
         if (getsockopt(ls[i].fd, SOL_SOCKET, SO_SNDBUF, (void *) &ls[i].sndbuf,
                        &olen)
             == -1)

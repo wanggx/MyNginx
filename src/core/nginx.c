@@ -429,6 +429,7 @@ ngx_show_version_info()
 }
 
 
+/* 前半部分功能是读取NGINX变量数值，并且设置到cycle的监听数组当中 */
 static ngx_int_t
 ngx_add_inherited_sockets(ngx_cycle_t *cycle)
 {
@@ -436,6 +437,7 @@ ngx_add_inherited_sockets(ngx_cycle_t *cycle)
     ngx_int_t         s;
     ngx_listening_t  *ls;
 
+	/* 获取环境变量NGINX */
     inherited = (u_char *) getenv(NGINX_VAR);
 
     if (inherited == NULL) {
@@ -445,6 +447,7 @@ ngx_add_inherited_sockets(ngx_cycle_t *cycle)
     ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0,
                   "using inherited sockets from \"%s\"", inherited);
 
+	/* 初始化cycle->listening数组，并且该数组中包含10个元素 */
     if (ngx_array_init(&cycle->listening, cycle->pool, 10,
                        sizeof(ngx_listening_t))
         != NGX_OK)
@@ -476,6 +479,7 @@ ngx_add_inherited_sockets(ngx_cycle_t *cycle)
         }
     }
 
+	/* 表示已经得到要继承的socket */
     ngx_inherited = 1;
 
     return ngx_set_inherited_sockets(cycle);
