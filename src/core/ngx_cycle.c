@@ -23,8 +23,8 @@ ngx_array_t            ngx_old_cycles;
 static ngx_pool_t     *ngx_temp_pool;
 static ngx_event_t     ngx_cleaner_event;
 
-ngx_uint_t             ngx_test_config;
-ngx_uint_t             ngx_dump_config;
+ngx_uint_t             ngx_test_config;   /* 是否需要测试配置文件 */
+ngx_uint_t             ngx_dump_config;   /* 是否需要拷贝配置文件 */
 ngx_uint_t             ngx_quiet_mode;
 
 
@@ -72,6 +72,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
     pool->log = log;
 
+    /* 在内存池中分配一个ngx_cycle_t的空间 */
     cycle = ngx_pcalloc(pool, sizeof(ngx_cycle_t));
     if (cycle == NULL) {
         ngx_destroy_pool(pool);
@@ -186,7 +187,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     ngx_queue_init(&cycle->reusable_connections_queue);
 
-
+    /* 从pool中分配配置上下文，有多少个模块就要分配多少个指针类型的空间 */
     cycle->conf_ctx = ngx_pcalloc(pool, ngx_max_module * sizeof(void *));
     if (cycle->conf_ctx == NULL) {
         ngx_destroy_pool(pool);
@@ -202,6 +203,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     /* on Linux gethostname() silently truncates name that does not fit */
 
+    /* 设置主机名 */
     hostname[NGX_MAXHOSTNAMELEN - 1] = '\0';
     cycle->hostname.len = ngx_strlen(hostname);
 
@@ -267,6 +269,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         return NULL;
     }
 
+    /* 配置文件解析 */
     if (ngx_conf_parse(&conf, &cycle->conf_file) != NGX_CONF_OK) {
         environ = senv;
         ngx_destroy_cycle_pools(&conf);
@@ -278,6 +281,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
                        cycle->conf_file.data);
     }
 
+    /* 根据配置文件初始化模块 */
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->type != NGX_CORE_MODULE) {
             continue;
@@ -347,6 +351,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     /* open the new files */
 
+    /* 打开cycle->open_files中的文件 */
     part = &cycle->open_files.part;
     file = part->elts;
 
@@ -935,6 +940,7 @@ ngx_init_zone_pool(ngx_cycle_t *cycle, ngx_shm_zone_t *zn)
 }
 
 
+/* 创建PID文件 */
 ngx_int_t
 ngx_create_pidfile(ngx_str_t *name, ngx_log_t *log)
 {
@@ -943,6 +949,7 @@ ngx_create_pidfile(ngx_str_t *name, ngx_log_t *log)
     ngx_file_t  file;
     u_char      pid[NGX_INT64_LEN + 2];
 
+    /* 不是master进程就不创建这个文件 */
     if (ngx_process > NGX_PROCESS_MASTER) {
         return NGX_OK;
     }

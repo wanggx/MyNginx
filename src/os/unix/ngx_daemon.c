@@ -14,6 +14,7 @@ ngx_daemon(ngx_log_t *log)
 {
     int  fd;
 
+    /* 换成子进程运行，父进程退出 */
     switch (fork()) {
     case -1:
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno, "fork() failed");
@@ -26,6 +27,7 @@ ngx_daemon(ngx_log_t *log)
         exit(0);
     }
 
+    /* 获取子进程的pid */
     ngx_pid = ngx_getpid();
 
     if (setsid() == -1) {

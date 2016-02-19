@@ -65,7 +65,7 @@ struct ngx_cycle_s {
 
     ngx_cycle_t              *old_cycle;
 
-    ngx_str_t                 conf_file;         /* 配置文件 */
+    ngx_str_t                 conf_file;         /* 配置文件，如nginx.conf */
     ngx_str_t                 conf_param;        /* 配置参数 */
     ngx_str_t                 conf_prefix;       /* 配置前缀 */
     ngx_str_t                 prefix;            /* 前缀 */
@@ -80,7 +80,7 @@ typedef struct {
 
      ngx_msec_t               timer_resolution;
 
-     ngx_int_t                worker_processes;
+     ngx_int_t                worker_processes;  /* worker进程数量 */
      ngx_int_t                debug_points;
 
      ngx_int_t                rlimit_nofile;

@@ -280,12 +280,14 @@ ngx_execute_proc(ngx_cycle_t *cycle, void *data)
 }
 
 
+/* 注册系统中信号处理 */
 ngx_int_t
 ngx_init_signals(ngx_log_t *log)
 {
     ngx_signal_t      *sig;
     struct sigaction   sa;
 
+    /* 依次处理信号数组 */
     for (sig = signals; sig->signo != 0; sig++) {
         ngx_memzero(&sa, sizeof(struct sigaction));
         sa.sa_handler = sig->handler;
@@ -609,7 +611,7 @@ ngx_debug_point(void)
     }
 }
 
-
+/* 向进程发送名称为name的信号 */
 ngx_int_t
 ngx_os_signal_process(ngx_cycle_t *cycle, char *name, ngx_int_t pid)
 {

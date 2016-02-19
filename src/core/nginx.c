@@ -160,7 +160,7 @@ ngx_module_t  ngx_core_module = {
 };
 
 
-ngx_uint_t          ngx_max_module;
+ngx_uint_t          ngx_max_module;     /* 记录模块数 */
 
 static ngx_uint_t   ngx_show_help;
 static ngx_uint_t   ngx_show_version;
@@ -168,7 +168,7 @@ static ngx_uint_t   ngx_show_configure;
 static u_char      *ngx_prefix;
 static u_char      *ngx_conf_file;
 static u_char      *ngx_conf_params;
-static char        *ngx_signal;
+static char        *ngx_signal;    /* 发送的信号 */
 
 
 static char **ngx_os_environ;
@@ -263,6 +263,7 @@ main(int argc, char *const *argv)
     }
 
     ngx_max_module = 0;
+    /* 每个模块用index唯一区别 */
     for (i = 0; ngx_modules[i]; i++) {
         ngx_modules[i]->index = ngx_max_module++;
     }
@@ -354,6 +355,7 @@ main(int argc, char *const *argv)
 
     ngx_use_stderr = 0;
 
+    /* 如果是单进程情况 */
     if (ngx_process == NGX_PROCESS_SINGLE) {
         ngx_single_process_cycle(cycle);
 

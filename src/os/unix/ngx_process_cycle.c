@@ -45,7 +45,7 @@ sig_atomic_t  ngx_reopen;
 sig_atomic_t  ngx_change_binary;
 ngx_pid_t     ngx_new_binary;
 ngx_uint_t    ngx_inherited;
-ngx_uint_t    ngx_daemonized;
+ngx_uint_t    ngx_daemonized;       /* 表示是否在后台运行 */
 
 sig_atomic_t  ngx_noaccept;
 ngx_uint_t    ngx_noaccepting;
@@ -136,6 +136,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
     sigio = 0;
     live = 1;
 
+    /* master进程的主循环 */
     for ( ;; ) {
         if (delay) {
             if (ngx_sigalrm) {
@@ -352,9 +353,10 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
     ngx_memzero(&ch, sizeof(ngx_channel_t));
 
     ch.command = NGX_CMD_OPEN_CHANNEL;
-
+    /* 创建n个worker进程 */
     for (i = 0; i < n; i++) {
 
+        /* ngx_worker_process_cycle用来初始化worker进程的主循环 */
         ngx_spawn_process(cycle, ngx_worker_process_cycle,
                           (void *) (intptr_t) i, "worker process", type);
 
@@ -735,8 +737,10 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 
     ngx_setproctitle("worker process");
 
+    /* worker进程的主循环 */
     for ( ;; ) {
 
+        /* 处理nginx退出 */
         if (ngx_exiting) {
             ngx_event_cancel_timers();
 
@@ -750,6 +754,7 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "worker cycle");
 
+        /* 网络事件处理函数 */
         ngx_process_events_and_timers(cycle);
 
         if (ngx_terminate) {

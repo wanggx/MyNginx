@@ -1,8 +1,28 @@
----- getsockname Matches (7 in 4 files) ----
-Ngx_connection.c (core):        if (getsockname(ls[i].fd, ls[i].sockaddr, &ls[i].socklen) == -1) {
-Ngx_connection.c (core):                          "getsockname() of the inherited "
-Ngx_connection.c (core):        if (getsockname(c->fd, (struct sockaddr *) &sa, &len) == -1) {
-Ngx_connection.c (core):            ngx_connection_error(c, ngx_socket_errno, "getsockname() failed");
-Ngx_http_request.c (http):         * is an "*:port" wildcard so getsockname() in ngx_http_server_addr()
-Ngx_mail_handler.c (mail):         * is the "*:port" wildcard so getsockname() is needed to determine
-Ngx_stream_handler.c (stream):         * is the "*:port" wildcard so getsockname() is needed to determine
+---- ngx_process Matches (27 in 15 files) ----
+Nginx.c (core):    if (ccf->master && ngx_process == NGX_PROCESS_SINGLE) {
+Nginx.c (core):        ngx_process = NGX_PROCESS_MASTER;
+Nginx.c (core):    if (ngx_process == NGX_PROCESS_SINGLE) {
+Nginx.c (core):                    ngx_process = NGX_PROCESS_SIGNALLER;
+Ngx_connection.c (core):            && ngx_process <= NGX_PROCESS_MASTER
+Ngx_core.h (core):#include <ngx_process.h>
+Ngx_cycle.c (core):    if (ngx_process == NGX_PROCESS_SIGNALLER) {
+Ngx_cycle.c (core):    if (ngx_process == NGX_PROCESS_MASTER || ngx_is_init_cycle(old_cycle)) {
+Ngx_cycle.c (core):    if (ngx_process > NGX_PROCESS_MASTER) {
+Ngx_event.c (event):    if (!ngx_test_config && ngx_process <= NGX_PROCESS_MASTER) {
+Ngx_event.c (event):                if (ngx_process == NGX_PROCESS_SINGLE
+Ngx_poll_module.c (event\modules):    if (ngx_process >= NGX_PROCESS_WORKER
+Ngx_process.c (os\unix):    switch (ngx_process) {
+Ngx_process_cycle.c (os\unix):ngx_uint_t    ngx_process;
+Ngx_process_cycle.c (os\unix):    ngx_process = NGX_PROCESS_WORKER;
+Ngx_process_cycle.c (os\unix):    ngx_process = NGX_PROCESS_HELPER;
+Ngx_process_cycle.c (os\win32):ngx_uint_t     ngx_process;
+Ngx_process_cycle.c (os\win32):    if (ngx_process == NGX_PROCESS_WORKER) {
+Ngx_process_cycle.h (os\unix):extern ngx_uint_t      ngx_process;
+Ngx_process_cycle.h (os\win32):extern ngx_uint_t      ngx_process;
+Ngx_select_module.c (event\modules):    if (ngx_process >= NGX_PROCESS_WORKER
+Ngx_thread_pool.c (core):    if (ngx_process != NGX_PROCESS_WORKER
+Ngx_thread_pool.c (core):        && ngx_process != NGX_PROCESS_SINGLE)
+Ngx_thread_pool.c (core):    if (ngx_process != NGX_PROCESS_WORKER
+Ngx_thread_pool.c (core):        && ngx_process != NGX_PROCESS_SINGLE)
+Ngx_win32_init.c (os\win32):        ngx_process = NGX_PROCESS_WORKER;
+Ngx_win32_select_module.c (event\modules):    if (ngx_process >= NGX_PROCESS_WORKER

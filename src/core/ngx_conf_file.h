@@ -76,8 +76,8 @@
 
 
 struct ngx_command_s {
-    ngx_str_t             name;
-    ngx_uint_t            type;
+    ngx_str_t             name;   /* 命令名 */
+    ngx_uint_t            type;   /* 命令类型 */
     char               *(*set)(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
     ngx_uint_t            conf;
     ngx_uint_t            offset;
@@ -102,19 +102,20 @@ struct ngx_open_file_s {
 
 struct ngx_module_s {
     ngx_uint_t            ctx_index;
-    ngx_uint_t            index;
+    ngx_uint_t            index;   /* 模块计数器 */
 
     ngx_uint_t            spare0;
     ngx_uint_t            spare1;
     ngx_uint_t            spare2;
     ngx_uint_t            spare3;
 
-    ngx_uint_t            version;
+    ngx_uint_t            version; /* 版本 */
 
-    void                 *ctx;
-    ngx_command_t        *commands;
-    ngx_uint_t            type;
+    void                 *ctx;     /* 模块上下文，每个种类的模块有不同的上下文 */
+    ngx_command_t        *commands;/* 模块的命令集 */
+    ngx_uint_t            type;    /* 模块的种类 */
 
+    /* 一些回调函数 */
     ngx_int_t           (*init_master)(ngx_log_t *log);
 
     ngx_int_t           (*init_module)(ngx_cycle_t *cycle);
@@ -342,7 +343,7 @@ char *ngx_conf_set_bitmask_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 
 
 extern ngx_uint_t     ngx_max_module;
-extern ngx_module_t  *ngx_modules[];
+extern ngx_module_t  *ngx_modules[];   /* 该数组在编译时自动生成 */
 
 
 #endif /* _NGX_CONF_FILE_H_INCLUDED_ */
