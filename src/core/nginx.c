@@ -960,6 +960,7 @@ ngx_process_options(ngx_cycle_t *cycle)
 }
 
 
+/* 创建核心模块配置上下文，申请内存，并初始化数据 */
 static void *
 ngx_core_module_create_conf(ngx_cycle_t *cycle)
 {
@@ -1036,6 +1037,7 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
         ngx_str_set(&ccf->pid, NGX_PID_PATH);
     }
 
+    /* 获取进程文件路径 */
     if (ngx_conf_full_name(cycle, &ccf->pid, 0) != NGX_OK) {
         return NGX_CONF_ERROR;
     }

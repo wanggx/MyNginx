@@ -174,7 +174,10 @@ struct ngx_event_aio_s {
 
 #endif
 
-
+/* 这个结构是nginx底层事件模型的抽象，具体的io模型会有自己的实现，
+ * 比如epoll、select。通过这一层的抽象屏蔽了底层的不同实现，
+ * 我们可以轻易从一种模型迁移至其他模型。这实际上就是C的面向接口编程，值得学习。
+ */
 typedef struct {
     ngx_int_t  (*add)(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags);
     ngx_int_t  (*del)(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags);

@@ -462,7 +462,7 @@ invalid:
     return NGX_ERROR;
 }
 
-
+/* 真正解析配置文件的地方 */
 static ngx_int_t
 ngx_conf_read_token(ngx_conf_t *cf)
 {
@@ -846,6 +846,7 @@ ngx_conf_full_name(ngx_cycle_t *cycle, ngx_str_t *name, ngx_uint_t conf_prefix)
 {
     ngx_str_t  *prefix;
 
+    /* 决定使用哪个配置文件 */
     prefix = conf_prefix ? &cycle->conf_prefix : &cycle->prefix;
 
     return ngx_get_full_name(cycle->pool, prefix, name);

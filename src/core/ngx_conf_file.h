@@ -111,7 +111,8 @@ struct ngx_module_s {
 
     ngx_uint_t            version; /* 版本 */
 
-    void                 *ctx;     /* 模块上下文，每个种类的模块有不同的上下文 */
+    /* 模块上下文，每个种类的模块有不同的上下文，ngx_core_module_t类型 */
+    void                 *ctx;     
     ngx_command_t        *commands;/* 模块的命令集 */
     ngx_uint_t            type;    /* 模块的种类 */
 
@@ -223,10 +224,11 @@ char * ngx_conf_deprecated(ngx_conf_t *cf, void *post, void *data);
 char *ngx_conf_check_num_bounds(ngx_conf_t *cf, void *post, void *data);
 
 
+/* 模块的配置文件 */
 #define ngx_get_conf(conf_ctx, module)  conf_ctx[module.index]
 
 
-
+/* 设置值 */
 #define ngx_conf_init_value(conf, default)                                   \
     if (conf == NGX_CONF_UNSET) {                                            \
         conf = default;                                                      \

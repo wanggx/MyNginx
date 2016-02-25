@@ -239,6 +239,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 
     delta = ngx_current_msec;
 
+    /* 开始处理事件 */
     (void) ngx_process_events(cycle, timer, flags);
 
     delta = ngx_current_msec - delta;
@@ -419,7 +420,7 @@ ngx_event_init_conf(ngx_cycle_t *cycle, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/* 事件模型初始化 */
 static ngx_int_t
 ngx_event_module_init(ngx_cycle_t *cycle)
 {
@@ -564,7 +565,7 @@ ngx_timer_signal_handler(int signo)
 
 #endif
 
-
+/* 事件驱动模块初始化 */
 static ngx_int_t
 ngx_event_process_init(ngx_cycle_t *cycle)
 {
