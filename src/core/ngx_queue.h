@@ -101,6 +101,7 @@ struct ngx_queue_s {
     (h)->prev->next = h;
 
 
+/* 取出队列中的数据，注意内存模型 */
 #define ngx_queue_data(q, type, link)                                         \
     (type *) ((u_char *) q - offsetof(type, link))
 

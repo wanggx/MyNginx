@@ -14,7 +14,9 @@ static ngx_int_t ngx_enable_accept_events(ngx_cycle_t *cycle);
 static ngx_int_t ngx_disable_accept_events(ngx_cycle_t *cycle, ngx_uint_t all);
 static void ngx_close_accepted_connection(ngx_connection_t *c);
 
-
+/* 事件驱动模型接收到事件后，对事件的处理函数，
+ * 也是对访问进行服务的地方
+ */
 void
 ngx_event_accept(ngx_event_t *ev)
 {
@@ -138,6 +140,7 @@ ngx_event_accept(ngx_event_t *ev)
         ngx_accept_disabled = ngx_cycle->connection_n / 8
                               - ngx_cycle->free_connection_n;
 
+        /* 得到一个空闲可用的连接 */
         c = ngx_get_connection(s, ev->log);
 
         if (c == NULL) {

@@ -122,11 +122,11 @@ typedef enum {
 
 
 struct ngx_connection_s {
-    void               *data;
-    ngx_event_t        *read;
-    ngx_event_t        *write;
+    void               *data;   /* 用来关联其他结构体 */
+    ngx_event_t        *read;   /* 连接的读事件 */
+    ngx_event_t        *write;  /* 连接的写事件 */
 
-    ngx_socket_t        fd;
+    ngx_socket_t        fd;     /* 连接对应文件描述符 */
 
     ngx_recv_pt         recv;
     ngx_send_pt         send;

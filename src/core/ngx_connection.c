@@ -982,6 +982,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
     ngx_cycle->free_connections = c->data;
     ngx_cycle->free_connection_n--;
 
+    /* 设置套接字描述符对应的连接 */
     if (ngx_cycle->files) {
         ngx_cycle->files[s] = c;
     }
@@ -989,6 +990,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
     rev = c->read;
     wev = c->write;
 
+    /* 连接数据进行清除 */
     ngx_memzero(c, sizeof(ngx_connection_t));
 
     c->read = rev;

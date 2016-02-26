@@ -28,7 +28,7 @@ typedef struct {
 
 
 struct ngx_event_s {
-    void            *data;
+    void            *data;   /* 事件携带数据 */
 
     unsigned         write:1;
 

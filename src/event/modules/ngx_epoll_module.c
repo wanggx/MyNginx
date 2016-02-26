@@ -696,7 +696,7 @@ ngx_epoll_notify(ngx_event_handler_pt handler)
 
 #endif
 
-
+/* epoll模型处理事件函数 */
 static ngx_int_t
 ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
 {
@@ -816,6 +816,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
                 queue = rev->accept ? &ngx_posted_accept_events
                                     : &ngx_posted_events;
 
+                /* 把事件post到队列当中 */
                 ngx_post_event(rev, queue);
 
             } else {
