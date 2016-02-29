@@ -28,6 +28,7 @@ static ngx_os_io_t ngx_linux_io = {
 };
 
 
+/* 获取操作系统的基本信息，并没有做特殊处理 */
 ngx_int_t
 ngx_os_specific_init(ngx_log_t *log)
 {

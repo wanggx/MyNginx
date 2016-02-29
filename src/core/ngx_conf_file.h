@@ -141,7 +141,9 @@ struct ngx_module_s {
 
 typedef struct {
     ngx_str_t             name;
+    /* 负责创建配置的内存空间 */
     void               *(*create_conf)(ngx_cycle_t *cycle);
+    /* 根据配置文件来初始化模块 */
     char               *(*init_conf)(ngx_cycle_t *cycle, void *conf);
 } ngx_core_module_t;
 
@@ -174,7 +176,7 @@ struct ngx_conf_s {
     ngx_conf_file_t      *conf_file;
     ngx_log_t            *log;
 
-    void                 *ctx;
+    void                 *ctx;  /* 配置上下文 */
     ngx_uint_t            module_type;
     ngx_uint_t            cmd_type;
 

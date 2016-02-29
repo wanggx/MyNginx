@@ -238,6 +238,7 @@ main(int argc, char *const *argv)
         return 1;
     }
 
+    /* 保存启动运行参数 */
     if (ngx_save_argv(&init_cycle, argc, argv) != NGX_OK) {
         return 1;
     }
@@ -320,6 +321,7 @@ main(int argc, char *const *argv)
 
 #if !(NGX_WIN32)
 
+    /* 初始化信号处理 */
     if (ngx_init_signals(cycle->log) != NGX_OK) {
         return 1;
     }
@@ -457,6 +459,7 @@ ngx_add_inherited_sockets(ngx_cycle_t *cycle)
         return NGX_ERROR;
     }
 
+    /* 将环境变量中指定的监听套接字描述符初始化到cycle的listening数组当中 */
     for (p = inherited, v = p; *p; p++) {
         if (*p == ':' || *p == ';') {
             s = ngx_atoi(v, p - v);
@@ -865,7 +868,7 @@ ngx_process_options(ngx_cycle_t *cycle)
     u_char  *p;
     size_t   len;
 
-    /* 如果设置了配置前缀 */
+    /* 如果设置了配置前缀，没有则根据当前进程的目录来计算 */
     if (ngx_prefix) {
         /* 获取前缀长度 */
         len = ngx_strlen(ngx_prefix);
@@ -931,6 +934,7 @@ ngx_process_options(ngx_cycle_t *cycle)
         ngx_str_set(&cycle->conf_file, NGX_CONF_PATH);
     }
 
+    /* 根据前缀来确定配置文件的路径 */
     if (ngx_conf_full_name(cycle, &cycle->conf_file, 0) != NGX_OK) {
         return NGX_ERROR;
     }

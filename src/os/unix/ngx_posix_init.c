@@ -29,6 +29,7 @@ ngx_os_io_t ngx_os_io = {
 };
 
 
+/* 和操作系统相关的初始化 */
 ngx_int_t
 ngx_os_init(ngx_log_t *log)
 {

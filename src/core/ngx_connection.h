@@ -18,16 +18,16 @@ typedef struct ngx_listening_s  ngx_listening_t;
 struct ngx_listening_s {
     ngx_socket_t        fd;
 
-    struct sockaddr    *sockaddr;
-    socklen_t           socklen;    /* size of sockaddr */
+    struct sockaddr    *sockaddr;   /* 监听套接字的地址 */
+    socklen_t           socklen;    /* size of sockaddr 监听套接字的长度 */ 
     size_t              addr_text_max_len;
     ngx_str_t           addr_text;
 
     int                 type;
 
-    int                 backlog;
-    int                 rcvbuf;
-    int                 sndbuf;
+    int                 backlog;   /* 监听套接字监听等待队列长度 */
+    int                 rcvbuf;    /* 套接字的接收缓冲大小 */
+    int                 sndbuf;    /* 套接字的发送缓冲大小 */
 #if (NGX_HAVE_KEEPALIVE_TUNABLE)
     int                 keepidle;
     int                 keepintvl;

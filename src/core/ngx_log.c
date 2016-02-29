@@ -67,7 +67,9 @@ ngx_module_t  ngx_errlog_module = {
 };
 
 
+/* 全局的日志变量 */
 static ngx_log_t        ngx_log;
+/* 变量在ngx_log_init中初始化 */
 static ngx_open_file_t  ngx_log_file;
 ngx_uint_t              ngx_use_stderr = 1;
 
@@ -375,6 +377,7 @@ ngx_log_init(u_char *prefix)
         }
     }
 
+    /* 打开日志文件，并设置日志文件的描述符 */
     ngx_log_file.fd = ngx_open_file(name, NGX_FILE_APPEND,
                                     NGX_FILE_CREATE_OR_OPEN,
                                     NGX_FILE_DEFAULT_ACCESS);
