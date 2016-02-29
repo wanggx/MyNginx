@@ -30,10 +30,10 @@ int              ngx_argc;
 char           **ngx_argv;
 char           **ngx_os_argv;
 
-ngx_int_t        ngx_process_slot;
+ngx_int_t        ngx_process_slot;   /* 进程数组中的索引 */
 ngx_socket_t     ngx_channel;
-ngx_int_t        ngx_last_process;
-ngx_process_t    ngx_processes[NGX_MAX_PROCESSES];
+ngx_int_t        ngx_last_process;   /* 最后一个进程的索引值 */
+ngx_process_t    ngx_processes[NGX_MAX_PROCESSES];  /* 系统中进程数组 */
 
 
 ngx_signal_t  signals[] = {
@@ -90,11 +90,12 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     u_long     on;
     ngx_pid_t  pid;
     ngx_int_t  s;
-
+    /* 如果respawn参数大于0，则相当于创建某个指定的进程 */
     if (respawn >= 0) {
         s = respawn;
 
     } else {
+        /* 获取一个合适的进程数组索引 */
         for (s = 0; s < ngx_last_process; s++) {
             if (ngx_processes[s].pid == -1) {
                 break;
@@ -212,7 +213,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     }
 
     ngx_processes[s].proc = proc;
-    ngx_processes[s].data = data;
+    ngx_processes[s].data = data;   /* 数据其实就是1，2，3 */
     ngx_processes[s].name = name;
     ngx_processes[s].exiting = 0;
 
@@ -249,6 +250,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         break;
     }
 
+    /* 创建完一个子进程时，会相应的增加ngx_last_process变量 */
     if (s == ngx_last_process) {
         ngx_last_process++;
     }

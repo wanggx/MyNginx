@@ -23,8 +23,8 @@ struct ngx_buf_s {
     off_t            file_pos;
     off_t            file_last;
 
-    u_char          *start;         /* start of buffer */
-    u_char          *end;           /* end of buffer */
+    u_char          *start;         /* start of buffer */ /* 配置缓存的其实地址 */
+    u_char          *end;           /* end of buffer */  /*配置缓存的结束地址 */
     ngx_buf_tag_t    tag;
     ngx_file_t      *file;
     ngx_buf_t       *shadow;

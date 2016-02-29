@@ -9,11 +9,13 @@
 #include <ngx_core.h>
 
 
+/* 从内存池中创建一个大小为size的零时缓冲 */
 ngx_buf_t *
 ngx_create_temp_buf(ngx_pool_t *pool, size_t size)
 {
     ngx_buf_t *b;
 
+    /* 从内存池中分配一个缓冲的大小 */
     b = ngx_calloc_buf(pool);
     if (b == NULL) {
         return NULL;

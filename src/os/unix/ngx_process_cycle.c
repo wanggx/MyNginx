@@ -127,6 +127,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
 
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
 
+    /* 启动worker进程，子进程异常退出时，master会重新创建它 */
     ngx_start_worker_processes(cycle, ccf->worker_processes,
                                NGX_PROCESS_RESPAWN);
     ngx_start_cache_manager_processes(cycle, 0);
@@ -342,6 +343,7 @@ ngx_single_process_cycle(ngx_cycle_t *cycle)
 }
 
 
+/* master进程启动n个子进程 */
 static void
 ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
 {

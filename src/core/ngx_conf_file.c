@@ -134,7 +134,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
         prev = cf->conf_file;
 
         cf->conf_file = &conf_file;
-
+        /* 获取文件的信息实际调用的是fstat函数 */
         if (ngx_fd_info(fd, &cf->conf_file->file.info) == NGX_FILE_ERROR) {
             ngx_log_error(NGX_LOG_EMERG, cf->log, ngx_errno,
                           ngx_fd_info_n " \"%s\" failed", filename->data);
@@ -152,6 +152,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
         buf.end = buf.last + NGX_CONF_BUFFER;
         buf.temporary = 1;
 
+        /* 设置配置文件的基本信息 */
         cf->conf_file->file.fd = fd;
         cf->conf_file->file.name.len = filename->len;
         cf->conf_file->file.name.data = filename->data;
@@ -159,6 +160,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
         cf->conf_file->file.log = cf->log;
         cf->conf_file->line = 1;
 
+        /* 解析整个文件 */
         type = parse_file;
 
         if (ngx_dump_config
@@ -172,6 +174,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
                 goto failed;
             }
 
+            /* 获取配置文件大小 */
             size = ngx_file_size(&cf->conf_file->file.info);
 
             tbuf = ngx_create_temp_buf(cf->cycle->pool, (size_t) size);
