@@ -16,6 +16,7 @@ ngx_os_io_t  ngx_io;
 static void ngx_drain_connections(void);
 
 
+/* ´´½¨¼àÌýÌ×½Ó×Ö */
 ngx_listening_t *
 ngx_create_listening(ngx_conf_t *cf, void *sockaddr, socklen_t socklen)
 {

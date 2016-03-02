@@ -17,6 +17,7 @@ typedef void *            ngx_buf_tag_t;
 
 typedef struct ngx_buf_s  ngx_buf_t;
 
+/* 配置文件缓存结构为了避免多次读取文件 */
 struct ngx_buf_s {
     u_char          *pos;
     u_char          *last;

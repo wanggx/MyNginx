@@ -269,6 +269,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
             }
 
             rv = (*cf->handler)(cf, NULL, cf->handler_conf);
+            /* 如果处理成功了，则继续处理下一个 */
             if (rv == NGX_CONF_OK) {
                 continue;
             }
@@ -282,7 +283,8 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
             goto failed;
         }
 
-        /* 配置文件处理句柄 */
+        /* 配置文件处理句柄，在该函数中又会循环递归调用本函数 
+            */
         rc = ngx_conf_handler(cf, rc);
 
         if (rc == NGX_ERROR) {
@@ -427,7 +429,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
                 }
             }
 
-            
+            /* 执行到这里表示已经找到配置解释执行 */
             rv = cmd->set(cf, cmd, conf);/* 调用命令的set函数 */
 
             if (rv == NGX_CONF_OK) {
@@ -466,7 +468,9 @@ invalid:
     return NGX_ERROR;
 }
 
-/* 真正解析配置文件的地方 */
+/* 真正解析配置文件的地方
+ * 返回配置项中的token的数量 
+ */
 static ngx_int_t
 ngx_conf_read_token(ngx_conf_t *cf)
 {

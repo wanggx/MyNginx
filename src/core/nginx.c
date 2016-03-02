@@ -37,7 +37,7 @@ static ngx_command_t  ngx_core_commands[] = {
 
     { ngx_string("daemon"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_FLAG,
-      ngx_conf_set_flag_slot,
+      ngx_conf_set_flag_slot, /* 调用该函数对daemon配置项的值进行解析 */
       0,
       offsetof(ngx_core_conf_t, daemon),
       NULL },

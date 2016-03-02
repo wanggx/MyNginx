@@ -1,4 +1,3 @@
----- NGX_ERROR_LOG_PATH Matches (3 in 1 files) ----
-Ngx_log.c (core):    name = (u_char *) NGX_ERROR_LOG_PATH;
-Ngx_log.c (core):            ngx_cpystrn(p, (u_char *) NGX_ERROR_LOG_PATH, nlen + 1);
-Ngx_log.c (core):    static ngx_str_t   error_log = ngx_string(NGX_ERROR_LOG_PATH);
+---- ngx_module_s Matches (2 in 2 files) ----
+Ngx_conf_file.h (core):struct ngx_module_s {
+Ngx_core.h (core):typedef struct ngx_module_s      ngx_module_t;
