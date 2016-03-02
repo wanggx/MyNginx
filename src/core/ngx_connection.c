@@ -1019,6 +1019,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 }
 
 
+/* 释放一个连接 */
 void
 ngx_free_connection(ngx_connection_t *c)
 {

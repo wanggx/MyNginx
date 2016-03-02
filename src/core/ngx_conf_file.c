@@ -96,7 +96,7 @@ ngx_conf_param(ngx_conf_t *cf)
     return rv;
 }
 
-
+/* 解析配置文件 */
 char *
 ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 {
@@ -282,7 +282,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
             goto failed;
         }
 
-
+        /* 配置文件处理句柄 */
         rc = ngx_conf_handler(cf, rc);
 
         if (rc == NGX_ERROR) {
@@ -427,7 +427,8 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
                 }
             }
 
-            rv = cmd->set(cf, cmd, conf);
+            
+            rv = cmd->set(cf, cmd, conf);/* 调用命令的set函数 */
 
             if (rv == NGX_CONF_OK) {
                 return NGX_OK;
@@ -844,6 +845,7 @@ ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 
+/* 获取配置文件的全路径 */
 ngx_int_t
 ngx_conf_full_name(ngx_cycle_t *cycle, ngx_str_t *name, ngx_uint_t conf_prefix)
 {
@@ -871,13 +873,14 @@ ngx_conf_open_file(ngx_cycle_t *cycle, ngx_str_t *name)
     if (name->len) {
         full = *name;
 
+        /* 获取配置文件的全路径到full当中 */
         if (ngx_conf_full_name(cycle, &full, 0) != NGX_OK) {
             return NULL;
         }
 
         part = &cycle->open_files.part;
         file = part->elts;
-
+        /* 从已经打开的文件当中查看全路径为full的文件有没有打开，如果打开则直接返回 */
         for (i = 0; /* void */ ; i++) {
 
             if (i >= part->nelts) {
@@ -899,6 +902,7 @@ ngx_conf_open_file(ngx_cycle_t *cycle, ngx_str_t *name)
         }
     }
 
+    /* 重新获取一个配置文件句柄 */
     file = ngx_list_push(&cycle->open_files);
     if (file == NULL) {
         return NULL;

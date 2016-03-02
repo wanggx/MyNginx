@@ -69,6 +69,7 @@ ngx_event_accept(ngx_event_t *ev)
         s = accept(lc->fd, (struct sockaddr *) sa, &socklen);
 #endif
 
+        /* accept失败 */
         if (s == (ngx_socket_t) -1) {
             err = ngx_socket_errno;
 
@@ -201,6 +202,7 @@ ngx_event_accept(ngx_event_t *ev)
 
         *log = ls->log;
 
+        /* 设置连接的操作回调 */
         c->recv = ngx_recv;
         c->send = ngx_send;
         c->recv_chain = ngx_recv_chain;
@@ -356,6 +358,7 @@ ngx_event_accept(ngx_event_t *ev)
         log->data = NULL;
         log->handler = NULL;
 
+        /* 开始处理接收的连接 */
         ls->handler(c);
 
         if (ngx_event_flags & NGX_USE_KQUEUE_EVENT) {
@@ -469,6 +472,7 @@ ngx_disable_accept_events(ngx_cycle_t *cycle, ngx_uint_t all)
 }
 
 
+/* 关闭连接 */
 static void
 ngx_close_accepted_connection(ngx_connection_t *c)
 {
@@ -479,6 +483,7 @@ ngx_close_accepted_connection(ngx_connection_t *c)
     fd = c->fd;
     c->fd = (ngx_socket_t) -1;
 
+    /* 关闭套接字 */
     if (ngx_close_socket(fd) == -1) {
         ngx_log_error(NGX_LOG_ALERT, c->log, ngx_socket_errno,
                       ngx_close_socket_n " failed");

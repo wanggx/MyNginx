@@ -1468,6 +1468,7 @@ ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
             }
         }
 
+        /* 初始化http监听 */
         if (ngx_http_init_listening(cf, &port[p]) != NGX_OK) {
             return NGX_ERROR;
         }
@@ -1713,7 +1714,7 @@ ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
             i++;
             continue;
         }
-
+        /* 添加http监听 */
         ls = ngx_http_add_listening(cf, &addr[i]);
         if (ls == NULL) {
             return NGX_ERROR;
@@ -1770,6 +1771,7 @@ ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
 
     ls->addr_ntop = 1;
 
+    /* 初始化监听套接字的连接处理 */
     ls->handler = ngx_http_init_connection;
 
     cscf = addr->default_server;

@@ -563,6 +563,7 @@ ngx_add_path(ngx_conf_t *cf, ngx_path_t **slot)
 }
 
 
+/* 创建cycle变量中的paths路径数组 */
 ngx_int_t
 ngx_create_paths(ngx_cycle_t *cycle, ngx_uid_t user)
 {
@@ -573,6 +574,7 @@ ngx_create_paths(ngx_cycle_t *cycle, ngx_uid_t user)
     path = cycle->paths.elts;
     for (i = 0; i < cycle->paths.nelts; i++) {
 
+        /* 创建一个路径 */
         if (ngx_create_dir(path[i]->name.data, 0700) == NGX_FILE_ERROR) {
             err = ngx_errno;
             if (err != NGX_EEXIST) {

@@ -466,6 +466,7 @@ ngx_log_redirect_stderr(ngx_cycle_t *cycle)
 }
 
 
+/* 获取日志队列中file指针不为NULL的日志对象 */
 ngx_log_t *
 ngx_log_get_file_log(ngx_log_t *head)
 {
@@ -684,6 +685,7 @@ ngx_log_insert(ngx_log_t *log, ngx_log_t *new_log)
 {
     ngx_log_t  tmp;
 
+    /* 如果新的日志级别大于log队首的级别，则将新的日志插入到队首 */
     if (new_log->log_level > log->log_level) {
 
         /*
@@ -699,6 +701,7 @@ ngx_log_insert(ngx_log_t *log, ngx_log_t *new_log)
         return;
     }
 
+    /* 否则按照日志级别按照从大到小的顺序插入 */
     while (log->next) {
         if (new_log->log_level > log->next->log_level) {
             new_log->next = log->next;
@@ -708,7 +711,7 @@ ngx_log_insert(ngx_log_t *log, ngx_log_t *new_log)
 
         log = log->next;
     }
-
+    /* 否则就插入到最后一个 */
     log->next = new_log;
 }
 

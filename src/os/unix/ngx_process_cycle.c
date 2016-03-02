@@ -130,6 +130,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
     /* 启动worker进程，子进程异常退出时，master会重新创建它 */
     ngx_start_worker_processes(cycle, ccf->worker_processes,
                                NGX_PROCESS_RESPAWN);
+    /* 启动缓存管理进程 */
     ngx_start_cache_manager_processes(cycle, 0);
 
     ngx_new_binary = 0;
@@ -371,6 +372,7 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
 }
 
 
+/* 启动缓存管理进程 */
 static void
 ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn)
 {

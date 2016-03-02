@@ -1012,6 +1012,7 @@ ngx_core_module_create_conf(ngx_cycle_t *cycle)
 static char *
 ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
 {
+    /* 获取模块的配置数据 */
     ngx_core_conf_t  *ccf = conf;
 
     ngx_conf_init_value(ccf->daemon, 1);

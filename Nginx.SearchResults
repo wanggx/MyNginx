@@ -1,7 +1,4 @@
----- ngx_conf_params Matches (6 in 1 files) ----
-Nginx.c (core):static u_char      *ngx_conf_params;
-Nginx.c (core):                    ngx_conf_params = p;
-Nginx.c (core):                    ngx_conf_params = (u_char *) argv[i];
-Nginx.c (core):    if (ngx_conf_params) {
-Nginx.c (core):        cycle->conf_param.len = ngx_strlen(ngx_conf_params);
-Nginx.c (core):        cycle->conf_param.data = ngx_conf_params;
+---- NGX_ERROR_LOG_PATH Matches (3 in 1 files) ----
+Ngx_log.c (core):    name = (u_char *) NGX_ERROR_LOG_PATH;
+Ngx_log.c (core):            ngx_cpystrn(p, (u_char *) NGX_ERROR_LOG_PATH, nlen + 1);
+Ngx_log.c (core):    static ngx_str_t   error_log = ngx_string(NGX_ERROR_LOG_PATH);

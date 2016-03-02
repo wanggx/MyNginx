@@ -190,7 +190,7 @@ ngx_http_header_t  ngx_http_headers_in[] = {
     { ngx_null_string, 0, NULL }
 };
 
-
+/* 处理接收连接 */
 void
 ngx_http_init_connection(ngx_connection_t *c)
 {
@@ -909,7 +909,7 @@ ngx_http_ssl_servername(ngx_ssl_conn_t *ssl_conn, int *ad, void *arg)
 
 #endif
 
-
+/* 解析成功初步意味着算是一个合法的http客户端请求 */
 static void
 ngx_http_process_request_line(ngx_event_t *rev)
 {
