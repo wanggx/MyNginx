@@ -500,6 +500,7 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
 }
 
 
+/* 创建一个http请求 */
 ngx_http_request_t *
 ngx_http_create_request(ngx_connection_t *c)
 {

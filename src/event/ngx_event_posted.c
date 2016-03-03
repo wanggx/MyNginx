@@ -14,6 +14,7 @@ ngx_queue_t  ngx_posted_accept_events;  /* accept事件队列 */
 ngx_queue_t  ngx_posted_events;         /* 普通事件队列 */
 
 
+/* 处理post队列中的事件 */
 void
 ngx_event_process_posted(ngx_cycle_t *cycle, ngx_queue_t *posted)
 {

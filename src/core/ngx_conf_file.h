@@ -125,7 +125,7 @@ struct ngx_module_s {
 
     /* 一些回调函数 */
     ngx_int_t           (*init_master)(ngx_log_t *log);
-
+    
     ngx_int_t           (*init_module)(ngx_cycle_t *cycle);
 
     ngx_int_t           (*init_process)(ngx_cycle_t *cycle);

@@ -189,7 +189,7 @@ ngx_module_t  ngx_event_core_module = {
     NGX_MODULE_V1_PADDING
 };
 
-
+/* 在worker进程中死循环不断调用这个函数用来处理事件和时钟 */
 void
 ngx_process_events_and_timers(ngx_cycle_t *cycle)
 {
@@ -247,6 +247,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                    "timer delta: %M", delta);
 
+    /* 处理接受队列中的事件 */
     ngx_event_process_posted(cycle, &ngx_posted_accept_events);
 
     if (ngx_accept_mutex_held) {
@@ -257,6 +258,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
         ngx_event_expire_timers();
     }
 
+    /* 处理普通队列中的事件 */
     ngx_event_process_posted(cycle, &ngx_posted_events);
 }
 
@@ -618,6 +620,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
         module = ngx_modules[m]->ctx;
 
+        /* 调用事件模型的初始化回调 */
         if (module->actions.init(cycle, ngx_timer_resolution) != NGX_OK) {
             /* fatal */
             exit(2);
@@ -1183,7 +1186,7 @@ ngx_event_core_create_conf(ngx_cycle_t *cycle)
     return ecf;
 }
 
-
+/* 事件核心模块初始化 */
 static char *
 ngx_event_core_init_conf(ngx_cycle_t *cycle, void *conf)
 {
@@ -1198,6 +1201,7 @@ ngx_event_core_init_conf(ngx_cycle_t *cycle, void *conf)
 
     module = NULL;
 
+/* 下面的几个宏非常特别，会特殊系统来确定使用不同多路io复用模型 */
 #if (NGX_HAVE_EPOLL) && !(NGX_TEST_BUILD_EPOLL)
 
     fd = epoll_create(100);

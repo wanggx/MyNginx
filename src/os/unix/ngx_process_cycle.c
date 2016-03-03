@@ -737,6 +737,7 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
     ngx_process = NGX_PROCESS_WORKER;
     ngx_worker = worker;
 
+    /* worker进程的初始化工作 */
     ngx_worker_process_init(cycle, worker);
 
     ngx_setproctitle("worker process");
@@ -788,7 +789,7 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
     }
 }
 
-
+/* 工作进程初始化 */
 static void
 ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 {

@@ -107,7 +107,7 @@ struct ngx_event_s {
 #else
     unsigned         available:1;
 #endif
-
+    /* 事件的处理回调 */
     ngx_event_handler_pt  handler;
 
 
@@ -479,7 +479,9 @@ extern ngx_atomic_t  *ngx_stat_waiting;
 
 
 #define NGX_UPDATE_TIME         1
-#define NGX_POST_EVENTS         2
+
+/* 是否将事件post到队列中然后在进行处理 */
+#define NGX_POST_EVENTS         2           
 
 
 extern sig_atomic_t           ngx_event_timer_alarm;

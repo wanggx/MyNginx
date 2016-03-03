@@ -127,6 +127,7 @@ static void *ngx_epoll_create_conf(ngx_cycle_t *cycle);
 static char *ngx_epoll_init_conf(ngx_cycle_t *cycle, void *conf);
 
 static int                  ep = -1;
+/* epoll模型的事件列表 */
 static struct epoll_event  *event_list;
 static ngx_uint_t           nevents;
 
@@ -168,6 +169,7 @@ static ngx_command_t  ngx_epoll_commands[] = {
 };
 
 
+/* epoll事件模型 */
 ngx_event_module_t  ngx_epoll_module_ctx = {
     &epoll_name,
     ngx_epoll_create_conf,               /* create configuration */
@@ -497,7 +499,7 @@ ngx_epoll_done(ngx_cycle_t *cycle)
     nevents = 0;
 }
 
-
+/* epoll事件模型的添加事件回调 */
 static ngx_int_t
 ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
 {
@@ -714,6 +716,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                    "epoll timer: %M", timer);
 
+    /* 监听到有events事件发生 */
     events = epoll_wait(ep, event_list, (int) nevents, timer);
 
     err = (events == -1) ? ngx_errno : 0;
