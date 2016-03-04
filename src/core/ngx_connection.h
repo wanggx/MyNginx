@@ -133,13 +133,13 @@ struct ngx_connection_s {
     ngx_recv_chain_pt   recv_chain;
     ngx_send_chain_pt   send_chain;
 
-    ngx_listening_t    *listening;
+    ngx_listening_t    *listening;      /* 连接对应的监听套接字 */
 
     off_t               sent;
 
     ngx_log_t          *log;
 
-    ngx_pool_t         *pool;
+    ngx_pool_t         *pool;       /* 连接的内存池 */
 
     struct sockaddr    *sockaddr;
     socklen_t           socklen;

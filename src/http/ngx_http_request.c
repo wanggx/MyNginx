@@ -190,7 +190,7 @@ ngx_http_header_t  ngx_http_headers_in[] = {
     { ngx_null_string, 0, NULL }
 };
 
-/* 处理接收连接 */
+/* 在ngx_event_accept函数中接收一个新的连接，然后来调用该函数处理接收连接 */
 void
 ngx_http_init_connection(ngx_connection_t *c)
 {
@@ -308,6 +308,7 @@ ngx_http_init_connection(ngx_connection_t *c)
 
     c->log_error = NGX_ERROR_INFO;
 
+    /* 这里是连接的读事件和写事件的处理函数 */
     rev = c->read;
     rev->handler = ngx_http_wait_request_handler;
     c->write->handler = ngx_http_empty_handler;
@@ -363,13 +364,14 @@ ngx_http_init_connection(ngx_connection_t *c)
     ngx_add_timer(rev, c->listening->post_accept_timeout);
     ngx_reusable_connection(c, 1);
 
+    /* 将一个新的连接的读事件添加到epoll模型当中 */
     if (ngx_handle_read_event(rev, 0) != NGX_OK) {
         ngx_http_close_connection(c);
         return;
     }
 }
 
-
+/* 等待http请求头的事件处理函数 */
 static void
 ngx_http_wait_request_handler(ngx_event_t *rev)
 {

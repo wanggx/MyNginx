@@ -15,7 +15,7 @@ static ngx_int_t ngx_disable_accept_events(ngx_cycle_t *cycle, ngx_uint_t all);
 static void ngx_close_accepted_connection(ngx_connection_t *c);
 
 /* 事件驱动模型接收到事件后，对事件的处理函数，
- * 也是对访问进行服务的地方
+ * 也是对访问进行服务的地方，监听套接字的事件处理函数
  */
 void
 ngx_event_accept(ngx_event_t *ev)
@@ -42,6 +42,7 @@ ngx_event_accept(ngx_event_t *ev)
         ev->timedout = 0;
     }
 
+    /* 获取事件驱动模型的配置内容 */
     ecf = ngx_event_get_conf(ngx_cycle->conf_ctx, ngx_event_core_module);
 
     if (!(ngx_event_flags & NGX_USE_KQUEUE_EVENT)) {

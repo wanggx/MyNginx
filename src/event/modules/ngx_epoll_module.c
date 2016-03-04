@@ -364,6 +364,7 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
     /* 事件的回调处理模型为epoll模型 */
     ngx_event_actions = ngx_epoll_module_ctx.actions;
 
+    /* 设置事件使用的模型标记 */
 #if (NGX_HAVE_CLEAR_EVENT)
     ngx_event_flags = NGX_USE_CLEAR_EVENT
 #else

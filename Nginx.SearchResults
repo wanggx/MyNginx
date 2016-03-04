@@ -1,5 +1,499 @@
----- ngx_event_accept Matches (4 in 3 files) ----
+---- handler Matches (516 in 100 files) ----
+Ngx_channel.c (os\unix):    ngx_event_handler_pt handler)
+Ngx_channel.c (os\unix):    ev->handler = handler;
+Ngx_channel.h (os\unix):    ngx_int_t event, ngx_event_handler_pt handler);
+Ngx_conf_file.c (core):        if (cf->handler) {
+Ngx_conf_file.c (core):            rv = (*cf->handler)(cf, NULL, cf->handler_conf);
+Ngx_conf_file.h (core):    ngx_conf_handler_pt   handler;
+Ngx_connection.c (core):        c->read->handler(c->read);
+Ngx_connection.c (core):            c[i].read->handler(c[i].read);
+Ngx_connection.h (core):    ngx_connection_handler_pt   handler;   /* 处理接收的连接 */
+Ngx_cycle.c (core):        ngx_cleaner_event.handler = ngx_clean_old_cycles;
+Ngx_devpoll_module.c (event\modules):                rev->handler(rev);
+Ngx_devpoll_module.c (event\modules):                wev->handler(wev);
+Ngx_epoll_module.c (event\modules):static ngx_int_t ngx_epoll_notify(ngx_event_handler_pt handler);
+Ngx_epoll_module.c (event\modules):    ngx_eventfd_event.handler = ngx_epoll_eventfd_handler;
+Ngx_epoll_module.c (event\modules):    notify_event.handler = ngx_epoll_notify_handler;
+Ngx_epoll_module.c (event\modules):    ngx_event_handler_pt  handler;
+Ngx_epoll_module.c (event\modules):    handler = ev->data;
+Ngx_epoll_module.c (event\modules):    handler(ev);
+Ngx_epoll_module.c (event\modules):ngx_epoll_notify(ngx_event_handler_pt handler)
+Ngx_epoll_module.c (event\modules):    notify_event.data = handler;
+Ngx_epoll_module.c (event\modules):                rev->handler(rev);
+Ngx_epoll_module.c (event\modules):                wev->handler(wev);
+Ngx_epoll_module.c (event\modules):    ngx_log_debug0(NGX_LOG_DEBUG_EVENT, ev->log, 0, "eventfd handler");
+Ngx_event.c (event):            rev->handler = ngx_event_acceptex;
+Ngx_event.c (event):            ls[i].log.handler = ngx_acceptex_log_error;
 Ngx_event.c (event):            rev->handler = ngx_event_accept;
 Ngx_event.c (event):        rev->handler = ngx_event_accept;
-Ngx_event.h (event):void ngx_event_accept(ngx_event_t *ev);
-Ngx_event_accept.c (event):ngx_event_accept(ngx_event_t *ev)
+Ngx_event.h (event):    ngx_event_handler_pt  handler;
+Ngx_event.h (event):    ngx_event_handler_pt       handler;
+Ngx_event.h (event):    ngx_int_t  (*notify)(ngx_event_handler_pt handler);
+Ngx_eventport_module.c (event\modules):static ngx_int_t ngx_eventport_notify(ngx_event_handler_pt handler);
+Ngx_eventport_module.c (event\modules):ngx_eventport_notify(ngx_event_handler_pt handler)
+Ngx_eventport_module.c (event\modules):    notify_event.handler = handler;
+Ngx_eventport_module.c (event\modules):                    rev->handler(rev);
+Ngx_eventport_module.c (event\modules):                    wev->handler(wev);
+Ngx_eventport_module.c (event\modules):            ev->handler(ev);
+Ngx_event_accept.c (event):        log->handler = NULL;
+Ngx_event_accept.c (event):        ls->handler(c);
+Ngx_event_acceptex.c (event):    c->log->handler = ngx_accept_log_error;
+Ngx_event_acceptex.c (event):    ls->handler(c);
+Ngx_event_acceptex.c (event):        rev->handler = ngx_event_acceptex;
+Ngx_event_openssl.c (event):    cln->handler = ngx_ssl_passwords_cleanup;
+Ngx_event_openssl.c (event):        c->read->handler = ngx_ssl_handshake_handler;
+Ngx_event_openssl.c (event):        c->write->handler = ngx_ssl_handshake_handler;
+Ngx_event_openssl.c (event):        c->read->handler = ngx_ssl_handshake_handler;
+Ngx_event_openssl.c (event):        c->write->handler = ngx_ssl_handshake_handler;
+Ngx_event_openssl.c (event):                   "SSL handshake handler: %d", ev->write);
+Ngx_event_openssl.c (event):        c->ssl->handler(c);
+Ngx_event_openssl.c (event):    c->ssl->handler(c);
+Ngx_event_openssl.c (event):            c->write->handler = c->ssl->saved_write_handler;
+Ngx_event_openssl.c (event):            c->ssl->saved_write_handler = c->write->handler;
+Ngx_event_openssl.c (event):            c->write->handler = ngx_ssl_write_handler;
+Ngx_event_openssl.c (event):    c->read->handler(c->read);
+Ngx_event_openssl.c (event):            c->read->handler = c->ssl->saved_read_handler;
+Ngx_event_openssl.c (event):            c->ssl->saved_read_handler = c->read->handler;
+Ngx_event_openssl.c (event):            c->read->handler = ngx_ssl_read_handler;
+Ngx_event_openssl.c (event):    c->write->handler(c->write);
+Ngx_event_openssl.c (event):        c->read->handler = ngx_ssl_shutdown_handler;
+Ngx_event_openssl.c (event):        c->write->handler = ngx_ssl_shutdown_handler;
+Ngx_event_openssl.c (event):    ngx_connection_handler_pt   handler;
+Ngx_event_openssl.c (event):    handler = c->ssl->handler;
+Ngx_event_openssl.c (event):    ngx_log_debug0(NGX_LOG_DEBUG_EVENT, ev->log, 0, "SSL shutdown handler");
+Ngx_event_openssl.c (event):    handler(c);
+Ngx_event_openssl.h (event):    ngx_connection_handler_pt   handler;
+Ngx_event_openssl_stapling.c (event):    void                       (*handler)(ngx_ssl_ocsp_ctx_t *r);
+Ngx_event_openssl_stapling.c (event):    cln->handler = ngx_ssl_stapling_cleanup;
+Ngx_event_openssl_stapling.c (event):    ctx->handler = ngx_ssl_stapling_ocsp_handler;
+Ngx_event_openssl_stapling.c (event):    log->handler = ngx_ssl_ocsp_log_error;
+Ngx_event_openssl_stapling.c (event):    ctx->handler(ctx);
+Ngx_event_openssl_stapling.c (event):        resolve->handler = ngx_ssl_ocsp_resolve_handler;
+Ngx_event_openssl_stapling.c (event):                   "ssl ocsp resolve handler");
+Ngx_event_openssl_stapling.c (event):    ctx->peer.connection->read->handler = ngx_ssl_ocsp_read_handler;
+Ngx_event_openssl_stapling.c (event):    ctx->peer.connection->write->handler = ngx_ssl_ocsp_write_handler;
+Ngx_event_openssl_stapling.c (event):                   "ssl ocsp write handler");
+Ngx_event_openssl_stapling.c (event):            wev->handler = ngx_ssl_ocsp_dummy_handler;
+Ngx_event_openssl_stapling.c (event):                   "ssl ocsp read handler");
+Ngx_event_openssl_stapling.c (event):                   "ssl ocsp dummy handler");
+Ngx_event_openssl_stapling.c (event):        ctx->handler(ctx);
+Ngx_event_posted.c (event):        ev->handler(ev);
+Ngx_event_timer.c (event):        ev->handler(ev);
+Ngx_event_timer.c (event):        ev->handler(ev);
+Ngx_file.c (core):            cln->handler = clean ? ngx_pool_delete_file : ngx_pool_cleanup_file;
+Ngx_files.c (os\unix):        task->handler = ngx_thread_read_handler;
+Ngx_files.c (os\unix):    ngx_log_debug0(NGX_LOG_DEBUG_CORE, log, 0, "thread read handler");
+Ngx_file_aio_read.c (os\unix):    ev->handler = ngx_file_aio_event_handler;
+Ngx_file_aio_read.c (os\unix):                   "aio event handler fd:%d %V", aio->fd, &aio->file->name);
+Ngx_file_aio_read.c (os\unix):        aio->handler(ev);
+Ngx_http.c (http):            ph->handler = h[j];
+Ngx_http.c (http):    ls->handler = ngx_http_init_connection;
+Ngx_http.c (http):    ls->log.handler = ngx_accept_log_error;
+Ngx_http_auth_request_module.c (http\modules):                   "auth request handler");
+Ngx_http_auth_request_module.c (http\modules):    ps->handler = ngx_http_auth_request_done;
+Ngx_http_browser_module.c (http\modules):    ngx_http_get_variable_pt    handler;
+Ngx_http_browser_module.c (http\modules):        v->get_handler = var->handler;
+Ngx_http_charset_filter_module.c (http\modules):    cf->handler = ngx_http_charset_map;
+Ngx_http_copy_filter_module.c (http):    file->aio->handler = ngx_http_copy_aio_event_handler;
+Ngx_http_copy_filter_module.c (http):    r->connection->write->handler(r->connection->write);
+Ngx_http_copy_filter_module.c (http):        aio->handler = ngx_http_copy_aio_sendfile_event_handler;
+Ngx_http_copy_filter_module.c (http):    r->connection->write->handler(r->connection->write);
+Ngx_http_copy_filter_module.c (http):    task->event.handler = ngx_http_copy_thread_event_handler;
+Ngx_http_copy_filter_module.c (http):    r->connection->write->handler(r->connection->write);
+Ngx_http_core_module.c (http):    rc = ph->handler(r);
+Ngx_http_core_module.c (http):    rc = ph->handler(r);
+Ngx_http_core_module.c (http):    rc = ph->handler(r);
+Ngx_http_core_module.c (http):    rc = ph->handler(r);
+Ngx_http_core_module.c (http):    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "no handler found");
+Ngx_http_core_module.c (http):    if (clcf->handler) {
+Ngx_http_core_module.c (http):        r->content_handler = clcf->handler;
+Ngx_http_core_module.c (http):    cln->handler = NULL;
+Ngx_http_core_module.c (http):    cf->handler = ngx_http_core_type;
+Ngx_http_core_module.h (http):    ngx_http_handler_pt        handler;
+Ngx_http_core_module.h (http):    ngx_http_handler_pt  handler;
+Ngx_http_empty_gif_module.c (http\modules):    clcf->handler = ngx_http_empty_gif_handler;
+Ngx_http_fastcgi_module.c (http\modules):                if (hh && hh->handler(r, h, hh->offset) != NGX_OK) {
+Ngx_http_fastcgi_module.c (http\modules):    if (clcf->lmt_excpt && clcf->handler == NULL
+Ngx_http_fastcgi_module.c (http\modules):        clcf->handler = ngx_http_fastcgi_handler;
+Ngx_http_fastcgi_module.c (http\modules):    clcf->handler = ngx_http_fastcgi_handler;
+Ngx_http_file_cache.c (http):    cln->handler = ngx_http_file_cache_cleanup;
+Ngx_http_file_cache.c (http):        cln->handler = ngx_http_file_cache_cleanup;
+Ngx_http_file_cache.c (http):        c->wait_event.handler = ngx_http_file_cache_lock_wait_handler;
+Ngx_http_file_cache.c (http):        c->file.aio->handler = ngx_http_cache_aio_event_handler;
+Ngx_http_file_cache.c (http):    task->event.handler = ngx_http_cache_thread_event_handler;
+Ngx_http_flv_module.c (http\modules):    clcf->handler = ngx_http_flv_handler;
+Ngx_http_geoip_module.c (http\modules):    ngx_http_geoip_variable_handler_pt     handler =
+Ngx_http_geoip_module.c (http\modules):              : handler(gcf->country, ngx_http_geoip_addr(r, gcf));
+Ngx_http_geoip_module.c (http\modules):    val = handler(gcf->country, ngx_http_geoip_addr(r, gcf));
+Ngx_http_geoip_module.c (http\modules):    cln->handler = ngx_http_geoip_cleanup;
+Ngx_http_geo_module.c (http\modules):    cf->handler = ngx_http_geo;
+Ngx_http_headers_filter_module.c (http\modules):    ngx_http_set_header_pt     handler;
+Ngx_http_headers_filter_module.c (http\modules):    ngx_http_set_header_pt     handler;
+Ngx_http_headers_filter_module.c (http\modules):            if (h[i].handler(r, &h[i], &value) != NGX_OK) {
+Ngx_http_headers_filter_module.c (http\modules):    hv->handler = ngx_http_add_header;
+Ngx_http_headers_filter_module.c (http\modules):        hv->handler = set[i].handler;
+Ngx_http_image_filter_module.c (http\modules):    cln->handler = ngx_http_image_cleanup;
+Ngx_http_limit_conn_module.c (http\modules):        cln->handler = ngx_http_limit_conn_cleanup;
+Ngx_http_limit_conn_module.c (http\modules):    while (cln && cln->handler == ngx_http_limit_conn_cleanup) {
+Ngx_http_log_module.c (http\modules):                   "http log handler");
+Ngx_http_log_module.c (http\modules):                   "http log buffer flush handler");
+Ngx_http_log_module.c (http\modules):            buffer->event->handler = ngx_http_log_flush_handler;
+Ngx_http_map_module.c (http\modules):    cf->handler = ngx_http_map;
+Ngx_http_memcached_module.c (http\modules):    clcf->handler = ngx_http_memcached_handler;
+Ngx_http_mp4_module.c (http\modules):    ngx_int_t           (*handler)(ngx_http_mp4_file_t *mp4,
+Ngx_http_mp4_module.c (http\modules):                rc = atom[n].handler(mp4, atom_size - atom_header_size);
+Ngx_http_mp4_module.c (http\modules):    clcf->handler = ngx_http_mp4_handler;
+Ngx_http_mysql_test.c (mysql):    m->handler = ngx_http_mysql_auth;
+Ngx_http_mysql_test.c (mysql):    m->handler = ngx_http_mysql_done;
+Ngx_http_mysql_test.c (mysql):    clcf->handler = ngx_http_mysql_test_handler;
+Ngx_http_perl_module.c (http\modules\perl):    ngx_str_t          handler;
+Ngx_http_perl_module.c (http\modules\perl):    ngx_str_t          handler;
+Ngx_http_perl_module.c (http\modules\perl):    HV *nginx, SV *sub, SV **args, ngx_str_t *handler, ngx_str_t *rv);
+Ngx_http_perl_module.c (http\modules\perl):static void ngx_http_perl_eval_anon_sub(pTHX_ ngx_str_t *handler, SV **sv);
+Ngx_http_perl_module.c (http\modules\perl):    ngx_str_t                   uri, args, *handler;
+Ngx_http_perl_module.c (http\modules\perl):    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "perl handler");
+Ngx_http_perl_module.c (http\modules\perl):        handler = &plcf->handler;
+Ngx_http_perl_module.c (http\modules\perl):        handler = &ngx_null_name;
+Ngx_http_perl_module.c (http\modules\perl):    rc = ngx_http_perl_call_handler(aTHX_ r, pmcf->nginx, sub, NULL, handler,
+Ngx_http_perl_module.c (http\modules\perl):                   "perl handler done: %i", rc);
+Ngx_http_perl_module.c (http\modules\perl):                   "perl sleep handler");
+Ngx_http_perl_module.c (http\modules\perl):                   "perl variable handler");
+Ngx_http_perl_module.c (http\modules\perl):                                    &pv->handler, &value);
+Ngx_http_perl_module.c (http\modules\perl):    ngx_str_t                  *handler, **args;
+Ngx_http_perl_module.c (http\modules\perl):                   "perl ssi handler");
+Ngx_http_perl_module.c (http\modules\perl):    handler = params[NGX_HTTP_PERL_SSI_SUB];
+Ngx_http_perl_module.c (http\modules\perl):    handler->data[handler->len] = '\0';
+Ngx_http_perl_module.c (http\modules\perl):    ngx_http_perl_eval_anon_sub(aTHX_ handler, &sv);
+Ngx_http_perl_module.c (http\modules\perl):                      "eval_pv(\"%V\") failed", handler);
+Ngx_http_perl_module.c (http\modules\perl):        sv = newSVpvn((char *) handler->data, handler->len);
+Ngx_http_perl_module.c (http\modules\perl):    sv = newSVpvn((char *) handler->data, handler->len);
+Ngx_http_perl_module.c (http\modules\perl):    rc = ngx_http_perl_call_handler(aTHX_ r, pmcf->nginx, sv, asv, handler,
+Ngx_http_perl_module.c (http\modules\perl):    cln->handler = ngx_http_perl_cleanup_perl;
+Ngx_http_perl_module.c (http\modules\perl):    SV **args, ngx_str_t *handler, ngx_str_t *rv)
+Ngx_http_perl_module.c (http\modules\perl):                      "call_sv(\"%V\") failed: \"%*s\"", handler, len + 1, err);
+Ngx_http_perl_module.c (http\modules\perl):                      "call_sv(\"%V\") returned %d results", handler, n);
+Ngx_http_perl_module.c (http\modules\perl):ngx_http_perl_eval_anon_sub(pTHX_ ngx_str_t *handler, SV **sv)
+Ngx_http_perl_module.c (http\modules\perl):    for (p = handler->data; *p; p++) {
+Ngx_http_perl_module.c (http\modules\perl):        conf->handler = prev->handler;
+Ngx_http_perl_module.c (http\modules\perl):    if (plcf->handler.data) {
+Ngx_http_perl_module.c (http\modules\perl):                           "duplicate perl handler \"%V\"", &value[1]);
+Ngx_http_perl_module.c (http\modules\perl):    plcf->handler = value[1];
+Ngx_http_perl_module.c (http\modules\perl):    clcf->handler = ngx_http_perl_handler;
+Ngx_http_perl_module.c (http\modules\perl):    pv->handler = value[2];
+Ngx_http_proxy_module.c (http\modules):    ngx_http_proxy_rewrite_pt      handler;
+Ngx_http_proxy_module.c (http\modules):            if (hh && hh->handler(r, h, hh->offset) != NGX_OK) {
+Ngx_http_proxy_module.c (http\modules):        rc = pr[i].handler(r, h, prefix, len, &pr[i]);
+Ngx_http_proxy_module.c (http\modules):        rc = pr[i].handler(r, h, prefix, len, &pr[i]);
+Ngx_http_proxy_module.c (http\modules):            pr->handler = ngx_http_proxy_rewrite_complex_handler;
+Ngx_http_proxy_module.c (http\modules):    if (clcf->lmt_excpt && clcf->handler == NULL
+Ngx_http_proxy_module.c (http\modules):        clcf->handler = ngx_http_proxy_handler;
+Ngx_http_proxy_module.c (http\modules):    clcf->handler = ngx_http_proxy_handler;
+Ngx_http_proxy_module.c (http\modules):        pr->handler = ngx_http_proxy_rewrite_complex_handler;
+Ngx_http_proxy_module.c (http\modules):        pr->handler = ngx_http_proxy_rewrite_complex_handler;
+Ngx_http_proxy_module.c (http\modules):        pr->handler = ngx_http_proxy_rewrite_domain_handler;
+Ngx_http_proxy_module.c (http\modules):        pr->handler = ngx_http_proxy_rewrite_complex_handler;
+Ngx_http_proxy_module.c (http\modules):    pr->handler = ngx_http_proxy_rewrite_regex_handler;
+Ngx_http_proxy_module.c (http\modules):    cln->handler = ngx_ssl_cleanup_ctx;
+Ngx_http_realip_module.c (http\modules):    cln->handler = ngx_http_realip_cleanup;
+Ngx_http_realip_module.c (http\modules):            if (cln->handler == ngx_http_realip_cleanup) {
+Ngx_http_request.c (http):    c->log->handler = ngx_http_log_error;
+Ngx_http_request.c (http):    rev->handler = ngx_http_wait_request_handler;
+Ngx_http_request.c (http):    c->write->handler = ngx_http_empty_handler;
+Ngx_http_request.c (http):        rev->handler = ngx_http_v2_init;
+Ngx_http_request.c (http):        rev->handler = ngx_http_ssl_handshake;
+Ngx_http_request.c (http):        rev->handler(rev);
+Ngx_http_request.c (http):    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0, "http wait request handler");
+Ngx_http_request.c (http):    rev->handler = ngx_http_process_request_line;
+Ngx_http_request.c (http):                c->ssl->handler = ngx_http_ssl_handshake_handler;
+Ngx_http_request.c (http):        rev->handler = ngx_http_wait_request_handler;
+Ngx_http_request.c (http):        c->read->handler = ngx_http_wait_request_handler;
+Ngx_http_request.c (http):        /* STUB: epoll edge */ c->write->handler = ngx_http_empty_handler;
+Ngx_http_request.c (http):            rev->handler = ngx_http_process_request_headers;
+Ngx_http_request.c (http):            if (hh && hh->handler(r, h, hh->offset) != NGX_OK) {
+Ngx_http_request.c (http):    c->read->handler = ngx_http_request_handler;
+Ngx_http_request.c (http):    c->write->handler = ngx_http_request_handler;
+Ngx_http_request.c (http):        rc = r->post_subrequest->handler(r, r->post_subrequest->data, rc);
+Ngx_http_request.c (http):        c->read->handler = ngx_http_request_handler;
+Ngx_http_request.c (http):        c->write->handler = ngx_http_request_handler;
+Ngx_http_request.c (http):        if (cln->handler) {
+Ngx_http_request.c (http):            cln->handler(cln->data);
+Ngx_http_request.c (http):                   "http terminate handler count:%d", r->count);
+Ngx_http_request.c (http):                   "http writer handler: \"%V?%V\"", &r->uri, &r->args);
+Ngx_http_request.c (http):    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0, "set http keepalive handler");
+Ngx_http_request.c (http):    wev->handler = ngx_http_empty_handler;
+Ngx_http_request.c (http):        rev->handler = ngx_http_process_request_line;
+Ngx_http_request.c (http):    rev->handler = ngx_http_keepalive_handler;
+Ngx_http_request.c (http):    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0, "http keepalive handler");
+Ngx_http_request.c (http):            c->log->handler = NULL;
+Ngx_http_request.c (http):    c->log->handler = NULL;
+Ngx_http_request.c (http):    c->log->handler = ngx_http_log_error;
+Ngx_http_request.c (http):    rev->handler = ngx_http_process_request_line;
+Ngx_http_request.c (http):    rev->handler = ngx_http_lingering_close_handler;
+Ngx_http_request.c (http):    wev->handler = ngx_http_empty_handler;
+Ngx_http_request.c (http):                   "http lingering close handler");
+Ngx_http_request.c (http):    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, wev->log, 0, "http empty handler");
+Ngx_http_request.c (http):                   "http request empty handler");
+Ngx_http_request.c (http):        if (cln->handler) {
+Ngx_http_request.c (http):            cln->handler(cln->data);
+Ngx_http_request.c (http):            c->ssl->handler = ngx_http_close_connection;
+Ngx_http_request.h (http):    ngx_http_header_handler_pt        handler;
+Ngx_http_request.h (http):    ngx_http_cleanup_pt               handler;
+Ngx_http_request.h (http):    ngx_http_post_subrequest_pt       handler;
+Ngx_http_rewrite_module.c (http\modules):        vhcode->handler = v->set_handler;
+Ngx_http_scgi_module.c (http\modules):            if (hh && hh->handler(r, h, hh->offset) != NGX_OK) {
+Ngx_http_scgi_module.c (http\modules):    if (clcf->lmt_excpt && clcf->handler == NULL
+Ngx_http_scgi_module.c (http\modules):        clcf->handler = ngx_http_scgi_handler;
+Ngx_http_scgi_module.c (http\modules):    clcf->handler = ngx_http_scgi_handler;
+Ngx_http_script.c (http):                   "http script set var handler");
+Ngx_http_script.c (http):    code->handler(e->request, e->sp, code->data);
+Ngx_http_script.h (http):    ngx_http_set_variable_pt    handler;
+Ngx_http_split_clients_module.c (http\modules):    cf->handler = ngx_http_split_clients;
+Ngx_http_ssi_filter_module.c (http\modules):                rc = cmd->handler(r, ctx, params);
+Ngx_http_ssi_filter_module.c (http\modules):        psr->handler = ngx_http_ssi_stub_output;
+Ngx_http_ssi_filter_module.c (http\modules):        psr->handler = ngx_http_ssi_set_variable;
+Ngx_http_ssi_filter_module.h (http\modules):    ngx_http_ssi_command_pt   handler;
+Ngx_http_ssl_module.c (http\modules):    ngx_ssl_variable_handler_pt  handler = (ngx_ssl_variable_handler_pt) data;
+Ngx_http_ssl_module.c (http\modules):        (void) handler(r->connection, NULL, &s);
+Ngx_http_ssl_module.c (http\modules):    ngx_ssl_variable_handler_pt  handler = (ngx_ssl_variable_handler_pt) data;
+Ngx_http_ssl_module.c (http\modules):        if (handler(r->connection, r->pool, &s) != NGX_OK) {
+Ngx_http_ssl_module.c (http\modules):    cln->handler = ngx_ssl_cleanup_ctx;
+Ngx_http_stub_status_module.c (http\modules):    clcf->handler = ngx_http_stub_status_handler;
+Ngx_http_upstream.c (http):    cln->handler = ngx_http_upstream_cleanup;
+Ngx_http_upstream.c (http):    u->cleanup = &cln->handler;
+Ngx_http_upstream.c (http):        ctx->handler = ngx_http_upstream_resolve_handler;
+Ngx_http_upstream.c (http):    c->write->handler = ngx_http_upstream_handler;
+Ngx_http_upstream.c (http):    c->read->handler = ngx_http_upstream_handler;
+Ngx_http_upstream.c (http):        c->ssl->handler = ngx_http_upstream_ssl_handshake;
+Ngx_http_upstream.c (http):        c->write->handler = ngx_http_upstream_handler;
+Ngx_http_upstream.c (http):        c->read->handler = ngx_http_upstream_handler;
+Ngx_http_upstream.c (http):                   "http upstream send request handler");
+Ngx_http_upstream.c (http):                   "http upstream read request handler");
+Ngx_http_upstream.c (http):                   "http upstream dummy handler");
+Ngx_http_upstream.h (http):    ngx_http_header_handler_pt       handler;
+Ngx_http_upstream_keepalive_module.c (http\modules):    c->write->handler = ngx_http_upstream_keepalive_dummy_handler;
+Ngx_http_upstream_keepalive_module.c (http\modules):    c->read->handler = ngx_http_upstream_keepalive_close_handler;
+Ngx_http_upstream_keepalive_module.c (http\modules):                   "keepalive dummy handler");
+Ngx_http_upstream_keepalive_module.c (http\modules):                   "keepalive close handler");
+Ngx_http_upstream_keepalive_module.c (http\modules):            c->ssl->handler = ngx_http_upstream_keepalive_close;
+Ngx_http_uwsgi_module.c (http\modules):            if (hh && hh->handler(r, h, hh->offset) != NGX_OK) {
+Ngx_http_uwsgi_module.c (http\modules):    if (clcf->lmt_excpt && clcf->handler == NULL
+Ngx_http_uwsgi_module.c (http\modules):        clcf->handler = ngx_http_uwsgi_handler;
+Ngx_http_uwsgi_module.c (http\modules):    clcf->handler = ngx_http_uwsgi_handler;
+Ngx_http_uwsgi_module.c (http\modules):    cln->handler = ngx_ssl_cleanup_ctx;
+Ngx_http_v2.c (http\v2):    u_char *pos, u_char *end, ngx_http_v2_handler_pt handler);
+Ngx_http_v2.c (http\v2):    u_char *pos, u_char *end, ngx_http_v2_handler_pt handler);
+Ngx_http_v2.c (http\v2):    cln->handler = ngx_http_v2_pool_cleanup;
+Ngx_http_v2.c (http\v2):    h2c->state.handler = hc->proxy_protocol ? ngx_http_v2_state_proxy_protocol
+Ngx_http_v2.c (http\v2):    rev->handler = ngx_http_v2_read_handler;
+Ngx_http_v2.c (http\v2):    c->write->handler = ngx_http_v2_write_handler;
+Ngx_http_v2.c (http\v2):    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0, "http2 read handler");
+Ngx_http_v2.c (http\v2):            p = h2c->state.handler(h2c, p, end);
+Ngx_http_v2.c (http\v2):    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0, "http2 write handler");
+Ngx_http_v2.c (http\v2):        wev->handler(wev);
+Ngx_http_v2.c (http\v2):        if (out->handler(h2c, out) != NGX_OK) {
+Ngx_http_v2.c (http\v2):    c->write->handler = ngx_http_empty_handler;
+Ngx_http_v2.c (http\v2):    c->read->handler = ngx_http_v2_idle_handler;
+Ngx_http_v2.c (http\v2):    if (hh && hh->handler(r, h, hh->offset) != NGX_OK) {
+Ngx_http_v2.c (http\v2):        h2c->state.handler = h2c->state.pool ? ngx_http_v2_state_header_block
+Ngx_http_v2.c (http\v2):    u_char *end, ngx_http_v2_handler_pt handler)
+Ngx_http_v2.c (http\v2):        return ngx_http_v2_state_save(h2c, pos, end, handler);
+Ngx_http_v2.c (http\v2):    h2c->state.handler = handler;
+Ngx_http_v2.c (http\v2):    ev->handler(ev);
+Ngx_http_v2.c (http\v2):                wev->handler(wev);
+Ngx_http_v2.c (http\v2):            wev->handler(wev);
+Ngx_http_v2.c (http\v2):    h2c->state.handler = ngx_http_v2_state_head;
+Ngx_http_v2.c (http\v2):    ngx_http_v2_handler_pt handler)
+Ngx_http_v2.c (http\v2):                   "http2 frame state save pos:%p end:%p handler:%p",
+Ngx_http_v2.c (http\v2):                   pos, end, handler);
+Ngx_http_v2.c (http\v2):    h2c->state.handler = handler;
+Ngx_http_v2.c (http\v2):    frame->handler = ngx_http_v2_settings_frame_handler;
+Ngx_http_v2.c (http\v2):        frame->handler = ngx_http_v2_frame_handler;
+Ngx_http_v2.c (http\v2):    rev->handler = ngx_http_v2_close_stream_handler;
+Ngx_http_v2.c (http\v2):    if (hh->handler(r, h, hh->offset) != NGX_OK) {
+Ngx_http_v2.c (http\v2):    if (hh->handler(r, h, hh->offset) != NGX_OK) {
+Ngx_http_v2.c (http\v2):    rev->handler(rev);
+Ngx_http_v2.c (http\v2):        fc->write->handler = ngx_http_v2_close_stream_handler;
+Ngx_http_v2.c (http\v2):    ev->handler = ngx_http_v2_handle_connection_handler;
+Ngx_http_v2.c (http\v2):                   "http2 close stream handler");
+Ngx_http_v2.c (http\v2):    rev->handler = ngx_http_v2_read_handler;
+Ngx_http_v2.c (http\v2):    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0, "http2 idle handler");
+Ngx_http_v2.c (http\v2):            c->log->handler = NULL;
+Ngx_http_v2.c (http\v2):    c->write->handler = ngx_http_v2_write_handler;
+Ngx_http_v2.c (http\v2):    rev->handler = ngx_http_v2_read_handler;
+Ngx_http_v2.c (http\v2):    c->read->handler = ngx_http_empty_handler;
+Ngx_http_v2.c (http\v2):    c->write->handler = ngx_http_empty_handler;
+Ngx_http_v2.c (http\v2):            ev->handler(ev);
+Ngx_http_v2.c (http\v2):                    wev->handler(wev);
+Ngx_http_v2.h (http\v2):    ngx_http_v2_handler_pt           handler;
+Ngx_http_v2.h (http\v2):    ngx_int_t                      (*handler)(ngx_http_v2_connection_t *h2c,
+Ngx_http_v2_filter_module.c (http\v2):    cln->handler = ngx_http_v2_filter_cleanup;
+Ngx_http_v2_filter_module.c (http\v2):    frame->handler = ngx_http_v2_headers_frame_handler;
+Ngx_http_v2_filter_module.c (http\v2):    frame->handler = ngx_http_v2_data_frame_handler;
+Ngx_http_xslt_filter_module.c (http\modules):    cln->handler = ngx_http_xslt_cleanup;
+Ngx_http_xslt_filter_module.c (http\modules):    cln->handler = ngx_http_xslt_cleanup_dtd;
+Ngx_http_xslt_filter_module.c (http\modules):    cln->handler = ngx_http_xslt_cleanup_stylesheet;
+Ngx_iocp_module.c (event\modules):                   "iocp event handler: %p", ev->handler);
+Ngx_iocp_module.c (event\modules):    ev->handler(ev);
+Ngx_kqueue_module.c (event\modules):static ngx_int_t ngx_kqueue_notify(ngx_event_handler_pt handler);
+Ngx_kqueue_module.c (event\modules):ngx_kqueue_notify(ngx_event_handler_pt handler)
+Ngx_kqueue_module.c (event\modules):    notify_event.handler = handler;
+Ngx_kqueue_module.c (event\modules):        ev->handler(ev);
+Ngx_linux_aio_read.c (os\unix):    ev->handler = ngx_file_aio_event_handler;
+Ngx_linux_aio_read.c (os\unix):                   "aio event handler fd:%d %V", aio->fd, &aio->file->name);
+Ngx_linux_aio_read.c (os\unix):    aio->handler(ev);
+Ngx_linux_sendfile_chain.c (os\unix):        task->handler = ngx_linux_sendfile_thread_handler;
+Ngx_linux_sendfile_chain.c (os\unix):    ngx_log_debug0(NGX_LOG_DEBUG_CORE, log, 0, "linux sendfile thread handler");
+Ngx_log.c (core):    if (level != NGX_LOG_DEBUG && log->handler) {
+Ngx_log.c (core):        p = log->handler(log, p, last - p);
+Ngx_log.c (core):        cln->handler = ngx_log_memory_cleanup;
+Ngx_log.h (core):    ngx_log_handler_pt   handler;
+Ngx_mail.c (mail):            ls->handler = ngx_mail_init_connection;
+Ngx_mail.c (mail):            ls->log.handler = ngx_accept_log_error;
+Ngx_mail_auth_http_module.c (mail):    ngx_mail_auth_http_handler_pt   handler;
+Ngx_mail_auth_http_module.c (mail):    s->connection->read->handler = ngx_mail_auth_http_block_read;
+Ngx_mail_auth_http_module.c (mail):    ctx->peer.connection->read->handler = ngx_mail_auth_http_read_handler;
+Ngx_mail_auth_http_module.c (mail):    ctx->peer.connection->write->handler = ngx_mail_auth_http_write_handler;
+Ngx_mail_auth_http_module.c (mail):    ctx->handler = ngx_mail_auth_http_ignore_status_line;
+Ngx_mail_auth_http_module.c (mail):                   "mail auth http write handler");
+Ngx_mail_auth_http_module.c (mail):            wev->handler = ngx_mail_auth_http_dummy_handler;
+Ngx_mail_auth_http_module.c (mail):                   "mail auth http read handler");
+Ngx_mail_auth_http_module.c (mail):        ctx->handler(s, ctx);
+Ngx_mail_auth_http_module.c (mail):    ctx->handler = ngx_mail_auth_http_process_headers;
+Ngx_mail_auth_http_module.c (mail):    ctx->handler(s, ctx);
+Ngx_mail_auth_http_module.c (mail):                s->connection->read->handler = ngx_mail_auth_sleep_handler;
+Ngx_mail_auth_http_module.c (mail):                s->connection->read->handler = ngx_mail_auth_sleep_handler;
+Ngx_mail_auth_http_module.c (mail):    ngx_log_debug0(NGX_LOG_DEBUG_MAIL, rev->log, 0, "mail auth sleep handler");
+Ngx_mail_auth_http_module.c (mail):        rev->handler = cscf->protocol->auth_state;
+Ngx_mail_auth_http_module.c (mail):            rev->handler(rev);
+Ngx_mail_auth_http_module.c (mail):                   "mail auth http dummy handler");
+Ngx_mail_handler.c (mail):    c->log->handler = ngx_mail_log_error;
+Ngx_mail_handler.c (mail):        c->ssl->handler = ngx_mail_ssl_handshake_handler;
+Ngx_mail_handler.c (mail):            c->read->handler = cscf->protocol->init_protocol;
+Ngx_mail_handler.c (mail):            c->write->handler = ngx_mail_send;
+Ngx_mail_handler.c (mail):        c->write->handler = ngx_mail_send;
+Ngx_mail_handler.c (mail):            c->write->handler = ngx_mail_send;
+Ngx_mail_handler.c (mail):    c->write->handler = ngx_mail_send;
+Ngx_mail_handler.c (mail):            c->read->handler(c->read);
+Ngx_mail_handler.c (mail):            c->ssl->handler = ngx_mail_close_connection;
+Ngx_mail_imap_handler.c (mail):    c->read->handler = ngx_mail_imap_init_protocol;
+Ngx_mail_imap_handler.c (mail):    c->read->handler = ngx_mail_imap_auth_state;
+Ngx_mail_imap_handler.c (mail):        ngx_log_debug0(NGX_LOG_DEBUG_MAIL, c->log, 0, "imap send handler busy");
+Ngx_mail_imap_handler.c (mail):            c->read->handler = ngx_mail_starttls_handler;
+Ngx_mail_pop3_handler.c (mail):    c->read->handler = ngx_mail_pop3_init_protocol;
+Ngx_mail_pop3_handler.c (mail):    c->read->handler = ngx_mail_pop3_auth_state;
+Ngx_mail_pop3_handler.c (mail):        ngx_log_debug0(NGX_LOG_DEBUG_MAIL, c->log, 0, "pop3 send handler busy");
+Ngx_mail_pop3_handler.c (mail):            c->read->handler = ngx_mail_starttls_handler;
+Ngx_mail_proxy_module.c (mail):    s->connection->read->handler = ngx_mail_proxy_block_read;
+Ngx_mail_proxy_module.c (mail):    p->upstream.connection->write->handler = ngx_mail_proxy_dummy_handler;
+Ngx_mail_proxy_module.c (mail):        p->upstream.connection->read->handler = ngx_mail_proxy_pop3_handler;
+Ngx_mail_proxy_module.c (mail):        p->upstream.connection->read->handler = ngx_mail_proxy_imap_handler;
+Ngx_mail_proxy_module.c (mail):        p->upstream.connection->read->handler = ngx_mail_proxy_smtp_handler;
+Ngx_mail_proxy_module.c (mail):                   "mail proxy pop3 auth handler");
+Ngx_mail_proxy_module.c (mail):        s->connection->read->handler = ngx_mail_proxy_handler;
+Ngx_mail_proxy_module.c (mail):        s->connection->write->handler = ngx_mail_proxy_handler;
+Ngx_mail_proxy_module.c (mail):        rev->handler = ngx_mail_proxy_handler;
+Ngx_mail_proxy_module.c (mail):        c->write->handler = ngx_mail_proxy_handler;
+Ngx_mail_proxy_module.c (mail):                   "mail proxy imap auth handler");
+Ngx_mail_proxy_module.c (mail):        s->connection->read->handler = ngx_mail_proxy_handler;
+Ngx_mail_proxy_module.c (mail):        s->connection->write->handler = ngx_mail_proxy_handler;
+Ngx_mail_proxy_module.c (mail):        rev->handler = ngx_mail_proxy_handler;
+Ngx_mail_proxy_module.c (mail):        c->write->handler = ngx_mail_proxy_handler;
+Ngx_mail_proxy_module.c (mail):                   "mail proxy smtp auth handler");
+Ngx_mail_proxy_module.c (mail):        s->connection->read->handler = ngx_mail_proxy_handler;
+Ngx_mail_proxy_module.c (mail):        s->connection->write->handler = ngx_mail_proxy_handler;
+Ngx_mail_proxy_module.c (mail):        rev->handler = ngx_mail_proxy_handler;
+Ngx_mail_proxy_module.c (mail):        c->write->handler = ngx_mail_proxy_handler;
+Ngx_mail_proxy_module.c (mail):    ngx_log_debug0(NGX_LOG_DEBUG_MAIL, wev->log, 0, "mail proxy dummy handler");
+Ngx_mail_proxy_module.c (mail):                   "mail proxy handler: %d, #%d > #%d",
+Ngx_mail_smtp_handler.c (mail):    ctx->handler = ngx_mail_smtp_resolve_addr_handler;
+Ngx_mail_smtp_handler.c (mail):    c->read->handler = ngx_mail_smtp_resolve_name;
+Ngx_mail_smtp_handler.c (mail):    ctx->handler = ngx_mail_smtp_resolve_name_handler;
+Ngx_mail_smtp_handler.c (mail):         c->read->handler = ngx_mail_smtp_invalid_pipelining;
+Ngx_mail_smtp_handler.c (mail):    c->read->handler = ngx_mail_smtp_init_protocol;
+Ngx_mail_smtp_handler.c (mail):        c->read->handler = ngx_mail_smtp_init_protocol;
+Ngx_mail_smtp_handler.c (mail):    c->read->handler = ngx_mail_smtp_auth_state;
+Ngx_mail_smtp_handler.c (mail):        ngx_log_debug0(NGX_LOG_DEBUG_MAIL, c->log, 0, "smtp send handler busy");
+Ngx_mail_smtp_handler.c (mail):            c->read->handler = ngx_mail_starttls_handler;
+Ngx_mail_ssl_module.c (mail):    cln->handler = ngx_ssl_cleanup_ctx;
+Ngx_mysql.c (mysql):    m->peer.connection->read->handler = ngx_mysql_read_server_greeting;
+Ngx_mysql.c (mysql):    m->peer.connection->write->handler = ngx_mysql_empty_handler;
+Ngx_mysql.c (mysql):    m->peer.connection->read->handler = ngx_mysql_read_auth_result;
+Ngx_mysql.c (mysql):    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, wev->log, 0, "mysql empty handler");
+Ngx_mysql.c (mysql):        m->handler(m);
+Ngx_mysql.c (mysql):    m->peer.connection->read->handler = ngx_mysql_read_query_result;
+Ngx_mysql.c (mysql):        m->handler(m);
+Ngx_mysql.c (mysql):    m->handler(m);
+Ngx_mysql.h (mysql):    ngx_mysql_handler_pt    handler;
+Ngx_open_file_cache.c (core):    cln->handler = ngx_open_file_cache_cleanup;
+Ngx_open_file_cache.c (core):            cln->handler = ngx_pool_cleanup_file;
+Ngx_open_file_cache.c (core):            cln->handler = ngx_open_file_cleanup;
+Ngx_open_file_cache.c (core):    file->event->handler = ngx_open_file_cache_remove;
+Ngx_palloc.c (core):        if (c->handler) {
+Ngx_palloc.c (core):            c->handler(c->data);
+Ngx_palloc.c (core):    c->handler = NULL;
+Ngx_palloc.c (core):        if (c->handler == ngx_pool_cleanup_file) {
+Ngx_palloc.c (core):                c->handler(cf);
+Ngx_palloc.c (core):                c->handler = NULL;
+Ngx_palloc.h (core):    ngx_pool_cleanup_pt   handler;
+Ngx_process.c (os\unix):    void  (*handler)(int signo);
+Ngx_process.c (os\unix):        sa.sa_handler = sig->handler;
+Ngx_process_cycle.c (os\unix):    ngx_log_debug0(NGX_LOG_DEBUG_CORE, ev->log, 0, "channel handler");
+Ngx_process_cycle.c (os\unix):    ev.handler = ctx->handler;
+Ngx_process_cycle.h (os\unix):    ngx_event_handler_pt       handler;
+Ngx_regex.c (core):        cln->handler = ngx_pcre_free_studies;
+Ngx_resolver.c (core):    cln->handler = ngx_resolver_cleanup;
+Ngx_resolver.c (core):    r->event->handler = ngx_resolver_resend_handler;
+Ngx_resolver.c (core):        ctx->handler(ctx);
+Ngx_resolver.c (core):                    ctx->handler(ctx);
+Ngx_resolver.c (core):                ctx->handler(ctx);
+Ngx_resolver.c (core):        ctx->handler(ctx);
+Ngx_resolver.c (core):        ctx->event->handler = ngx_resolver_timeout_handler;
+Ngx_resolver.c (core):            ctx->handler(ctx);
+Ngx_resolver.c (core):    ctx->event->handler = ngx_resolver_timeout_handler;
+Ngx_resolver.c (core):        uc->log.handler = ngx_resolver_log_error;
+Ngx_resolver.c (core):        uc->connection->read->handler = ngx_resolver_read_response;
+Ngx_resolver.c (core):                   "resolver resend handler");
+Ngx_resolver.c (core):            ctx->handler(ctx);
+Ngx_resolver.c (core):            ctx->handler(ctx);
+Ngx_resolver.c (core):            ctx->handler(ctx);
+Ngx_resolver.c (core):        ctx->handler(ctx);
+Ngx_resolver.c (core):        ctx->handler(ctx);
+Ngx_resolver.h (core):    ngx_resolver_handler_pt   handler;
+Ngx_stream.c (stream):            ls->handler = ngx_stream_init_connection;
+Ngx_stream.c (stream):            ls->log.handler = ngx_accept_log_error;
+Ngx_stream.h (stream):    ngx_stream_handler_pt   handler;
+Ngx_stream_core_module.c (stream):    if (conf->handler == NULL) {
+Ngx_stream_core_module.c (stream):                      "no handler for server in %s:%ui",
+Ngx_stream_handler.c (stream):    c->log->handler = ngx_stream_log_error;
+Ngx_stream_handler.c (stream):    cscf->handler(s);
+Ngx_stream_handler.c (stream):        c->ssl->handler = ngx_stream_ssl_handshake_handler;
+Ngx_stream_handler.c (stream):            c->ssl->handler = ngx_stream_close_connection;
+Ngx_stream_limit_conn_module.c (stream):        cln->handler = ngx_stream_limit_conn_cleanup;
+Ngx_stream_limit_conn_module.c (stream):    while (cln && cln->handler == ngx_stream_limit_conn_cleanup) {
+Ngx_stream_proxy_module.c (stream):                   "proxy connection handler");
+Ngx_stream_proxy_module.c (stream):    c->write->handler = ngx_stream_proxy_downstream_handler;
+Ngx_stream_proxy_module.c (stream):    c->read->handler = ngx_stream_proxy_downstream_handler;
+Ngx_stream_proxy_module.c (stream):    pc->read->handler = ngx_stream_proxy_connect_handler;
+Ngx_stream_proxy_module.c (stream):    pc->write->handler = ngx_stream_proxy_connect_handler;
+Ngx_stream_proxy_module.c (stream):    ngx_log_handler_pt            handler;
+Ngx_stream_proxy_module.c (stream):            handler = c->log->handler;
+Ngx_stream_proxy_module.c (stream):            c->log->handler = NULL;
+Ngx_stream_proxy_module.c (stream):            c->log->handler = handler;
+Ngx_stream_proxy_module.c (stream):    pc->read->handler = ngx_stream_proxy_upstream_handler;
+Ngx_stream_proxy_module.c (stream):    pc->write->handler = ngx_stream_proxy_upstream_handler;
+Ngx_stream_proxy_module.c (stream):        pc->write->handler = ngx_stream_proxy_connect_handler;
+Ngx_stream_proxy_module.c (stream):        pc->ssl->handler = ngx_stream_proxy_ssl_handshake;
+Ngx_stream_proxy_module.c (stream):    ngx_log_handler_pt            handler;
+Ngx_stream_proxy_module.c (stream):        handler = c->log->handler;
+Ngx_stream_proxy_module.c (stream):        c->log->handler = NULL;
+Ngx_stream_proxy_module.c (stream):        c->log->handler = handler;
+Ngx_stream_proxy_module.c (stream):    cln->handler = ngx_ssl_cleanup_ctx;
+Ngx_stream_proxy_module.c (stream):    cscf->handler = ngx_stream_proxy_handler;
+Ngx_stream_ssl_module.c (stream):    cln->handler = ngx_ssl_cleanup_ctx;
+Ngx_syslog.c (core):    cln->handler = ngx_syslog_cleanup;
+Ngx_thread_pool.c (core):    task.handler = ngx_thread_pool_exit_handler;
+Ngx_thread_pool.c (core):        task->handler(task->ctx, tp->log);
+Ngx_thread_pool.c (core):    ngx_log_debug0(NGX_LOG_DEBUG_CORE, ev->log, 0, "thread pool handler");
+Ngx_thread_pool.c (core):                       "run completion handler for task #%ui", task->id);
+Ngx_thread_pool.c (core):        event->handler(event);
+Ngx_thread_pool.h (core):    void               (*handler)(void *data, ngx_log_t *log);
