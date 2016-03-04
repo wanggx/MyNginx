@@ -263,6 +263,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 }
 
 
+/* 处理读事件 */
 ngx_int_t
 ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
 {
@@ -271,6 +272,7 @@ ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
         /* kqueue, epoll */
 
         if (!rev->active && !rev->ready) {
+            /* 添加读事件 */
             if (ngx_add_event(rev, NGX_READ_EVENT, NGX_CLEAR_EVENT)
                 == NGX_ERROR)
             {
@@ -330,7 +332,7 @@ ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
     return NGX_OK;
 }
 
-
+/* 处理写事件 */
 ngx_int_t
 ngx_handle_write_event(ngx_event_t *wev, size_t lowat)
 {
@@ -567,7 +569,7 @@ ngx_timer_signal_handler(int signo)
 
 #endif
 
-/* 事件驱动模块初始化 */
+/* 事件驱动模块初始化，也就是worker进程初始化时会调用到这里 */
 static ngx_int_t
 ngx_event_process_init(ngx_cycle_t *cycle)
 {
@@ -602,6 +604,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
 #endif
 
+    /* 初始化两个时间接收队列 */
     ngx_queue_init(&ngx_posted_accept_events);
     ngx_queue_init(&ngx_posted_events);
 
@@ -736,6 +739,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     /* for each listening socket */
 
     ls = cycle->listening.elts;
+    /* 循环处理监听套接字，也就是监听套接字的事件处理为ngx_event_accept函数 */
     for (i = 0; i < cycle->listening.nelts; i++) {
 
 #if (NGX_HAVE_REUSEPORT)

@@ -56,7 +56,7 @@ struct ngx_cycle_s {
     ngx_list_t                open_files;        /* 打开文件列表 */
     ngx_list_t                shared_memory;     /* 共享内存链 */
 
-    ngx_uint_t                connection_n;
+    ngx_uint_t                connection_n;      /* 连接数 */
     ngx_uint_t                files_n;           /* 打开文件个数 */
 
     ngx_connection_t         *connections;       /* 连接 */

@@ -1,5 +1,5 @@
----- ngx_event_process_posted Matches (4 in 3 files) ----
-Ngx_event.c (event):    ngx_event_process_posted(cycle, &ngx_posted_accept_events);
-Ngx_event.c (event):    ngx_event_process_posted(cycle, &ngx_posted_events);
-Ngx_event_posted.c (event):ngx_event_process_posted(ngx_cycle_t *cycle, ngx_queue_t *posted)
-Ngx_event_posted.h (event):void ngx_event_process_posted(ngx_cycle_t *cycle, ngx_queue_t *posted);
+---- ngx_event_accept Matches (4 in 3 files) ----
+Ngx_event.c (event):            rev->handler = ngx_event_accept;
+Ngx_event.c (event):        rev->handler = ngx_event_accept;
+Ngx_event.h (event):void ngx_event_accept(ngx_event_t *ev);
+Ngx_event_accept.c (event):ngx_event_accept(ngx_event_t *ev)

@@ -95,7 +95,7 @@ struct io_event {
 
 
 typedef struct {
-    ngx_uint_t  events;
+    ngx_uint_t  events;         /* epoll监听的文件数量 */
     ngx_uint_t  aio_requests;
 } ngx_epoll_conf_t;
 
@@ -126,6 +126,7 @@ static void ngx_epoll_eventfd_handler(ngx_event_t *ev);
 static void *ngx_epoll_create_conf(ngx_cycle_t *cycle);
 static char *ngx_epoll_init_conf(ngx_cycle_t *cycle, void *conf);
 
+/* 创建epoll模型对应的文件描述符 */
 static int                  ep = -1;
 /* epoll模型的事件列表 */
 static struct epoll_event  *event_list;
@@ -312,12 +313,13 @@ failed:
 
 #endif
 
-
+/* epoll模型初始化 */
 static ngx_int_t
 ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
 {
     ngx_epoll_conf_t  *epcf;
 
+    /* 获取epoll模型的配置 */
     epcf = ngx_event_get_conf(cycle->conf_ctx, ngx_epoll_module);
 
     if (ep == -1) {
@@ -354,10 +356,12 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
         }
     }
 
+    /* 通过配置文件来设置epoll监听的最大文件数量 */
     nevents = epcf->events;
 
     ngx_io = ngx_os_io;
 
+    /* 事件的回调处理模型为epoll模型 */
     ngx_event_actions = ngx_epoll_module_ctx.actions;
 
 #if (NGX_HAVE_CLEAR_EVENT)
@@ -450,7 +454,7 @@ ngx_epoll_notify_handler(ngx_event_t *ev)
 
 #endif
 
-
+/* epoll模型关闭，清理数据，释放内存 */
 static void
 ngx_epoll_done(ngx_cycle_t *cycle)
 {
@@ -499,7 +503,10 @@ ngx_epoll_done(ngx_cycle_t *cycle)
     nevents = 0;
 }
 
-/* epoll事件模型的添加事件回调 */
+/* epoll事件模型的添加事件回调，此处主要是添加事件监控
+ * 然后在worker进程的主循环当中通过调用epoll_wait函数获取监控的事件
+ * 然后依次处理事件
+ */
 static ngx_int_t
 ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
 {
@@ -509,6 +516,7 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
     ngx_connection_t    *c;
     struct epoll_event   ee;
 
+    /* 获取事件所在的连接 */
     c = ev->data;
 
     events = (uint32_t) event;
@@ -542,7 +550,7 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
     ngx_log_debug3(NGX_LOG_DEBUG_EVENT, ev->log, 0,
                    "epoll add event: fd:%d op:%d ev:%08XD",
                    c->fd, op, ee.events);
-
+    /* 添加到epoll模型中的监控当中，同时设定监控事件的数据 */
     if (epoll_ctl(ep, op, c->fd, &ee) == -1) {
         ngx_log_error(NGX_LOG_ALERT, ev->log, ngx_errno,
                       "epoll_ctl(%d, %d) failed", op, c->fd);
@@ -615,7 +623,7 @@ ngx_epoll_del_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
     return NGX_OK;
 }
 
-
+/* 向epoll模型中添加一个连接的监控 */
 static ngx_int_t
 ngx_epoll_add_connection(ngx_connection_t *c)
 {
@@ -639,7 +647,7 @@ ngx_epoll_add_connection(ngx_connection_t *c)
     return NGX_OK;
 }
 
-
+/* 将连接从epoll的监控当中删除 */
 static ngx_int_t
 ngx_epoll_del_connection(ngx_connection_t *c, ngx_uint_t flags)
 {
@@ -753,12 +761,14 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
         return NGX_ERROR;
     }
 
+    /* 开始处理监听到的事件 */
     for (i = 0; i < events; i++) {
         c = event_list[i].data.ptr;
 
         instance = (uintptr_t) c & 1;
         c = (ngx_connection_t *) ((uintptr_t) c & (uintptr_t) ~1);
 
+        /* 获取连接的读事件 */
         rev = c->read;
 
         if (c->fd == -1 || rev->instance != instance) {
@@ -827,6 +837,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
             }
         }
 
+        /* 获取连接的写事件 */
         wev = c->write;
 
         if ((revents & EPOLLOUT) && wev->active) {

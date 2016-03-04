@@ -357,7 +357,9 @@ extern ngx_event_actions_t   ngx_event_actions;
 
 #elif (NGX_HAVE_EPOLL)
 
+/* 表明是读事件 */
 #define NGX_READ_EVENT     (EPOLLIN|EPOLLRDHUP)
+/* 表明是写事件 */
 #define NGX_WRITE_EVENT    EPOLLOUT
 
 #define NGX_LEVEL_EVENT    0
