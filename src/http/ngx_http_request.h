@@ -382,7 +382,9 @@ struct ngx_http_request_s {
     ngx_pool_t                       *pool;
     ngx_buf_t                        *header_in;
 
+    /* 代表请求头部 */
     ngx_http_headers_in_t             headers_in;
+    /* 代表响应头部 */
     ngx_http_headers_out_t            headers_out;
 
     ngx_http_request_body_t          *request_body;
@@ -405,12 +407,14 @@ struct ngx_http_request_s {
 
     ngx_chain_t                      *out;
     ngx_http_request_t               *main;
-    ngx_http_request_t               *parent;
+    /* 当前请求的父请求 */
+    ngx_http_request_t               *parent;   
     ngx_http_postponed_request_t     *postponed;
     ngx_http_post_subrequest_t       *post_subrequest;
     ngx_http_posted_request_t        *posted_requests;
 
     ngx_int_t                         phase_handler;
+    /* 生成内容的处理函数 */
     ngx_http_handler_pt               content_handler;
     ngx_uint_t                        access_code;
 

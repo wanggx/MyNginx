@@ -122,7 +122,7 @@ typedef enum {
 
 
 struct ngx_connection_s {
-    void               *data;   /* 用来关联其他结构体 */
+    void               *data;   /* 用来关联其他结构体,如ngx_http_connection_t */
     ngx_event_t        *read;   /* 连接的读事件 */
     ngx_event_t        *write;  /* 连接的写事件 */
 
