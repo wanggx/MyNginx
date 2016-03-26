@@ -603,6 +603,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         }
     }
 
+    /* 开始真正的listen所有的监听套接字 */
     if (ngx_open_listening_sockets(cycle) != NGX_OK) {
         goto failed;
     }

@@ -16,7 +16,9 @@ ngx_os_io_t  ngx_io;
 static void ngx_drain_connections(void);
 
 
-/* 创建监听套接字 */
+/* 根据地址来创建监听套接字，同时将创建的套接字给返回，
+ * 在函数内部将创建的套接字添加到cycle的listening当中
+ */
 ngx_listening_t *
 ngx_create_listening(ngx_conf_t *cf, void *sockaddr, socklen_t socklen)
 {
@@ -25,6 +27,7 @@ ngx_create_listening(ngx_conf_t *cf, void *sockaddr, socklen_t socklen)
     struct sockaddr  *sa;
     u_char            text[NGX_SOCKADDR_STRLEN];
 
+    /* 注意将新创建的监听套接字push到cycle数组当中 */
     ls = ngx_array_push(&cf->cycle->listening);
     if (ls == NULL) {
         return NULL;
@@ -366,6 +369,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 }
 
 
+/* 真正的开始cycle中的所有监听套接字的listen系统调用 */
 ngx_int_t
 ngx_open_listening_sockets(ngx_cycle_t *cycle)
 {

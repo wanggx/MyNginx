@@ -1,8 +1,4 @@
----- ngx_channel Matches (7 in 4 files) ----
-Ngx_channel.c (os\unix):#include <ngx_channel.h>
-Ngx_process.c (os\unix):#include <ngx_channel.h>
-Ngx_process.c (os\unix):ngx_socket_t     ngx_channel;
-Ngx_process.c (os\unix):        ngx_channel = ngx_processes[s].channel[1];
-Ngx_process.h (os\unix):extern ngx_socket_t   ngx_channel;
-Ngx_process_cycle.c (os\unix):#include <ngx_channel.h>
-Ngx_process_cycle.c (os\unix):    if (ngx_add_channel_event(cycle, ngx_channel, NGX_READ_EVENT,
+---- ngx_open_listening_sockets Matches (3 in 3 files) ----
+Ngx_connection.c (core):ngx_open_listening_sockets(ngx_cycle_t *cycle)
+Ngx_connection.h (core):ngx_int_t ngx_open_listening_sockets(ngx_cycle_t *cycle);
+Ngx_cycle.c (core):    if (ngx_open_listening_sockets(cycle) != NGX_OK) {

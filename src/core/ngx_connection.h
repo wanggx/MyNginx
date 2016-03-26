@@ -20,8 +20,8 @@ struct ngx_listening_s {
 
     struct sockaddr    *sockaddr;   /* 监听套接字的地址 */
     socklen_t           socklen;    /* size of sockaddr 监听套接字的长度 */ 
-    size_t              addr_text_max_len;
-    ngx_str_t           addr_text;
+    size_t              addr_text_max_len; /* 地址文本内容的最大长度 */
+    ngx_str_t           addr_text;  /* 地址的文本内容 */
 
     int                 type;
 

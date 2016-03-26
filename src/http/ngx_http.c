@@ -116,6 +116,7 @@ ngx_module_t  ngx_http_module = {
 };
 
 
+/* http配置指令的回调 */
 static char *
 ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -337,6 +338,9 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     /* optimize the lists of ports, addresses and server names */
 
+    /* 所有http配置块解析之后开始创建对应的监听套接口
+       * 这里的创建只是名义上的创建，只是创建了结构体变量，并存放在cycle的listening当中
+       */
     if (ngx_http_optimize_servers(cf, cmcf, cmcf->ports) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -1143,7 +1147,7 @@ inclusive:
     return node;
 }
 
-
+/* 将[port,addr]添加到ports当中 */
 ngx_int_t
 ngx_http_add_listen(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_listen_opt_t *lsopt)
@@ -1429,7 +1433,7 @@ ngx_http_add_server(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     return NGX_OK;
 }
 
-
+/* 此时是在http模块配置文件解析完成之后，开始创建监听套接字 */
 static ngx_int_t
 ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
     ngx_array_t *ports)
@@ -1633,7 +1637,7 @@ failed:
     return NGX_ERROR;
 }
 
-
+/* 对端口所对应的地址进行排序 */
 static ngx_int_t
 ngx_http_cmp_conf_addrs(const void *one, const void *two)
 {
@@ -1679,7 +1683,7 @@ ngx_http_cmp_dns_wildcards(const void *one, const void *two)
     return ngx_dns_strcmp(first->key.data, second->key.data);
 }
 
-
+/* 初始化端口的监听 */
 static ngx_int_t
 ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
 {
@@ -1708,6 +1712,7 @@ ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
 
     i = 0;
 
+    /* 依次处理一个端口对应的多个地址 */
     while (i < last) {
 
         if (bind_wildcard && !addr[i].opt.bind) {
@@ -1756,7 +1761,7 @@ ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
     return NGX_OK;
 }
 
-
+/* 根据地址来添加一个监听套接字，此时该监听套接字还并没有执行listen系统调用 */
 static ngx_listening_t *
 ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
 {
@@ -1764,6 +1769,7 @@ ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
     ngx_http_core_loc_conf_t  *clcf;
     ngx_http_core_srv_conf_t  *cscf;
 
+    /* 创建一个监听套接字，就相当于分配了一个 */
     ls = ngx_create_listening(cf, &addr->opt.u.sockaddr, addr->opt.socklen);
     if (ls == NULL) {
         return NULL;
@@ -1797,6 +1803,7 @@ ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
     }
 #endif
 
+    /* 设置监听套接字的最大读取等待队列，接收缓冲和发送缓冲 */
     ls->backlog = addr->opt.backlog;
     ls->rcvbuf = addr->opt.rcvbuf;
     ls->sndbuf = addr->opt.sndbuf;

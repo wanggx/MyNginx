@@ -181,7 +181,7 @@ typedef struct {
 
     ngx_hash_keys_arrays_t    *variables_keys;
 
-    ngx_array_t               *ports;
+    ngx_array_t               *ports;  /* 以[port,addr]的形式存放 */
 
     ngx_uint_t                 try_files;       /* unsigned  try_files:1 */
 
@@ -196,7 +196,7 @@ typedef struct {
     /* server ctx */
     ngx_http_conf_ctx_t        *ctx;
 
-    ngx_str_t                   server_name;
+    ngx_str_t                   server_name;   /* 相当于一个域名如 www.baidu.com */
 
     size_t                      connection_pool_size;
     size_t                      request_pool_size;
@@ -278,13 +278,14 @@ typedef struct {
 } ngx_http_port_t;
 
 
+/* http监听地址结构 */
 typedef struct {
-    ngx_int_t                  family;
-    in_port_t                  port;
-    ngx_array_t                addrs;     /* array of ngx_http_conf_addr_t */
+    ngx_int_t                  family;  /* 协议族 */
+    in_port_t                  port;    /* 端口号 */
+    ngx_array_t                addrs;   /* 监听地址 */  /* array of ngx_http_conf_addr_t */
 } ngx_http_conf_port_t;
 
-
+/* 配置地址，和上面的ngx_http_conf_port_t中的addrs相关联 */
 typedef struct {
     ngx_http_listen_opt_t      opt;
 
@@ -299,6 +300,7 @@ typedef struct {
 
     /* the default server configuration for this address:port */
     ngx_http_core_srv_conf_t  *default_server;
+    /* 服务器配置数组 */
     ngx_array_t                servers;  /* array of ngx_http_core_srv_conf_t */
 } ngx_http_conf_addr_t;
 
