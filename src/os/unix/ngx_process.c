@@ -95,7 +95,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         s = respawn;
 
     } else {
-        /* 获取一个合适的进程数组索引 */
+        /* 获取一个合适的进程数组索引，新建的子进程信息就放在全局进程结构的s索引处 */
         for (s = 0; s < ngx_last_process; s++) {
             if (ngx_processes[s].pid == -1) {
                 break;
@@ -174,6 +174,10 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
             return NGX_INVALID_PID;
         }
 
+        /* 父进程创建一对通道，父进程使用的是0通道，子进程使用的是1通道，
+            * 在worker进程的初始化过程当中会将该文件描述符添加到读监听集里面，
+            * 主要目的是两个子进程之间通信 
+            */
         ngx_channel = ngx_processes[s].channel[1];
 
     } else {
@@ -181,9 +185,13 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         ngx_processes[s].channel[1] = -1;
     }
 
+    /* 设置创建子进程在全局进程结构中的索引 */
     ngx_process_slot = s;
 
-
+    /* 错误返回-1
+      * 子进程返回0
+      * 父进程返回子进程的pid
+      */
     pid = fork();
 
     switch (pid) {
@@ -196,15 +204,19 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
 
     case 0:
         ngx_pid = ngx_getpid();
+        /* 开始执行子进程的函数，注意子进程是一个服务进程，所以在proc函数在执行之后
+           * 就会一直循环 
+           */
         proc(cycle, data);
         break;
 
     default:
         break;
     }
-
+    /* 此处之下就都是父进程执行的代码 */
     ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "start %s %P", name, pid);
 
+    /* 设置子进程的相关信息 */
     ngx_processes[s].pid = pid;
     ngx_processes[s].exited = 0;
 
@@ -217,6 +229,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     ngx_processes[s].name = name;
     ngx_processes[s].exiting = 0;
 
+    /* 根据respawn参数来确定 respawn，just_spawn,detached的值 */
     switch (respawn) {
 
     case NGX_PROCESS_NORESPAWN:

@@ -1,74 +1,8 @@
----- servers Matches (73 in 22 files) ----
-Ngx_connection.h (core):    void               *servers;  /* array of ngx_http_in_addr_t, for example */
-Ngx_http.c (http):    cscfp = cmcf->servers.elts;
-Ngx_http.c (http):    for (s = 0; s < cmcf->servers.nelts; s++) {
-Ngx_http.c (http):    cscfp = cmcf->servers.elts;
-Ngx_http.c (http):    for (s = 0; s < cmcf->servers.nelts; s++) {
-Ngx_http.c (http):    addr->servers.elts = NULL;
-Ngx_http.c (http):    if (addr->servers.elts == NULL) {
-Ngx_http.c (http):        if (ngx_array_init(&addr->servers, cf->temp_pool, 4,
-Ngx_http.c (http):        server = addr->servers.elts;
-Ngx_http.c (http):        for (i = 0; i < addr->servers.nelts; i++) {
-Ngx_http.c (http):    server = ngx_array_push(&addr->servers);
-Ngx_http.c (http):            if (addr[a].servers.nelts > 1
-Ngx_http.c (http):    cscfp = addr->servers.elts;
-Ngx_http.c (http):    for (s = 0; s < addr->servers.nelts; s++) {
-Ngx_http.c (http):    for (s = 0; s < addr->servers.nelts; s++) {
-Ngx_http.c (http):        ls->servers = hport;
-Ngx_http_core_module.c (http):    cscfp = ngx_array_push(&cmcf->servers);
-Ngx_http_core_module.c (http):    if (ngx_array_init(&cmcf->servers, cf->pool, 4,
-Ngx_http_core_module.h (http):    ngx_array_t                servers;         /* ngx_http_core_srv_conf_t */
-Ngx_http_core_module.h (http):    ngx_array_t                servers;  /* array of ngx_http_core_srv_conf_t */
-Ngx_http_request.c (http):    port = c->listening->servers;
-Ngx_http_ssl_module.c (http\modules):    cscfp = cmcf->servers.elts;
-Ngx_http_ssl_module.c (http\modules):    for (s = 0; s < cmcf->servers.nelts; s++) {
-Ngx_http_upstream.c (http):    uscf->servers = ngx_array_create(cf->pool, 4,
-Ngx_http_upstream.c (http):    if (uscf->servers == NULL) {
-Ngx_http_upstream.c (http):    if (uscf->servers->nelts == 0) {
-Ngx_http_upstream.c (http):                           "no servers are inside upstream");
-Ngx_http_upstream.c (http):    us = ngx_array_push(uscf->servers);
-Ngx_http_upstream.c (http):        uscf->servers = ngx_array_create(cf->pool, 1,
-Ngx_http_upstream.c (http):        if (uscf->servers == NULL) {
-Ngx_http_upstream.c (http):        us = ngx_array_push(uscf->servers);
-Ngx_http_upstream.h (http):    ngx_array_t                     *servers;  /* ngx_http_upstream_server_t */
-Ngx_http_upstream_least_conn_module.c (http\modules):                       "get least conn peer, backup servers");
-Ngx_http_upstream_round_robin.c (http):    if (us->servers) {
-Ngx_http_upstream_round_robin.c (http):        server = us->servers->elts;
-Ngx_http_upstream_round_robin.c (http):        for (i = 0; i < us->servers->nelts; i++) {
-Ngx_http_upstream_round_robin.c (http):                          "no servers in upstream \"%V\" in %s:%ui",
-Ngx_http_upstream_round_robin.c (http):        for (i = 0; i < us->servers->nelts; i++) {
-Ngx_http_upstream_round_robin.c (http):        for (i = 0; i < us->servers->nelts; i++) {
-Ngx_http_upstream_round_robin.c (http):        for (i = 0; i < us->servers->nelts; i++) {
-Ngx_http_upstream_round_robin.c (http):        ngx_log_debug0(NGX_LOG_DEBUG_HTTP, pc->log, 0, "backup servers");
-Ngx_mail.c (mail):    cscfp = cmcf->servers.elts;
-Ngx_mail.c (mail):        for (s = 0; s < cmcf->servers.nelts; s++) {
-Ngx_mail.c (mail):            ls->servers = mport;
-Ngx_mail.h (mail):    ngx_array_t             servers;     /* ngx_mail_core_srv_conf_t */
-Ngx_mail_core_module.c (mail):    if (ngx_array_init(&cmcf->servers, cf->pool, 4,
-Ngx_mail_core_module.c (mail):    cscfp = ngx_array_push(&cmcf->servers);
-Ngx_mail_handler.c (mail):    port = c->listening->servers;
-Ngx_stream.c (stream):    cscfp = cmcf->servers.elts;
-Ngx_stream.c (stream):        for (s = 0; s < cmcf->servers.nelts; s++) {
-Ngx_stream.c (stream):            ls->servers = stport;
-Ngx_stream.h (stream):    ngx_array_t             servers;     /* ngx_stream_core_srv_conf_t */
-Ngx_stream_core_module.c (stream):    if (ngx_array_init(&cmcf->servers, cf->pool, 4,
-Ngx_stream_core_module.c (stream):    cscfp = ngx_array_push(&cmcf->servers);
-Ngx_stream_handler.c (stream):    port = c->listening->servers;
-Ngx_stream_upstream.c (stream):    uscf->servers = ngx_array_create(cf->pool, 4,
-Ngx_stream_upstream.c (stream):    if (uscf->servers == NULL) {
-Ngx_stream_upstream.c (stream):    if (uscf->servers->nelts == 0) {
-Ngx_stream_upstream.c (stream):                           "no servers are inside upstream");
-Ngx_stream_upstream.c (stream):    us = ngx_array_push(uscf->servers);
-Ngx_stream_upstream.c (stream):        uscf->servers = ngx_array_create(cf->pool, 1,
-Ngx_stream_upstream.c (stream):        if (uscf->servers == NULL) {
-Ngx_stream_upstream.c (stream):        us = ngx_array_push(uscf->servers);
-Ngx_stream_upstream.h (stream):    ngx_array_t                       *servers;
-Ngx_stream_upstream_least_conn_module.c (stream):                       "get least conn peer, backup servers");
-Ngx_stream_upstream_round_robin.c (stream):    if (us->servers) {
-Ngx_stream_upstream_round_robin.c (stream):        server = us->servers->elts;
-Ngx_stream_upstream_round_robin.c (stream):        for (i = 0; i < us->servers->nelts; i++) {
-Ngx_stream_upstream_round_robin.c (stream):                          "no servers in upstream \"%V\" in %s:%ui",
-Ngx_stream_upstream_round_robin.c (stream):        for (i = 0; i < us->servers->nelts; i++) {
-Ngx_stream_upstream_round_robin.c (stream):        for (i = 0; i < us->servers->nelts; i++) {
-Ngx_stream_upstream_round_robin.c (stream):        for (i = 0; i < us->servers->nelts; i++) {
-Ngx_stream_upstream_round_robin.c (stream):        ngx_log_debug0(NGX_LOG_DEBUG_STREAM, pc->log, 0, "backup servers");
+---- ngx_channel Matches (7 in 4 files) ----
+Ngx_channel.c (os\unix):#include <ngx_channel.h>
+Ngx_process.c (os\unix):#include <ngx_channel.h>
+Ngx_process.c (os\unix):ngx_socket_t     ngx_channel;
+Ngx_process.c (os\unix):        ngx_channel = ngx_processes[s].channel[1];
+Ngx_process.h (os\unix):extern ngx_socket_t   ngx_channel;
+Ngx_process_cycle.c (os\unix):#include <ngx_channel.h>
+Ngx_process_cycle.c (os\unix):    if (ngx_add_channel_event(cycle, ngx_channel, NGX_READ_EVENT,

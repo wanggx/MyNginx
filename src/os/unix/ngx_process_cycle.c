@@ -365,8 +365,13 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
 
         ch.pid = ngx_processes[ngx_process_slot].pid;
         ch.slot = ngx_process_slot;
+        /* 将子进程的0通道通知其他在前创建的进程，1通道是接收信息的 */
         ch.fd = ngx_processes[ngx_process_slot].channel[0];
 
+        /* 把创建的子进程的相关信息通知前面已经生成的子进程，
+            * 注意这里是父进程把刚创建的子进程的相关信息发送给其他子进程，
+            * 而不是子进程自己发送的  
+            */
         ngx_pass_open_channel(cycle, &ch);
     }
 }
@@ -434,6 +439,7 @@ ngx_pass_open_channel(ngx_cycle_t *cycle, ngx_channel_t *ch)
 {
     ngx_int_t  i;
 
+    /* 将ch信息发送给其他的所有存活进程 */
     for (i = 0; i < ngx_last_process; i++) {
 
         if (i == ngx_process_slot
@@ -450,7 +456,7 @@ ngx_pass_open_channel(ngx_cycle_t *cycle, ngx_channel_t *ch)
                       ngx_processes[i].channel[0]);
 
         /* TODO: NGX_AGAIN */
-
+        /* 为啥是向其他进程的0通道发送? */
         ngx_write_channel(ngx_processes[i].channel[0],
                           ch, sizeof(ngx_channel_t), cycle->log);
     }
@@ -916,10 +922,12 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 
     for (n = 0; n < ngx_last_process; n++) {
 
+        /* 判断进程是否存活 */
         if (ngx_processes[n].pid == -1) {
             continue;
         }
 
+        /* 如果是当前子进程的索引 */
         if (n == ngx_process_slot) {
             continue;
         }
@@ -943,6 +951,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     ngx_last_process = 0;
 #endif
 
+    /* 监听子进程的1通道，看是否有其他进程给自己发送消息 */
     if (ngx_add_channel_event(cycle, ngx_channel, NGX_READ_EVENT,
                               ngx_channel_handler)
         == NGX_ERROR)
@@ -953,6 +962,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 }
 
 
+/* 工作进程退出 */
 static void
 ngx_worker_process_exit(ngx_cycle_t *cycle)
 {
@@ -1010,10 +1020,11 @@ ngx_worker_process_exit(ngx_cycle_t *cycle)
 
     ngx_log_error(NGX_LOG_NOTICE, ngx_cycle->log, 0, "exit");
 
+    /* 此时进程就退出了，进程之后的代码就都不会执行了 */
     exit(0);
 }
 
-
+/* 子进程收到后来新建子进程的相关信息，并根据通道的命令完成相应的动作  */
 static void
 ngx_channel_handler(ngx_event_t *ev)
 {
@@ -1072,7 +1083,7 @@ ngx_channel_handler(ngx_event_t *ev)
         case NGX_CMD_REOPEN:
             ngx_reopen = 1;
             break;
-
+        /* 子进程之间的通信打开通道 */
         case NGX_CMD_OPEN_CHANNEL:
 
             ngx_log_debug3(NGX_LOG_DEBUG_CORE, ev->log, 0,
@@ -1080,6 +1091,7 @@ ngx_channel_handler(ngx_event_t *ev)
                            ch.slot, ch.pid, ch.fd);
 
             ngx_processes[ch.slot].pid = ch.pid;
+            /* 设置进程的0通道，在刚创建的时候，子进程的0通道是从父进程继承的 */
             ngx_processes[ch.slot].channel[0] = ch.fd;
             break;
 
