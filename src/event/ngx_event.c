@@ -40,6 +40,7 @@ sig_atomic_t          ngx_event_timer_alarm;
 
 static ngx_uint_t     ngx_event_max_module;
 
+/* 表示系统中使用的是那种事件模型，如linux中的epoll模型或mac的kqueue模型 */
 ngx_uint_t            ngx_event_flags;
 ngx_event_actions_t   ngx_event_actions;
 

@@ -608,6 +608,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         goto failed;
     }
 
+    /* 配置监听套接字的一些相关属性 */
     if (!ngx_test_config) {
         ngx_configure_listening_sockets(cycle);
     }

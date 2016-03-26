@@ -633,7 +633,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
     return NGX_OK;
 }
 
-
+/* 配置监听套接字的一些相关属性，可以在nginx的配置文件配置这些属性 */
 void
 ngx_configure_listening_sockets(ngx_cycle_t *cycle)
 {

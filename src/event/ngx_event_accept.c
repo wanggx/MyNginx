@@ -239,6 +239,9 @@ ngx_event_accept(ngx_event_t *ev)
             rev->ready = 1;
         }
 
+        /* deferred_accept为1则意味着当accept这个请求时，请求的具体数据以及到达了，
+           * 也就是数据准备好了
+           */
         if (ev->deferred_accept) {
             rev->ready = 1;
 #if (NGX_HAVE_KQUEUE)
@@ -365,8 +368,8 @@ ngx_event_accept(ngx_event_t *ev)
         if (ngx_event_flags & NGX_USE_KQUEUE_EVENT) {
             ev->available--;
         }
-
-    } while (ev->available);
+    /* 当配置文件当中有multi_accept on;时，对应的ev->available为1，否则为0*/
+    } while (ev->available);        
 }
 
 

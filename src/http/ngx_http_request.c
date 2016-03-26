@@ -350,6 +350,9 @@ ngx_http_init_connection(ngx_connection_t *c)
         c->log->action = "reading PROXY protocol";
     }
 
+    /* 如果ready为1，则此时可以明确的知道有数据可以读，
+      * 所以没有必要再下面把连接对象添加到事件监听机制里面
+      */
     if (rev->ready) {
         /* the deferred accept(), iocp */
 
@@ -357,7 +360,7 @@ ngx_http_init_connection(ngx_connection_t *c)
             ngx_post_event(rev, &ngx_posted_events);
             return;
         }
-
+        /* 代表有数据可以读了，则理解进行处理 */
         rev->handler(rev);
         return;
     }

@@ -1,4 +1,21 @@
----- ngx_open_listening_sockets Matches (3 in 3 files) ----
-Ngx_connection.c (core):ngx_open_listening_sockets(ngx_cycle_t *cycle)
-Ngx_connection.h (core):ngx_int_t ngx_open_listening_sockets(ngx_cycle_t *cycle);
-Ngx_cycle.c (core):    if (ngx_open_listening_sockets(cycle) != NGX_OK) {
+---- ngx_test_config Matches (20 in 5 files) ----
+Nginx.c (core):        if (!ngx_test_config) {
+Nginx.c (core):        if (ngx_test_config) {
+Nginx.c (core):    if (ngx_test_config) {
+Nginx.c (core):                ngx_test_config = 1;
+Nginx.c (core):                ngx_test_config = 1;
+Nginx.c (core):    if (ngx_test_config) {
+Ngx_connection.c (core):                if (err != NGX_EADDRINUSE || !ngx_test_config) {
+Ngx_connection.c (core):                if (!ngx_test_config) {
+Ngx_connection.c (core):                if (ngx_test_config) {
+Ngx_connection.c (core):                if (err != NGX_EADDRINUSE || !ngx_test_config) {
+Ngx_connection.c (core):                if (!ngx_test_config) {
+Ngx_cycle.c (core):ngx_uint_t             ngx_test_config;   /* 是否需要测试配置文件 */
+Ngx_cycle.c (core):    if (ngx_test_config && !ngx_quiet_mode) {
+Ngx_cycle.c (core):    if (ngx_test_config) {
+Ngx_cycle.c (core):    if (!ngx_test_config) {
+Ngx_cycle.c (core):    if (ngx_test_config) {
+Ngx_cycle.c (core):    create = ngx_test_config ? NGX_FILE_CREATE_OR_OPEN : NGX_FILE_TRUNCATE;
+Ngx_cycle.c (core):    if (!ngx_test_config) {
+Ngx_cycle.h (core):extern ngx_uint_t             ngx_test_config;
+Ngx_event.c (event):    if (!ngx_test_config && ngx_process <= NGX_PROCESS_MASTER) {
