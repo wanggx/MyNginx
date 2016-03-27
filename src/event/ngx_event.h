@@ -57,7 +57,7 @@ struct ngx_event_s {
     unsigned         error:1;
 
     unsigned         timedout:1;
-    unsigned         timer_set:1;
+    unsigned         timer_set:1;    /* 表示是否设置了时钟 */
 
     unsigned         delayed:1;
 
@@ -122,7 +122,7 @@ struct ngx_event_s {
     ngx_rbtree_node_t   timer;
 
     /* the posted queue */
-    ngx_queue_t      queue;
+    ngx_queue_t      queue;   /* 注意这个队列非常重要，将事件给串联起来 */
 
 #if 0
 

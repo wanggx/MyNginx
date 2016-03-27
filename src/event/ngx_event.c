@@ -697,6 +697,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
     c = cycle->connections;
 
+    /* 分配读事件 */
     cycle->read_events = ngx_alloc(sizeof(ngx_event_t) * cycle->connection_n,
                                    cycle->log);
     if (cycle->read_events == NULL) {
@@ -727,6 +728,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         i--;
 
         c[i].data = next;
+        /* 设置连接的读事件和写事件 */
         c[i].read = &cycle->read_events[i];
         c[i].write = &cycle->write_events[i];
         c[i].fd = (ngx_socket_t) -1;

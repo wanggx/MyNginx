@@ -361,13 +361,14 @@ typedef void (*ngx_http_event_handler_pt)(ngx_http_request_t *r);
 struct ngx_http_request_s {
     uint32_t                          signature;         /* "HTTP" */
 
-    ngx_connection_t                 *connection;
+    ngx_connection_t                 *connection;   /* 为请求服务的连接 */
 
     void                            **ctx;
     void                            **main_conf;
     void                            **srv_conf;
     void                            **loc_conf;
 
+    /* 请求的读写事件处理 */
     ngx_http_event_handler_pt         read_event_handler;
     ngx_http_event_handler_pt         write_event_handler;
 
@@ -436,7 +437,7 @@ struct ngx_http_request_s {
 
     ngx_uint_t                        err_status;
 
-    ngx_http_connection_t            *http_connection;
+    ngx_http_connection_t            *http_connection;   /* 请求的http连接信息 */
 #if (NGX_HTTP_V2)
     ngx_http_v2_stream_t             *stream;
 #endif

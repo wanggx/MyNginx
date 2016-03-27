@@ -402,6 +402,7 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
         return;
     }
 
+    /* 获取http连接的真实数据 */
     hc = c->data;
     cscf = ngx_http_get_module_srv_conf(hc->conf_ctx, ngx_http_core_module);
 
@@ -509,7 +510,9 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
 }
 
 
-/* 创建一个http请求 */
+/* 根据一个连接来创建一个http请求
+  * 初始化请求的相关信息和一些时间处理句柄
+  */
 ngx_http_request_t *
 ngx_http_create_request(ngx_connection_t *c)
 {
@@ -533,18 +536,21 @@ ngx_http_create_request(ngx_connection_t *c)
         return NULL;
     }
 
+    /* 分配一个ngx_http_request_t结构*/
     r = ngx_pcalloc(pool, sizeof(ngx_http_request_t));
     if (r == NULL) {
         ngx_destroy_pool(pool);
         return NULL;
     }
 
+    /* 设置请求的内存池和相关数据，如请求连接 */
     r->pool = pool;
 
     r->http_connection = hc;
     r->signature = NGX_HTTP_MODULE;
     r->connection = c;
 
+    /* 设置请求的配置文件 */
     r->main_conf = hc->conf_ctx->main_conf;
     r->srv_conf = hc->conf_ctx->srv_conf;
     r->loc_conf = hc->conf_ctx->loc_conf;
@@ -944,16 +950,19 @@ ngx_http_process_request_line(ngx_event_t *rev)
 
     rc = NGX_AGAIN;
 
+    /* 因为请求的数据可能分多次到达，所以要循环的读 */
     for ( ;; ) {
 
         if (rc == NGX_AGAIN) {
             n = ngx_http_read_request_header(r);
 
+            /* 如果还没有读到数据 则函数先返回了 */
             if (n == NGX_AGAIN || n == NGX_ERROR) {
                 return;
             }
         }
 
+        /* 如果从连接中读取到了数据 */
         rc = ngx_http_parse_request_line(r, r->header_in);
 
         if (rc == NGX_OK) {
@@ -1372,7 +1381,7 @@ ngx_http_process_request_headers(ngx_event_t *rev)
     }
 }
 
-
+/* 读取请求的头部，就相当于从连接的套接字里面读取请求的数据 */
 static ssize_t
 ngx_http_read_request_header(ngx_http_request_t *r)
 {
@@ -1386,6 +1395,7 @@ ngx_http_read_request_header(ngx_http_request_t *r)
 
     n = r->header_in->last - r->header_in->pos;
 
+    /* 如果有读取的数据则直接返回 */
     if (n > 0) {
         return n;
     }
@@ -1403,6 +1413,7 @@ ngx_http_read_request_header(ngx_http_request_t *r)
             ngx_add_timer(rev, cscf->client_header_timeout);
         }
 
+        /* 如果此时还没有读到请求的数据，则继续监听读并返回 */
         if (ngx_handle_read_event(rev, 0) != NGX_OK) {
             ngx_http_close_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
             return NGX_ERROR;

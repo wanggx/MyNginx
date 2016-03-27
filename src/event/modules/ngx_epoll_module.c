@@ -545,6 +545,7 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
         op = EPOLL_CTL_ADD;
     }
 
+    /* 把事件的连接和事件标记给传递过去 */
     ee.events = events | (uint32_t) flags;
     ee.data.ptr = (void *) ((uintptr_t) c | ev->instance);
 

@@ -99,7 +99,7 @@ static uint32_t  usual[] = {
 
 
 /* gcc, icc, msvc and others compile these switches as an jump table */
-
+/* 解析http的请求行 */
 ngx_int_t
 ngx_http_parse_request_line(ngx_http_request_t *r, ngx_buf_t *b)
 {
@@ -822,7 +822,7 @@ done:
     return NGX_OK;
 }
 
-
+/* 解析http的头部 */
 ngx_int_t
 ngx_http_parse_header_line(ngx_http_request_t *r, ngx_buf_t *b,
     ngx_uint_t allow_underscores)

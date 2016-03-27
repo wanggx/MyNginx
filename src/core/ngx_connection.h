@@ -156,7 +156,7 @@ struct ngx_connection_s {
 
     ngx_buf_t          *buffer;
 
-    ngx_queue_t         queue;
+    ngx_queue_t         queue;   /* 构成连接的队列 */
 
     ngx_atomic_uint_t   number;
 
