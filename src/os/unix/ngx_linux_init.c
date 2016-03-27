@@ -45,6 +45,7 @@ ngx_os_specific_init(ngx_log_t *log)
     (void) ngx_cpystrn(ngx_linux_kern_osrelease, (u_char *) u.release,
                        sizeof(ngx_linux_kern_osrelease));
 
+    /*设置linux系统的系统调用 */
     ngx_os_io = ngx_linux_io;
 
     return NGX_OK;

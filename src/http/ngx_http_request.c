@@ -431,6 +431,7 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
         b->end = b->last + size;
     }
 
+    /* 从连接中去接受数据 */
     n = c->recv(c, b->last, size);
 
     if (n == NGX_AGAIN) {
@@ -439,9 +440,10 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
             ngx_add_timer(rev, c->listening->post_accept_timeout);
             ngx_reusable_connection(c, 1);
         }
-
+        /* 如果连接的数据还没有准备好，则在继续监听连接的读事件 */
         if (ngx_handle_read_event(rev, 0) != NGX_OK) {
-            ngx_http_close_connection(c);
+            /* 如果无法监听在关闭该连接 */
+            ngx_http_close_connection(c);   
             return;
         }
 
@@ -495,12 +497,13 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
 
     ngx_reusable_connection(c, 0);
 
+    /* 创建一个新的请求 */
     c->data = ngx_http_create_request(c);
     if (c->data == NULL) {
         ngx_http_close_connection(c);
         return;
     }
-
+    /* 如果一切正常，则开始处理请求行 */
     rev->handler = ngx_http_process_request_line;
     ngx_http_process_request_line(rev);
 }

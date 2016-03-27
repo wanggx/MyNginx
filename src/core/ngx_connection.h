@@ -128,8 +128,8 @@ struct ngx_connection_s {
 
     ngx_socket_t        fd;     /* 连接对应文件描述符 */
 
-    ngx_recv_pt         recv;
-    ngx_send_pt         send;
+    ngx_recv_pt         recv;  /* 连接的接受函数 */
+    ngx_send_pt         send; /* 连接的发送函数 */
     ngx_recv_chain_pt   recv_chain;
     ngx_send_chain_pt   send_chain;
 

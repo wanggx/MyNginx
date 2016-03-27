@@ -203,7 +203,7 @@ ngx_event_accept(ngx_event_t *ev)
 
         *log = ls->log;
 
-        /* 设置连接的操作回调 */
+        /* 设置连接的操作回调，也就是连接的接收和发送函数 */
         c->recv = ngx_recv;
         c->send = ngx_send;
         c->recv_chain = ngx_recv_chain;

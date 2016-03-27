@@ -264,7 +264,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 }
 
 
-/* 处理读事件 */
+/* 监听读事件 */
 ngx_int_t
 ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
 {
