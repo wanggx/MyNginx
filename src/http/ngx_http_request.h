@@ -125,7 +125,7 @@
  */
 #define NGX_HTTP_CLIENT_CLOSED_REQUEST     499
 
-
+/* 服务器内部错误 */
 #define NGX_HTTP_INTERNAL_SERVER_ERROR     500
 #define NGX_HTTP_NOT_IMPLEMENTED           501
 #define NGX_HTTP_BAD_GATEWAY               502

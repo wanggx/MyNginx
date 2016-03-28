@@ -925,7 +925,9 @@ ngx_http_ssl_servername(ngx_ssl_conn_t *ssl_conn, int *ad, void *arg)
 
 #endif
 
-/* 解析成功初步意味着算是一个合法的http客户端请求 */
+/* 解析成功初步意味着算是一个合法的http客户端请求
+  * 在该函数中会调用ngx_http_process_request函数，最后已完成实际的请求处理 
+  */
 static void
 ngx_http_process_request_line(ngx_event_t *rev)
 {
@@ -1852,7 +1854,7 @@ ngx_http_process_request_header(ngx_http_request_t *r)
     return NGX_OK;
 }
 
-
+/* 处理请求 */
 void
 ngx_http_process_request(ngx_http_request_t *r)
 {
@@ -2275,7 +2277,7 @@ ngx_http_post_request(ngx_http_request_t *r, ngx_http_posted_request_t *pr)
     return NGX_OK;
 }
 
-
+/* 处理请求 */
 void
 ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
 {
@@ -3541,6 +3543,7 @@ ngx_http_log_request(ngx_http_request_t *r)
     log_handler = cmcf->phases[NGX_HTTP_LOG_PHASE].handlers.elts;
     n = cmcf->phases[NGX_HTTP_LOG_PHASE].handlers.nelts;
 
+    /* 开始处理请求 */
     for (i = 0; i < n; i++) {
         log_handler[i](r);
     }

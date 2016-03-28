@@ -162,7 +162,7 @@ typedef struct {
 
 
 typedef struct {
-    ngx_array_t                servers;         /* ngx_http_core_srv_conf_t */
+    ngx_array_t                servers;        /* ·şÎñÆ÷ÅäÖÃ */ /* ngx_http_core_srv_conf_t */
 
     ngx_http_phase_engine_t    phase_engine;
 

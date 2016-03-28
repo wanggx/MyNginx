@@ -952,7 +952,7 @@ ngx_close_listening_sockets(ngx_cycle_t *cycle)
     cycle->listening.nelts = 0;
 }
 
-
+/* 获取套接字对应的连接 */
 ngx_connection_t *
 ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 {
@@ -1015,6 +1015,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
     rev->index = NGX_INVALID_INDEX;
     wev->index = NGX_INVALID_INDEX;
 
+    /* 读写时间携带的数据是连接 */
     rev->data = c;
     wev->data = c;
 

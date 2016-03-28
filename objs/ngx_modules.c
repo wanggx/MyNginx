@@ -15,7 +15,8 @@ extern ngx_module_t  ngx_http_module;
 extern ngx_module_t  ngx_http_core_module;
 extern ngx_module_t  ngx_http_log_module;
 extern ngx_module_t  ngx_http_upstream_module;
-extern ngx_module_t  ngx_http_static_module;
+/* http¾²Ì¬ÍøÒ³´¦ÀíÄ£¿é */
+extern ngx_module_t  ngx_http_static_module; 
 extern ngx_module_t  ngx_http_autoindex_module;
 extern ngx_module_t  ngx_http_index_module;
 extern ngx_module_t  ngx_http_auth_basic_module;

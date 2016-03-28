@@ -247,6 +247,7 @@ main(int argc, char *const *argv)
         return 1;
     }
 
+    /* 根据特殊的操作系统进行初始化，如事件模型和socket的系统调用 */
     if (ngx_os_init(log) != NGX_OK) {
         return 1;
     }
@@ -268,7 +269,7 @@ main(int argc, char *const *argv)
     for (i = 0; ngx_modules[i]; i++) {
         ngx_modules[i]->index = ngx_max_module++;
     }
-    /* 循环的初始化 */
+    /* cycle的初始化 */
     cycle = ngx_init_cycle(&init_cycle);
     if (cycle == NULL) {
         if (ngx_test_config) {

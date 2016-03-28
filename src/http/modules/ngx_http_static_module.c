@@ -45,6 +45,7 @@ ngx_module_t  ngx_http_static_module = {
 };
 
 
+/* 静态页面处理函数 */
 static ngx_int_t
 ngx_http_static_handler(ngx_http_request_t *r)
 {
@@ -271,6 +272,7 @@ ngx_http_static_handler(ngx_http_request_t *r)
 }
 
 
+/* 设置静态网页的处理回调 */
 static ngx_int_t
 ngx_http_static_init(ngx_conf_t *cf)
 {

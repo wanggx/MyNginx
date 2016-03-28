@@ -116,7 +116,7 @@ ngx_module_t  ngx_http_module = {
 };
 
 
-/* http配置指令的回调 */
+/* http配置指令的回调，同时也对http模块进行了一些前后阶段性的操作 */
 static char *
 ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -304,7 +304,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-
+    /* 对http模块进行后期配置，如设置静态网页的请求处理句柄 */
     for (m = 0; ngx_modules[m]; m++) {
         if (ngx_modules[m]->type != NGX_HTTP_MODULE) {
             continue;
@@ -330,7 +330,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     *cf = pcf;
 
-
+    /* 初始化http各个阶段的处理函数 */
     if (ngx_http_init_phase_handlers(cf, cmcf) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -480,6 +480,7 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
         return NGX_ERROR;
     }
 
+    /* 设置指针关系 */
     cmcf->phase_engine.handlers = ph;
     n = 0;
 

@@ -779,6 +779,7 @@ ngx_module_t  ngx_http_core_module = {
 ngx_str_t  ngx_http_core_get_method = { 3, (u_char *) "GET" };
 
 
+/* 请求的处理句柄 */
 void
 ngx_http_handler(ngx_http_request_t *r)
 {
@@ -823,7 +824,7 @@ ngx_http_handler(ngx_http_request_t *r)
     ngx_http_core_run_phases(r);
 }
 
-
+/* 开始执行http请求的各个阶段 */
 void
 ngx_http_core_run_phases(ngx_http_request_t *r)
 {
@@ -1970,6 +1971,7 @@ ngx_http_output_filter(ngx_http_request_t *r, ngx_chain_t *in)
 }
 
 
+/* 将请求的一个URL转换到服务器本地的一个绝对路径 */
 u_char *
 ngx_http_map_uri_to_path(ngx_http_request_t *r, ngx_str_t *path,
     size_t *root_length, size_t reserved)
