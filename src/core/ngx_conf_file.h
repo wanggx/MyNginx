@@ -123,7 +123,7 @@ struct ngx_module_s {
     ngx_command_t        *commands;/* 模块可以解析的配置项目 */
     ngx_uint_t            type;    /* 模块的种类 */
 
-    /* 一些回调函数 */
+    /* 一些回调函数,在模块初始化的各个时期调用 */
     ngx_int_t           (*init_master)(ngx_log_t *log);
     
     ngx_int_t           (*init_module)(ngx_cycle_t *cycle);
