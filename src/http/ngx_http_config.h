@@ -14,6 +14,7 @@
 #include <ngx_http.h>
 
 
+/* httpеДжциообнд */
 typedef struct {
     void        **main_conf;
     void        **srv_conf;

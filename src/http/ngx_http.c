@@ -66,6 +66,7 @@ static ngx_int_t ngx_http_add_addrs6(ngx_conf_t *cf, ngx_http_port_t *hport,
     ngx_http_conf_addr_t *addr);
 #endif
 
+/* http模块数量 */
 ngx_uint_t   ngx_http_max_module;
 
 
@@ -145,6 +146,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     /* count the number of the http modules and set up their indices */
 
+    /* 扫描所有模块，获取http模块的数量 */
     ngx_http_max_module = 0;
     for (m = 0; ngx_modules[m]; m++) {
         if (ngx_modules[m]->type != NGX_HTTP_MODULE) {
@@ -157,6 +159,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     /* the http main_conf context, it is the same in the all http contexts */
 
+    /* 为main_conf分配ngx_http_max_module个指针空间 */
     ctx->main_conf = ngx_pcalloc(cf->pool,
                                  sizeof(void *) * ngx_http_max_module);
     if (ctx->main_conf == NULL) {
@@ -169,6 +172,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
      * the server{}s' srv_conf's
      */
 
+    /* 为srv_conf分配ngx_http_max_module个指针空间 */
     ctx->srv_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_http_max_module);
     if (ctx->srv_conf == NULL) {
         return NGX_CONF_ERROR;
@@ -179,7 +183,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
      * the http null loc_conf context, it is used to merge
      * the server{}s' loc_conf's
      */
-
+    /* 为loc_conf分配ngx_http_max_module个指针空间 */
     ctx->loc_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_http_max_module);
     if (ctx->loc_conf == NULL) {
         return NGX_CONF_ERROR;
@@ -199,6 +203,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         module = ngx_modules[m]->ctx;
         mi = ngx_modules[m]->ctx_index;
 
+        /* 为每个模块创建main_conf配置 */
         if (module->create_main_conf) {
             ctx->main_conf[mi] = module->create_main_conf(cf);
             if (ctx->main_conf[mi] == NULL) {
@@ -222,6 +227,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     pcf = *cf;
+    /* 设置配置文件的山下文 */
     cf->ctx = ctx;
 
     for (m = 0; ngx_modules[m]; m++) {
@@ -295,7 +301,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
     }
 
-
+    /* http各个处理阶段的初始化，只分配了内存 */
     if (ngx_http_init_phases(cf, cmcf) != NGX_OK) {
         return NGX_CONF_ERROR;
     }

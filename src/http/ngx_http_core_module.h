@@ -118,13 +118,13 @@ typedef struct {
 
 
 typedef enum {
-    NGX_HTTP_POST_READ_PHASE = 0,
+    NGX_HTTP_POST_READ_PHASE = 0,  /* 读取请求的阶段 */
 
-    NGX_HTTP_SERVER_REWRITE_PHASE,
+    NGX_HTTP_SERVER_REWRITE_PHASE, /* 这个阶段主要是处理全局的(server block)的rewrite */
 
-    NGX_HTTP_FIND_CONFIG_PHASE,
-    NGX_HTTP_REWRITE_PHASE,
-    NGX_HTTP_POST_REWRITE_PHASE,
+    NGX_HTTP_FIND_CONFIG_PHASE,   /* 根据url查找location */
+    NGX_HTTP_REWRITE_PHASE,            /* location级别的rewrite */
+    NGX_HTTP_POST_REWRITE_PHASE, /* server，location级别的rewrite都是在这个phase进行收尾工作的 */
 
     NGX_HTTP_PREACCESS_PHASE,
 
@@ -132,9 +132,9 @@ typedef enum {
     NGX_HTTP_POST_ACCESS_PHASE,
 
     NGX_HTTP_TRY_FILES_PHASE,
-    NGX_HTTP_CONTENT_PHASE,
+    NGX_HTTP_CONTENT_PHASE,          /* 生成http响应 */
 
-    NGX_HTTP_LOG_PHASE
+    NGX_HTTP_LOG_PHASE                     /* log模块 */
 } ngx_http_phases;
 
 typedef struct ngx_http_phase_handler_s  ngx_http_phase_handler_t;
@@ -143,14 +143,14 @@ typedef ngx_int_t (*ngx_http_phase_handler_pt)(ngx_http_request_t *r,
     ngx_http_phase_handler_t *ph);
 
 struct ngx_http_phase_handler_s {
-    ngx_http_phase_handler_pt  checker;
+    ngx_http_phase_handler_pt  checker;       /* 参数携带一个请求和结构自身 */
     ngx_http_handler_pt        handler;
     ngx_uint_t                 next;
 };
 
 
 typedef struct {
-    ngx_http_phase_handler_t  *handlers;
+    ngx_http_phase_handler_t  *handlers;  /* 是一个动态数组用来保存所有的ngx_http_phase_handler_t结构 */
     ngx_uint_t                 server_rewrite_index;
     ngx_uint_t                 location_rewrite_index;
 } ngx_http_phase_engine_t;
@@ -185,6 +185,7 @@ typedef struct {
 
     ngx_uint_t                 try_files;       /* unsigned  try_files:1 */
 
+    /* 请求的阶段处理数组 */
     ngx_http_phase_t           phases[NGX_HTTP_LOG_PHASE + 1];
 } ngx_http_core_main_conf_t;
 
