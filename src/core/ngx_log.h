@@ -56,10 +56,10 @@ struct ngx_log_s {
 
     time_t               disk_full_time;
 
-    ngx_log_handler_pt   handler;
+    ngx_log_handler_pt   handler;      /* 日志的回调处理函数 */
     void                *data;
 
-    ngx_log_writer_pt    writer;
+    ngx_log_writer_pt    writer;       /* 日志写回调 */
     void                *wdata;
 
     /*

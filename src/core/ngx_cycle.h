@@ -65,8 +65,8 @@ struct ngx_cycle_s {
 
     ngx_cycle_t              *old_cycle;
 
-    ngx_str_t                 conf_file;         /* 配置文件，如nginx.conf */
-    ngx_str_t                 conf_param;        /* 配置参数 */
+    ngx_str_t                 conf_file;         /* 配置文件路径nginx.conf 如conf/nginx.conf */
+    ngx_str_t                 conf_param;        /* 配置参数 ，默认情况下是没设置的 */
     ngx_str_t                 conf_prefix;       /* 配置前缀 */
     ngx_str_t                 prefix;            /* 前缀 */
     ngx_str_t                 lock_file;         /* 锁文件 */

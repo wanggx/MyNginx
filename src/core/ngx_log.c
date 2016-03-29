@@ -67,9 +67,9 @@ ngx_module_t  ngx_errlog_module = {
 };
 
 
-/* 全局的日志变量 */
+/* 全局的日志变量，file指针指向ngx_log_file */
 static ngx_log_t        ngx_log;
-/* 变量在ngx_log_init中初始化 */
+/* 变量在ngx_log_init中初始化为错误日志文件 */
 static ngx_open_file_t  ngx_log_file;
 ngx_uint_t              ngx_use_stderr = 1;
 
@@ -360,6 +360,7 @@ ngx_log_init(u_char *prefix)
         }
 
         if (plen) {
+            /* 安装路径+错误日志文件子路径，就是错误日志文件的绝对路径  */
             name = malloc(plen + nlen + 2);
             if (name == NULL) {
                 return NULL;

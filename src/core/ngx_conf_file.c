@@ -122,7 +122,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
     if (filename) {
 
         /* open configuration file */
-        /* 打开配置文件 */
+        /* 打开nginx.conf配置文件 */
         fd = ngx_open_file(filename->data, NGX_FILE_RDONLY, NGX_FILE_OPEN, 0);
         if (fd == NGX_INVALID_FILE) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, ngx_errno,
@@ -147,9 +147,11 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
             goto failed;
         }
 
+        /* 初始化buf的指针 */
         buf.pos = buf.start;
         buf.last = buf.start;
         buf.end = buf.last + NGX_CONF_BUFFER;
+        /* 缓存中值可以修改 */
         buf.temporary = 1;
 
         /* 设置配置文件的基本信息 */
@@ -177,6 +179,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
             /* 获取配置文件大小 */
             size = ngx_file_size(&cf->conf_file->file.info);
 
+            /* 在内存池中获取一个能够容下文件大小的空间 */
             tbuf = ngx_create_temp_buf(cf->cycle->pool, (size_t) size);
             if (tbuf == NULL) {
                 goto failed;

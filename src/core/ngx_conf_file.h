@@ -181,10 +181,10 @@ struct ngx_conf_s {
     ngx_cycle_t          *cycle;
     ngx_pool_t           *pool;
     ngx_pool_t           *temp_pool;
-    ngx_conf_file_t      *conf_file;  /* 配置文件指针 */
+    ngx_conf_file_t      *conf_file;  /* 指向nginx.conf配置文件指针 */
     ngx_log_t            *log;
 
-    void                 *ctx;  /* 配置上下文 */
+    void                 *ctx;  /* 配置上下文和cycle中的conf_ctx对应指向同一块内存 */
     ngx_uint_t            module_type;
     ngx_uint_t            cmd_type;
 

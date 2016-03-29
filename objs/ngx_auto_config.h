@@ -277,7 +277,7 @@
 #define NGX_ZLIB  1
 #endif
 
-
+/* nginx的安装路径 */
 #ifndef NGX_PREFIX
 #define NGX_PREFIX  "/usr/local/nginx/"
 #endif
@@ -287,17 +287,17 @@
 #define NGX_CONF_PREFIX  "conf/"
 #endif
 
-
+/* nginx可执行文件路径 */
 #ifndef NGX_SBIN_PATH
 #define NGX_SBIN_PATH  "sbin/nginx"
 #endif
 
-
+/* nginx配置文件 */
 #ifndef NGX_CONF_PATH
 #define NGX_CONF_PATH  "conf/nginx.conf"
 #endif
 
-
+/* nginx的pid文件 */
 #ifndef NGX_PID_PATH
 #define NGX_PID_PATH  "logs/nginx.pid"
 #endif
@@ -308,11 +308,12 @@
 #endif
 
 
+/* 错误日志文件 */
 #ifndef NGX_ERROR_LOG_PATH
 #define NGX_ERROR_LOG_PATH  "logs/error.log"
 #endif
 
-
+/* http日志记录文件 */
 #ifndef NGX_HTTP_LOG_PATH
 #define NGX_HTTP_LOG_PATH  "logs/access.log"
 #endif

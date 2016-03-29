@@ -25,7 +25,7 @@ static void ngx_signal_handler(int signo);
 static void ngx_process_get_status(void);
 static void ngx_unlock_mutexes(ngx_pid_t pid);
 
-
+/* 启动的参数个数和参数数组 */
 int              ngx_argc;
 char           **ngx_argv;
 char           **ngx_os_argv;

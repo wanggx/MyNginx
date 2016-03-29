@@ -32,7 +32,7 @@ ngx_uint_t             ngx_quiet_mode;
 static ngx_connection_t  dumb;
 /* STUB */
 
-/* 系统运行环境变量的初始化 */
+/* 系统cycle的初始化 */
 ngx_cycle_t *
 ngx_init_cycle(ngx_cycle_t *old_cycle)
 {
@@ -62,7 +62,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     ngx_time_update();
 
-
+    /* 获取老的日志 */
     log = old_cycle->log;
 
     /* 创建16kb大小的内存池 */
@@ -224,6 +224,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         module = ngx_modules[i]->ctx;
 
         if (module->create_conf) {
+            /* 分配配置的空间和部分数据的初始化 */
             rv = module->create_conf(cycle);
             if (rv == NULL) {
                 ngx_destroy_pool(pool);

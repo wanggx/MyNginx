@@ -165,7 +165,7 @@ ngx_uint_t          ngx_max_module;     /* 记录模块数 */
 static ngx_uint_t   ngx_show_help;
 static ngx_uint_t   ngx_show_version;
 static ngx_uint_t   ngx_show_configure;
-static u_char      *ngx_prefix;
+static u_char      *ngx_prefix;  /* nginx的安装路径 */
 static u_char      *ngx_conf_file;
 static u_char      *ngx_conf_params;
 static char        *ngx_signal;    /* 发送的信号 */
@@ -243,6 +243,7 @@ main(int argc, char *const *argv)
         return 1;
     }
 
+    /* 根据参数来处理一些路径问题，如果配置文件路径，安装路径等等 */
     if (ngx_process_options(&init_cycle) != NGX_OK) {
         return 1;
     }
@@ -312,6 +313,7 @@ main(int argc, char *const *argv)
 
     ngx_os_status(cycle->log);
 
+    /* 在这里又重新设置ngx_cycle的指针为cycle */
     ngx_cycle = cycle;
 
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
@@ -741,11 +743,12 @@ ngx_get_options(int argc, char *const *argv)
                 break;
 
             case 'p':
+                /* 如果-p后面不是空格则去-p后面的字符串 */
                 if (*p) {
                     ngx_prefix = p;
                     goto next;
                 }
-
+                /* 如果有空格，则取空格后面的一个字符串  */
                 if (argv[++i]) {
                     ngx_prefix = (u_char *) argv[i];
                     goto next;
@@ -768,7 +771,15 @@ ngx_get_options(int argc, char *const *argv)
                 ngx_log_stderr(0, "option \"-c\" requires file name");
                 return NGX_ERROR;
 
-            case 'g':
+            case 'g':         /* 和-p参数一样的解析方法 */
+                /* -g参数的约束条件是指定的配置项不能与默认路径下的nginx.conf中的配置项相冲突，
+                  * 否则无法启动。就像上例那样，类似这样的配置项：pid logs/nginx.pid， 
+                  * 是不能存在于默认的nginx.conf中的。 
+                  * 另一个约束条件是，以-g方式启动的Nginx服务执行其他命令行时，需要把-g参数也带上，
+                  * 否则可能出现配置项不匹配的情形。例如，如果要停止Nginx服务，那么需要执行下面代码：
+                  * /usr/local/nginx/sbin/nginx -g "pid /var/nginx/test.pid;" -s stop 
+                  * 如果不带上-g "pid /var/nginx/test.pid;"，那么找不到pid文件，也会出现无法停止服务的情况。 
+                  */
                 if (*p) {
                     ngx_conf_params = p;
                     goto next;
@@ -869,7 +880,9 @@ ngx_process_options(ngx_cycle_t *cycle)
     u_char  *p;
     size_t   len;
 
-    /* 如果设置了配置前缀，没有则根据当前进程的目录来计算 */
+    /* 如果设置了配置前缀，没有则根据当前进程的目录来计算
+      * 如果仅仅是执行./configure命令，则ngx_prefix变量此时应该为null
+      */
     if (ngx_prefix) {
         /* 获取前缀长度 */
         len = ngx_strlen(ngx_prefix);
@@ -885,7 +898,9 @@ ngx_process_options(ngx_cycle_t *cycle)
             p[len++] = '/';
         }
 
-        /* 设置配置前缀和前缀 */
+        /* 设置配置前缀和前缀，如果在./configure命令的时候设置了安装前缀，
+          * 则conf_prefix和prefix变量值相同 
+          */
         cycle->conf_prefix.len = len;
         cycle->conf_prefix.data = p;
         cycle->prefix.len = len;
@@ -916,7 +931,10 @@ ngx_process_options(ngx_cycle_t *cycle)
         cycle->prefix.data = p;
 
 #else
-
+        /* 在正常情况下(./configure)conf_prefix和prefix的值是不同的
+          * conf_prefix指向conf/路径 
+          * prefix指向安装路径 
+          */
 #ifdef NGX_CONF_PREFIX
         ngx_str_set(&cycle->conf_prefix, NGX_CONF_PREFIX);
 #else
@@ -935,7 +953,7 @@ ngx_process_options(ngx_cycle_t *cycle)
         ngx_str_set(&cycle->conf_file, NGX_CONF_PATH);
     }
 
-    /* 根据前缀来确定配置文件的路径 */
+    /* 根据前缀来确定nginx.conf配置文件的绝对路径 */
     if (ngx_conf_full_name(cycle, &cycle->conf_file, 0) != NGX_OK) {
         return NGX_ERROR;
     }
