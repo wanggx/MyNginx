@@ -185,10 +185,13 @@ struct ngx_conf_s {
     ngx_log_t            *log;
 
     void                 *ctx;  /* 配置上下文和cycle中的conf_ctx对应指向同一块内存 */
-    ngx_uint_t            module_type;
+    ngx_uint_t            module_type;            /* 设置配置文件所代表的模块类型 */
     ngx_uint_t            cmd_type;
 
-    ngx_conf_handler_pt   handler;
+     /* 如在ngx_conf_parse函数中，如果没有指定配置的回调处理，
+       * 则会默认调用ngx_conf_handler函数
+       */
+    ngx_conf_handler_pt   handler;           
     char                 *handler_conf;
 };
 

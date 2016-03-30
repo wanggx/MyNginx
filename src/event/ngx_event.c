@@ -736,6 +736,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         next = &c[i];
     } while (i);
 
+    /* 刚开始设置所有的连接为空闲连接 */
     cycle->free_connections = next;
     cycle->free_connection_n = cycle->connection_n;
 

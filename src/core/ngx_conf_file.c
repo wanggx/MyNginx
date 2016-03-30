@@ -259,6 +259,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 
         /* rc == NGX_OK || rc == NGX_CONF_BLOCK_START */
 
+        /* 如果配置文件处理句柄不为空，则使用配置文件携带的句柄，否则使用ngx_conf_handler */
         if (cf->handler) {
 
             /*
@@ -323,7 +324,7 @@ done:
     return NGX_CONF_OK;
 }
 
-
+/* 默认的配置文件处理句柄 */
 static ngx_int_t
 ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 {
@@ -333,6 +334,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
     ngx_str_t      *name;
     ngx_command_t  *cmd;
 
+    /* 从配置文件中读取的数据，然后在下面进行分析来确定调用某个命令  */
     name = cf->args->elts;
 
     found = 0;
@@ -344,12 +346,15 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             continue;
         }
 
+        /* 循环处理模块中的所有命令 */
         for ( /* void */ ; cmd->name.len; cmd++) {
 
+            /* 首先判断字符串长度 */
             if (name->len != cmd->name.len) {
                 continue;
             }
 
+            /* 和命令的名称进行对比，不相同则不执行这个命令  */
             if (ngx_strcmp(name->data, cmd->name.data) != 0) {
                 continue;
             }

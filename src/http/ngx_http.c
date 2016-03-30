@@ -248,6 +248,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     cf->module_type = NGX_HTTP_MODULE;
     cf->cmd_type = NGX_HTTP_MAIN_CONF;
+    /* 注意这里可能设置cf的配置文件处理回调 */
     rv = ngx_conf_parse(cf, NULL);
 
     if (rv != NGX_CONF_OK) {
