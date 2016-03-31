@@ -215,22 +215,26 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     ngx_strlow(cycle->hostname.data, (u_char *) hostname, cycle->hostname.len);
 
-
+	/* 创建核心模块的配置的内存空间 */
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->type != NGX_CORE_MODULE) {
             continue;
         }
 
+		/* 获取核心模块的模块上下文，
+		 * 从这里就可以知道核心模块的上下文结构是相同的
+		 */
         module = ngx_modules[i]->ctx;
 
         if (module->create_conf) {
-            /* 分配配置的空间和部分数据的初始化 */
+            /* 分配配置的空间和部分数据的初始化,返回ngx_core_conf_t结构 */
+			
             rv = module->create_conf(cycle);
             if (rv == NULL) {
                 ngx_destroy_pool(pool);
                 return NULL;
             }
-            /* 配置模块文件的上下文 */
+            /* 配置模块文件的配置上下文 */
             cycle->conf_ctx[ngx_modules[i]->index] = rv;
         }
     }

@@ -73,7 +73,7 @@ struct ngx_cycle_s {
     ngx_str_t                 hostname;          /* 主机名 */
 };
 
-
+/* 核心模块的配置上下文 */
 typedef struct {
      ngx_flag_t               daemon;
      ngx_flag_t               master;

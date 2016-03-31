@@ -1,21 +1,99 @@
----- ngx_test_config Matches (20 in 5 files) ----
-Nginx.c (core):        if (!ngx_test_config) {
-Nginx.c (core):        if (ngx_test_config) {
-Nginx.c (core):    if (ngx_test_config) {
-Nginx.c (core):                ngx_test_config = 1;
-Nginx.c (core):                ngx_test_config = 1;
-Nginx.c (core):    if (ngx_test_config) {
-Ngx_connection.c (core):                if (err != NGX_EADDRINUSE || !ngx_test_config) {
-Ngx_connection.c (core):                if (!ngx_test_config) {
-Ngx_connection.c (core):                if (ngx_test_config) {
-Ngx_connection.c (core):                if (err != NGX_EADDRINUSE || !ngx_test_config) {
-Ngx_connection.c (core):                if (!ngx_test_config) {
-Ngx_cycle.c (core):ngx_uint_t             ngx_test_config;   /* 是否需要测试配置文件 */
-Ngx_cycle.c (core):    if (ngx_test_config && !ngx_quiet_mode) {
-Ngx_cycle.c (core):    if (ngx_test_config) {
-Ngx_cycle.c (core):    if (!ngx_test_config) {
-Ngx_cycle.c (core):    if (ngx_test_config) {
-Ngx_cycle.c (core):    create = ngx_test_config ? NGX_FILE_CREATE_OR_OPEN : NGX_FILE_TRUNCATE;
-Ngx_cycle.c (core):    if (!ngx_test_config) {
-Ngx_cycle.h (core):extern ngx_uint_t             ngx_test_config;
-Ngx_event.c (event):    if (!ngx_test_config && ngx_process <= NGX_PROCESS_MASTER) {
+---- ctx_index Matches (98 in 24 files) ----
+Ngx_conf_file.c (core):                    conf = confp[ngx_modules[i]->ctx_index];
+Ngx_conf_file.h (core):    ngx_uint_t            ctx_index;  /* 表示当前模块在同类模块中的序号 */
+Ngx_event.c (event):    ecf = (*cf)[ngx_event_core_module.ctx_index];
+Ngx_event.c (event):        if (ngx_modules[m]->ctx_index != ecf->use) {
+Ngx_event.c (event):        ngx_modules[i]->ctx_index = ngx_event_max_module++;
+Ngx_event.c (event):            (*ctx)[ngx_modules[i]->ctx_index] = m->create_conf(cf->cycle);
+Ngx_event.c (event):            if ((*ctx)[ngx_modules[i]->ctx_index] == NULL) {
+Ngx_event.c (event):            rv = m->init_conf(cf->cycle, (*ctx)[ngx_modules[i]->ctx_index]);
+Ngx_event.c (event):                ecf->use = ngx_modules[m]->ctx_index;
+Ngx_event.c (event):    ngx_conf_init_uint_value(ecf->use, module->ctx_index);
+Ngx_event.h (event):             (*(ngx_get_conf(conf_ctx, ngx_events_module))) [module.ctx_index];
+Ngx_http.c (http):    ngx_uint_t ctx_index);
+Ngx_http.c (http):    ngx_uint_t ctx_index);
+Ngx_http.c (http):        ngx_modules[m]->ctx_index = ngx_http_max_module++;
+Ngx_http.c (http):        mi = ngx_modules[m]->ctx_index;
+Ngx_http.c (http):    cmcf = ctx->main_conf[ngx_http_core_module.ctx_index];
+Ngx_http.c (http):        mi = ngx_modules[m]->ctx_index;
+Ngx_http.c (http):        clcf = cscfp[s]->ctx->loc_conf[ngx_http_core_module.ctx_index];
+Ngx_http.c (http):    ngx_http_module_t *module, ngx_uint_t ctx_index)
+Ngx_http.c (http):            rv = module->merge_srv_conf(cf, saved.srv_conf[ctx_index],
+Ngx_http.c (http):                                        cscfp[s]->ctx->srv_conf[ctx_index]);
+Ngx_http.c (http):            rv = module->merge_loc_conf(cf, saved.loc_conf[ctx_index],
+Ngx_http.c (http):                                        cscfp[s]->ctx->loc_conf[ctx_index]);
+Ngx_http.c (http):            clcf = cscfp[s]->ctx->loc_conf[ngx_http_core_module.ctx_index];
+Ngx_http.c (http):                                          module, ctx_index);
+Ngx_http.c (http):    void **loc_conf, ngx_http_module_t *module, ngx_uint_t ctx_index)
+Ngx_http.c (http):        rv = module->merge_loc_conf(cf, loc_conf[ctx_index],
+Ngx_http.c (http):                                    clcf->loc_conf[ctx_index]);
+Ngx_http.c (http):                                      module, ctx_index);
+Ngx_http.c (http):    clcf = cscf->ctx->loc_conf[ngx_http_core_module.ctx_index];
+Ngx_http.h (http):#define ngx_http_get_module_ctx(r, module)  (r)->ctx[module.ctx_index]
+Ngx_http.h (http):#define ngx_http_set_ctx(r, c, module)      r->ctx[module.ctx_index] = c;
+Ngx_http_config.h (http):    (r)->main_conf[module.ctx_index]
+Ngx_http_config.h (http):#define ngx_http_get_module_srv_conf(r, module)  (r)->srv_conf[module.ctx_index]
+Ngx_http_config.h (http):#define ngx_http_get_module_loc_conf(r, module)  (r)->loc_conf[module.ctx_index]
+Ngx_http_config.h (http):    ((ngx_http_conf_ctx_t *) cf->ctx)->main_conf[module.ctx_index]
+Ngx_http_config.h (http):    ((ngx_http_conf_ctx_t *) cf->ctx)->srv_conf[module.ctx_index]
+Ngx_http_config.h (http):    ((ngx_http_conf_ctx_t *) cf->ctx)->loc_conf[module.ctx_index]
+Ngx_http_config.h (http):            ->main_conf[module.ctx_index]:                                    \
+Ngx_http_core_module.c (http):            ctx->srv_conf[ngx_modules[i]->ctx_index] = mconf;
+Ngx_http_core_module.c (http):            ctx->loc_conf[ngx_modules[i]->ctx_index] = mconf;
+Ngx_http_core_module.c (http):    cscf = ctx->srv_conf[ngx_http_core_module.ctx_index];
+Ngx_http_core_module.c (http):    cmcf = ctx->main_conf[ngx_http_core_module.ctx_index];
+Ngx_http_core_module.c (http):            ctx->loc_conf[ngx_modules[i]->ctx_index] =
+Ngx_http_core_module.c (http):            if (ctx->loc_conf[ngx_modules[i]->ctx_index] == NULL) {
+Ngx_http_core_module.c (http):    clcf = ctx->loc_conf[ngx_http_core_module.ctx_index];
+Ngx_http_core_module.c (http):    pclcf = pctx->loc_conf[ngx_http_core_module.ctx_index];
+Ngx_http_core_module.c (http):            ctx->loc_conf[ngx_modules[i]->ctx_index] = mconf;
+Ngx_http_core_module.c (http):    clcf = ctx->loc_conf[ngx_http_core_module.ctx_index];
+Ngx_http_rewrite_module.c (http\modules):            ctx->loc_conf[ngx_modules[i]->ctx_index] = mconf;
+Ngx_http_rewrite_module.c (http\modules):    pclcf = pctx->loc_conf[ngx_http_core_module.ctx_index];
+Ngx_http_rewrite_module.c (http\modules):    clcf = ctx->loc_conf[ngx_http_core_module.ctx_index];
+Ngx_http_rewrite_module.c (http\modules):    nlcf = ctx->loc_conf[ngx_http_rewrite_module.ctx_index];
+Ngx_http_special_response.c (http):        ctx = r->ctx[m->ctx_index];
+Ngx_http_special_response.c (http):        r->ctx[m->ctx_index] = ctx;
+Ngx_http_ssl_module.c (http\modules):        sscf = cscfp[s]->ctx->srv_conf[ngx_http_ssl_module.ctx_index];
+Ngx_http_ssl_module.c (http\modules):        clcf = cscfp[s]->ctx->loc_conf[ngx_http_core_module.ctx_index];
+Ngx_http_upstream.c (http):    ctx->srv_conf[ngx_http_upstream_module.ctx_index] = uscf;
+Ngx_http_upstream.c (http):            ctx->srv_conf[ngx_modules[m]->ctx_index] = mconf;
+Ngx_http_upstream.c (http):            ctx->loc_conf[ngx_modules[m]->ctx_index] = mconf;
+Ngx_http_upstream.h (http):    uscf->srv_conf[module.ctx_index]
+Ngx_mail.c (mail):        ngx_modules[m]->ctx_index = ngx_mail_max_module++;
+Ngx_mail.c (mail):        mi = ngx_modules[m]->ctx_index;
+Ngx_mail.c (mail):    cmcf = ctx->main_conf[ngx_mail_core_module.ctx_index];
+Ngx_mail.c (mail):        mi = ngx_modules[m]->ctx_index;
+Ngx_mail.c (mail):            cscf = addr->opt.ctx->srv_conf[ngx_mail_core_module.ctx_index];
+Ngx_mail.h (mail):#define ngx_mail_get_module_ctx(s, module)     (s)->ctx[module.ctx_index]
+Ngx_mail.h (mail):#define ngx_mail_set_ctx(s, c, module)         s->ctx[module.ctx_index] = c;
+Ngx_mail.h (mail):#define ngx_mail_delete_ctx(s, module)         s->ctx[module.ctx_index] = NULL;
+Ngx_mail.h (mail):    (s)->main_conf[module.ctx_index]
+Ngx_mail.h (mail):#define ngx_mail_get_module_srv_conf(s, module)  (s)->srv_conf[module.ctx_index]
+Ngx_mail.h (mail):    ((ngx_mail_conf_ctx_t *) cf->ctx)->main_conf[module.ctx_index]
+Ngx_mail.h (mail):    ((ngx_mail_conf_ctx_t *) cf->ctx)->srv_conf[module.ctx_index]
+Ngx_mail_core_module.c (mail):            ctx->srv_conf[ngx_modules[m]->ctx_index] = mconf;
+Ngx_mail_core_module.c (mail):    cscf = ctx->srv_conf[ngx_mail_core_module.ctx_index];
+Ngx_mail_core_module.c (mail):    cmcf = ctx->main_conf[ngx_mail_core_module.ctx_index];
+Ngx_poll_module.c (event\modules):    if (ecf->use != ngx_poll_module.ctx_index) {
+Ngx_select_module.c (event\modules):    if (ecf->use != ngx_select_module.ctx_index) {
+Ngx_stream.c (stream):        ngx_modules[m]->ctx_index = ngx_stream_max_module++;
+Ngx_stream.c (stream):        mi = ngx_modules[m]->ctx_index;
+Ngx_stream.c (stream):    cmcf = ctx->main_conf[ngx_stream_core_module.ctx_index];
+Ngx_stream.c (stream):        mi = ngx_modules[m]->ctx_index;
+Ngx_stream.c (stream):            cscf = addr->opt.ctx->srv_conf[ngx_stream_core_module.ctx_index];
+Ngx_stream.h (stream):#define ngx_stream_get_module_ctx(s, module)   (s)->ctx[module.ctx_index]
+Ngx_stream.h (stream):#define ngx_stream_set_ctx(s, c, module)       s->ctx[module.ctx_index] = c;
+Ngx_stream.h (stream):#define ngx_stream_delete_ctx(s, module)       s->ctx[module.ctx_index] = NULL;
+Ngx_stream.h (stream):    (s)->main_conf[module.ctx_index]
+Ngx_stream.h (stream):    (s)->srv_conf[module.ctx_index]
+Ngx_stream.h (stream):    ((ngx_stream_conf_ctx_t *) cf->ctx)->main_conf[module.ctx_index]
+Ngx_stream.h (stream):    ((ngx_stream_conf_ctx_t *) cf->ctx)->srv_conf[module.ctx_index]
+Ngx_stream.h (stream):            ->main_conf[module.ctx_index]:                                     \
+Ngx_stream_core_module.c (stream):            ctx->srv_conf[ngx_modules[m]->ctx_index] = mconf;
+Ngx_stream_core_module.c (stream):    cscf = ctx->srv_conf[ngx_stream_core_module.ctx_index];
+Ngx_stream_core_module.c (stream):    cmcf = ctx->main_conf[ngx_stream_core_module.ctx_index];
+Ngx_stream_upstream.c (stream):    ctx->srv_conf[ngx_stream_upstream_module.ctx_index] = uscf;
+Ngx_stream_upstream.c (stream):            ctx->srv_conf[ngx_modules[m]->ctx_index] = mconf;
+Ngx_stream_upstream.h (stream):    uscf->srv_conf[module.ctx_index]
+Ngx_win32_select_module.c (event\modules):    if (ecf->use != ngx_select_module.ctx_index) {

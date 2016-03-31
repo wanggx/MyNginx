@@ -145,7 +145,7 @@ struct ngx_module_s {
     uintptr_t             spare_hook7;
 };
 
-
+/* 核心模块的上下文结构 */
 typedef struct {
     ngx_str_t             name;
     /* 负责创建配置的内存空间 */
@@ -176,7 +176,7 @@ typedef char *(*ngx_conf_handler_pt)(ngx_conf_t *cf,
 
 struct ngx_conf_s {
     char                 *name;
-    ngx_array_t          *args;   /* 读取的配置项的值 */
+    ngx_array_t          *args;   /* 读取的配置项的值，读取的多个token存放在args中 */
 
     ngx_cycle_t          *cycle;
     ngx_pool_t           *pool;
@@ -184,7 +184,7 @@ struct ngx_conf_s {
     ngx_conf_file_t      *conf_file;  /* 指向nginx.conf配置文件指针 */
     ngx_log_t            *log;
 
-    void                 *ctx;  /* 配置上下文和cycle中的conf_ctx对应指向同一块内存 */
+    void                 *ctx;    /* 配置上下文和cycle中的conf_ctx对应指向同一块内存 */
     ngx_uint_t            module_type;            /* 设置配置文件所代表的模块类型 */
     ngx_uint_t            cmd_type;
 
