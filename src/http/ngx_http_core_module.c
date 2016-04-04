@@ -170,7 +170,7 @@ static ngx_str_t  ngx_http_gzip_private = ngx_string("private");
 
 #endif
 
-
+/* http核心模块的命令列表 */
 static ngx_command_t  ngx_http_core_commands[] = {
 
     { ngx_string("variables_hash_max_size"),
@@ -2933,7 +2933,7 @@ ngx_http_get_forwarded_addr_internal(ngx_http_request_t *r, ngx_addr_t *addr,
     return NGX_DECLINED;
 }
 
-
+/* 解析http模块的server */
 static char *
 ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 {
@@ -3019,6 +3019,7 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     cf->ctx = ctx;
     cf->cmd_type = NGX_HTTP_SRV_CONF;
 
+    /* 再次循环调用 */
     rv = ngx_conf_parse(cf, NULL);
 
     *cf = pcf;
@@ -3061,6 +3062,7 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 }
 
 
+/* http模块location的解析 */
 static char *
 ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 {
@@ -3959,7 +3961,7 @@ ngx_http_core_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     return NGX_CONF_OK;
 }
 
-
+/* http监听套接口的解析 */
 static char *
 ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -4326,7 +4328,7 @@ ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_ERROR;
 }
 
-
+/* http模块服务器名称的解析 */
 static char *
 ngx_http_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {

@@ -61,7 +61,11 @@ ngx_module_t *ngx_modules[] = {
     &ngx_regex_module,                    /* NGX_CORE_MODULE */
     &ngx_events_module,                 /* NGX_CORE_MODULE */
     &ngx_event_core_module,          /* NGX_EVENT_MODULE */
-    &ngx_kqueue_module,                 /* NGX_EVENT_MODULE */
+    #if 1                                           /* 如果是在linux下则configure时生成的是ngx_epoll_module模型 */
+    &ngx_epoll_module                       /* NGX_EVENT_MODULE */
+    #else                                            /* mac下configure生成的是ngx_kqueue_module模型 */
+    /*&ngx_kqueue_module,  */               /* NGX_EVENT_MODULE */
+    #endif
     &ngx_http_module,                     /* NGX_CORE_MODULE */
     &ngx_http_core_module,             /* NGX_HTTP_MODULE */
     &ngx_http_log_module,               /* NGX_HTTP_MODULE */

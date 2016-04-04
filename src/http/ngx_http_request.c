@@ -360,7 +360,7 @@ ngx_http_init_connection(ngx_connection_t *c)
             ngx_post_event(rev, &ngx_posted_events);
             return;
         }
-        /* 代表有数据可以读了，则理解进行处理 */
+        /* 代表有数据可以读了，则立即进行处理 */
         rev->handler(rev);
         return;
     }
