@@ -2451,6 +2451,7 @@ ngx_http_variables_add_core_vars(ngx_conf_t *cf)
     ngx_http_variable_t        *cv, *v;
     ngx_http_core_main_conf_t  *cmcf;
 
+    /* 得到模块的main_conf */
     cmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module);
 
     cmcf->variables_keys = ngx_pcalloc(cf->temp_pool,

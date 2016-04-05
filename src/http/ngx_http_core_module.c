@@ -2953,6 +2953,9 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         return NGX_CONF_ERROR;
     }
 
+    /* 为ctx分配空间，将ctx->main_conf指向ngx_http_module的config信息的main_conf，
+      * 这样就保证了在解析http块、server块和location块时，使用的main_conf是同一份。
+      */
     http_ctx = cf->ctx;
     ctx->main_conf = http_ctx->main_conf;
 
@@ -2970,6 +2973,21 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         return NGX_CONF_ERROR;
     }
 
+    /* 保证解析的main_conf是同一份，而srv_conf和loc_conf是复制的一份
+      * 调用所有模块的create_srv_conf和create_loc_conf回调函数创建模块的srv config和loc config， 
+      * 并更新ctx的srv_conf和loc_conf数组。这里， 
+      * 大家可能还记得在解析http块的ngx_http_block函数中， 
+      * 已经为ngx_http_conf_ctx_t分配空间， 
+      * 并调用所有http module的回调函数创建main、srv和loc配置结构。 
+      * 而这里在解析server块时，又重新创建了一个ngx_http_conf_ctx_t结构， 
+      * 并创建所有http module的srv和loc配置结构。 
+      * 大家可能很纳闷，为什么要重复分配这个空间呢？ 
+      * 实际上，这里是为了处理有些指令是可以同时出现在http块和server块中的情况， 
+      * 如果在server块中没有定义这个指令则会从http块继承， 
+      * 否则会直接覆盖http块中的定义。具体srv和loc块的合并在后续ngx_http_block中会处理。 
+      * 后面的location块的解析时，也同样会分配ngx_http_conf_ctx_t的内存， 
+      * 不过只会创建所有http module的loc的配置结构。
+      */
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->type != NGX_HTTP_MODULE) {
             continue;
@@ -2999,17 +3017,19 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 
     /* the server configuration context */
 
+    /* cscf得到的只是一个默认值，通过create_srv_conf创建的 */
     cscf = ctx->srv_conf[ngx_http_core_module.ctx_index];
     cscf->ctx = ctx;
 
-
     cmcf = ctx->main_conf[ngx_http_core_module.ctx_index];
 
+    /* 新增一个ngx_http_core_srv_conf_t结构 */
     cscfp = ngx_array_push(&cmcf->servers);
     if (cscfp == NULL) {
         return NGX_CONF_ERROR;
     }
 
+    /* 设置新增加的元素内容 */
     *cscfp = cscf;
 
 
@@ -3023,8 +3043,17 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     /* 再次循环调用 */
     rv = ngx_conf_parse(cf, NULL);
 
+    /* 恢复原来数据 */
     *cf = pcf;
 
+    /* 这段代码是用于设置默认的监听socket，
+      *正常可以通过listen指令指定监听的端口、ip地址等信息，
+      *如果server块中没有指定listen指令，
+      * 则这里会设置成默认监听80端口或8000端口，
+      * 并且接收的ip地址是INADDR_ANY，也就是说接收任意网卡上的连接 
+      * ngx_http_add_listen定义在ngx_http.c中，用于添加监听的socket 
+      * 后面在介绍nginx的事件模型初始化时会再详细介绍。
+      */
     if (rv == NGX_CONF_OK && !cscf->listen) {
         ngx_memzero(&lsopt, sizeof(ngx_http_listen_opt_t));
 
@@ -3036,6 +3065,7 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 #else
         sin->sin_port = htons((getuid() == 0) ? 80 : 8000);
 #endif
+        /* 监听任何地址 */
         sin->sin_addr.s_addr = INADDR_ANY;
 
         lsopt.socklen = sizeof(struct sockaddr_in);
@@ -3054,6 +3084,7 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         (void) ngx_sock_ntop(&lsopt.u.sockaddr, lsopt.socklen, lsopt.addr,
                              NGX_SOCKADDR_STRLEN, 1);
 
+        /* 添加监听套接字 */
         if (ngx_http_add_listen(cf, cscf, &lsopt) != NGX_OK) {
             return NGX_CONF_ERROR;
         }
@@ -3085,9 +3116,11 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     }
 
     pctx = cf->ctx;
+    /* 依然指向同一份main_conf 和同一份srv_conf */
     ctx->main_conf = pctx->main_conf;
     ctx->srv_conf = pctx->srv_conf;
 
+    /* 重新生成一份loc_conf */
     ctx->loc_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_http_max_module);
     if (ctx->loc_conf == NULL) {
         return NGX_CONF_ERROR;
@@ -3114,30 +3147,34 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 
     value = cf->args->elts;
 
+    /* 分析location的匹配规则 */
     if (cf->args->nelts == 3) {
 
         len = value[1].len;
         mod = value[1].data;
         name = &value[2];
 
+        /* 字符串精确匹配 */
         if (len == 1 && mod[0] == '=') {
 
             clcf->name = *name;
             clcf->exact_match = 1;
 
         } else if (len == 2 && mod[0] == '^' && mod[1] == '~') {
-
+            /* 前缀匹配 */
             clcf->name = *name;
             clcf->noregex = 1;
 
         } else if (len == 1 && mod[0] == '~') {
 
+            /* 区分大小写正则匹配 */
             if (ngx_http_core_regex_location(cf, clcf, name, 0) != NGX_OK) {
                 return NGX_CONF_ERROR;
             }
 
         } else if (len == 2 && mod[0] == '~' && mod[1] == '*') {
 
+            /* 不区分大小写正则匹配 */
             if (ngx_http_core_regex_location(cf, clcf, name, 1) != NGX_OK) {
                 return NGX_CONF_ERROR;
             }
@@ -3194,6 +3231,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         }
     }
 
+    /* 获取ngx_http_core_module模块的location配置 */
     pclcf = pctx->loc_conf[ngx_http_core_module.ctx_index];
 
     if (cf->cmd_type == NGX_HTTP_LOC_CONF) {
@@ -3244,6 +3282,8 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         }
     }
 
+    /*把这个location的配置添加到locations队列里， 
+      *后面会依据这个队列将所有的静态location组织成树结构 */
     if (ngx_http_add_location(cf, &pclcf->locations, clcf) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -3252,6 +3292,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     cf->ctx = ctx;
     cf->cmd_type = NGX_HTTP_LOC_CONF;
 
+    /* 继续用来解析location块内的指令，如proxy_pass等等 */
     rv = ngx_conf_parse(cf, NULL);
 
     *cf = save;

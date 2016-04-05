@@ -66,7 +66,7 @@ ngx_module_t *ngx_modules[] = {
     #else                                            /* mac下configure生成的是ngx_kqueue_module模型 */
     /*&ngx_kqueue_module,  */               /* NGX_EVENT_MODULE */
     #endif
-    &ngx_http_module,                     /* NGX_CORE_MODULE */
+    &ngx_http_module,                     /* NGX_CORE_MODULE */ /* 该模块负责初始化其他所有http模块 */
     &ngx_http_core_module,             /* NGX_HTTP_MODULE */
     &ngx_http_log_module,               /* NGX_HTTP_MODULE */
     &ngx_http_upstream_module,      /* NGX_HTTP_MODULE */

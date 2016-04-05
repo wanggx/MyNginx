@@ -157,7 +157,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         if (ngx_modules[m]->type != NGX_HTTP_MODULE) {
             continue;
         }
-
+        /* 此处设定http模块中同类模块的缩影 */
         ngx_modules[m]->ctx_index = ngx_http_max_module++;
     }
 
@@ -200,6 +200,9 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
      * of the all http modules
      */
 
+    /* 此时ngx_http_conf_ctx_t中的二维数组中的第一维已经分配了内存，
+      * 该for循环用来初始化并给第二维数组来分配内存
+      */
     for (m = 0; ngx_modules[m]; m++) {
         if (ngx_modules[m]->type != NGX_HTTP_MODULE) {
             continue;
@@ -210,7 +213,9 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
         /* 为每个模块创建main_conf配置 */
         if (module->create_main_conf) {
-			/* 返回ngx_http_core_main_conf_t结构 */
+        /* 注意这里返回的配置结构，会根据不同的模块有所差别，
+          * 也就是不同模块，配置结构不同，下面的srv_conf，loc_conf也是同样的道理
+          */
             ctx->main_conf[mi] = module->create_main_conf(cf);
             if (ctx->main_conf[mi] == NULL) {
                 return NGX_CONF_ERROR;
@@ -237,6 +242,9 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     /* 设置配置文件的山下文，此时ngx_conf_t中的ctx指向的就是http模块配置上下文 */
     cf->ctx = ctx;
 
+    /* 对http模块进行配置前处理，因为此时仅仅是分配了内存，
+      * 还没有开始解析http模块的配置
+      */
     for (m = 0; ngx_modules[m]; m++) {
         if (ngx_modules[m]->type != NGX_HTTP_MODULE) {
             continue;
@@ -880,7 +888,11 @@ ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
 {
     ngx_http_location_queue_t  *lq;
 
+    /* 如果队列为空，则给队列进行初始化 */
     if (*locations == NULL) {
+        /* 注意queue成员是ngx_http_location_queue_t结构的第一个成员，
+          * 内存对齐
+          */
         *locations = ngx_palloc(cf->temp_pool,
                                 sizeof(ngx_http_location_queue_t));
         if (*locations == NULL) {
@@ -890,6 +902,7 @@ ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
         ngx_queue_init(*locations);
     }
 
+    /* 分配一个ngx_http_location_queue_t结构 */
     lq = ngx_palloc(cf->temp_pool, sizeof(ngx_http_location_queue_t));
     if (lq == NULL) {
         return NGX_ERROR;
@@ -913,8 +926,10 @@ ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
     lq->file_name = cf->conf_file->file.name.data;
     lq->line = cf->conf_file->line;
 
+    /* 初始化队列 */
     ngx_queue_init(&lq->list);
 
+    /* 将location插入到lq的queue队列末尾 */
     ngx_queue_insert_tail(*locations, &lq->queue);
 
     return NGX_OK;

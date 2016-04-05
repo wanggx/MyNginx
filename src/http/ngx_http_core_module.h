@@ -195,7 +195,7 @@ typedef struct {
     ngx_array_t                 server_names;
 
     /* server ctx */
-    ngx_http_conf_ctx_t        *ctx;
+    ngx_http_conf_ctx_t        *ctx;          /* 指向的是http模块的配置上下文 */
 
     ngx_str_t                   server_name;   /* 相当于一个域名如 www.baidu.com */
 
@@ -324,7 +324,9 @@ typedef struct {
 } ngx_http_try_file_t;
 
 
+/* 核心location配置模块 */
 struct ngx_http_core_loc_conf_s {
+    /* 匹配的名称 */
     ngx_str_t     name;          /* location name */
 
 #if (NGX_PCRE)
@@ -335,7 +337,7 @@ struct ngx_http_core_loc_conf_s {
     unsigned      lmt_excpt:1;
     unsigned      named:1;
 
-    unsigned      exact_match:1;
+    unsigned      exact_match:1;  /* 是否精确匹配 */
     unsigned      noregex:1;
 
     unsigned      auto_redirect:1;
@@ -352,6 +354,7 @@ struct ngx_http_core_loc_conf_s {
 #endif
 
     /* pointer to the modules' loc_conf */
+    /* 指向ngx_http_conf_ctx_t中的loc_conf */
     void        **loc_conf;
 
     uint32_t      limit_except;
@@ -458,14 +461,14 @@ struct ngx_http_core_loc_conf_s {
     ngx_uint_t    types_hash_max_size;
     ngx_uint_t    types_hash_bucket_size;
 
-    ngx_queue_t  *locations;
+    ngx_queue_t  *locations;  /* 其实就是一个ngx_http_location_queue_t队列 */
 
 #if 0
     ngx_http_core_loc_conf_t  *prev_location;
 #endif
 };
 
-
+/* location的队列 */
 typedef struct {
     ngx_queue_t                      queue;
     ngx_http_core_loc_conf_t        *exact;
