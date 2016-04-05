@@ -339,6 +339,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 
     found = 0;
 
+    /* 进行所有的模块扫描 */
     for (i = 0; ngx_modules[i]; i++) {
 
         cmd = ngx_modules[i]->commands;
@@ -361,6 +362,9 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 
             found = 1;
 
+            /* 注意这一句很重要，如果不是NGX_CONF_MODULE模块，
+              * 且满足第二个条件，则不会执行模块的命令
+              */
             if (ngx_modules[i]->type != NGX_CONF_MODULE
                 && ngx_modules[i]->type != cf->module_type)
             {

@@ -3062,7 +3062,9 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 }
 
 
-/* http模块location的解析 */
+/* http模块location的解析
+  * location也是一个复杂配置项，所以最后也会调用到ngx_conf_parse函数当中
+  */
 static char *
 ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 {
@@ -4429,7 +4431,7 @@ ngx_http_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/* 设置服务的根目录 */
 static char *
 ngx_http_core_root(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -4789,7 +4791,7 @@ ngx_http_core_directio(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/* 设置访问错误页 */
 static char *
 ngx_http_core_error_page(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
