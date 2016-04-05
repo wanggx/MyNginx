@@ -75,7 +75,7 @@ struct ngx_cycle_s {
 
 /* 核心模块的配置上下文 */
 typedef struct {
-     ngx_flag_t               daemon;
+     ngx_flag_t               daemon;           /* 是否开启僵尸进程 */
      ngx_flag_t               master;
 
      ngx_msec_t               timer_resolution;

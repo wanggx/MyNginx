@@ -44,16 +44,19 @@
 /* 表示配置项的值为复杂配置项 */
 #define NGX_CONF_BLOCK       0x00000100
 /* 表示配置项目有一个布尔类型的值 */
-#define NGX_CONF_FLAG        0x00000200   
+#define NGX_CONF_FLAG        0x00000200  
+/* 配置指令可以接受任意的参数值，一个或多个或配置块 */ 
 #define NGX_CONF_ANY         0x00000400
 #define NGX_CONF_1MORE       0x00000800
 #define NGX_CONF_2MORE       0x00001000
 #define NGX_CONF_MULTI       0x00000000  /* compatibility */
 
+/* 可以出现在配置文件最外层 */
 #define NGX_DIRECT_CONF      0x00010000
 
-/* 该配置项的上下文 */
+/* 表示配置文件最外层，不包含其内的复杂配置项  */
 #define NGX_MAIN_CONF        0x01000000
+/* 该配置指令可以出现在任意配置级别上 */
 #define NGX_ANY_CONF         0x1F000000
 
 
@@ -84,9 +87,9 @@ struct ngx_command_s {
     ngx_uint_t            type;   /* 命令类型 */
     /* 字段指向配置指令处理回调函数 */
     char               *(*set)(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
-    ngx_uint_t            conf;
+    ngx_uint_t            conf;     /* 该字段只会在NGX_HTTP_MODULE中使用 */
     ngx_uint_t            offset;  /* 配置项在结构中的存放位置 */
-    void                 *post;
+    void                 *post;       /* 在一些特殊配置中有时会设定为回调函数的指针 */
 };
 
 #define ngx_null_command  { ngx_null_string, 0, NULL, 0, 0, NULL }
@@ -184,9 +187,13 @@ struct ngx_conf_s {
     ngx_conf_file_t      *conf_file;  /* 指向nginx.conf配置文件指针 */
     ngx_log_t            *log;
 
-    void                 *ctx;    /* 配置上下文和cycle中的conf_ctx对应指向同一块内存 */
+    /* 刚开始的配置上下文和cycle中的conf_ctx对应指向同一块内存，
+      * 随着解析模块的深入，会不断变动，如在递归调用ngx_conf_parse之前都会 
+      * 更改ctx的值，之后再恢复 
+      */
+    void                 *ctx;    
     ngx_uint_t            module_type;            /* 设置配置文件所代表的模块类型 */
-    ngx_uint_t            cmd_type;
+    ngx_uint_t            cmd_type;                 /* 配置的类型如如当前在解析某个某个模块的上下文或配置的token的数量 */
 
      /* 如在ngx_conf_parse函数中，如果没有指定配置的回调处理，
        * 则会默认调用ngx_conf_handler函数

@@ -3017,6 +3017,7 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 
     pcf = *cf;
     cf->ctx = ctx;
+    /* 指明是解析http模块的server复杂配置项 */
     cf->cmd_type = NGX_HTTP_SRV_CONF;
 
     /* 再次循环调用 */

@@ -48,6 +48,7 @@ typedef struct {
 #define NGX_HTTP_LMT_CONF         0x80000000
 
 
+/* 获取main_conf在ngx_http_conf_ctx_t中的偏移量 */
 #define NGX_HTTP_MAIN_CONF_OFFSET  offsetof(ngx_http_conf_ctx_t, main_conf)
 #define NGX_HTTP_SRV_CONF_OFFSET   offsetof(ngx_http_conf_ctx_t, srv_conf)
 #define NGX_HTTP_LOC_CONF_OFFSET   offsetof(ngx_http_conf_ctx_t, loc_conf)

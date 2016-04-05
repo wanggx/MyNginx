@@ -306,7 +306,10 @@ ngx_http_upstream_header_t  ngx_http_upstream_headers_in[] = {
     { ngx_null_string, NULL, 0, NULL, 0, 0 }
 };
 
-
+/* upstram模块主要是用来进行反向代理和集群的负载均衡
+  * upstream表示以下是upstream模块的集群配置 
+  * server表示集群中的服务器配置  
+  */
 static ngx_command_t  ngx_http_upstream_commands[] = {
 
     { ngx_string("upstream"),
@@ -5272,7 +5275,7 @@ ngx_http_upstream_cache_etag(ngx_http_request_t *r,
 
 #endif
 
-
+/* 解析http模块中的集群配置，并且集群配置是一个复杂配置 */
 static char *
 ngx_http_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 {
@@ -5368,6 +5371,7 @@ ngx_http_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 
     pcf = *cf;
     cf->ctx = ctx;
+    /* 表明是http的upstream的配置 */
     cf->cmd_type = NGX_HTTP_UPS_CONF;
 
     rv = ngx_conf_parse(cf, NULL);
@@ -5387,7 +5391,7 @@ ngx_http_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     return rv;
 }
 
-
+/* 解析集群的server配置 */
 static char *
 ngx_http_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {

@@ -1426,6 +1426,7 @@ ngx_set_worker_processes(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_str_t        *value;
     ngx_core_conf_t  *ccf;
 
+    /* 获取核心模块的配置内存指针 */
     ccf = (ngx_core_conf_t *) conf;
 
     if (ccf->worker_processes != NGX_CONF_UNSET) {
@@ -1434,11 +1435,13 @@ ngx_set_worker_processes(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     value = cf->args->elts;
 
+    /* 如果是自动的话，则设置为cpu的数量 */
     if (ngx_strcmp(value[1].data, "auto") == 0) {
         ccf->worker_processes = ngx_ncpu;
         return NGX_CONF_OK;
     }
 
+    /* 否则使用配置值 */
     ccf->worker_processes = ngx_atoi(value[1].data, value[1].len);
 
     if (ccf->worker_processes == NGX_ERROR) {

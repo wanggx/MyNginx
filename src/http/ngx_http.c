@@ -117,7 +117,11 @@ ngx_module_t  ngx_http_module = {
 };
 
 
-/* http配置指令的回调，同时也对http模块进行了一些前后阶段性的操作 */
+/* http配置指令的回调，同时也对http模块进行了一些前后阶段性的操作
+  * cf是不断解析配置时携带的配置信息 
+  * cmd表示模块中命令的指针 
+  * conf表示相应模块在cycle中conf_ctx中的指针
+  */
 static char *
 ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -141,7 +145,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-	/* 更改conf的值 */
+	/* 更改conf的值，也就是http模块的配置内存 */
     *(ngx_http_conf_ctx_t **) conf = ctx;
 
 
@@ -228,8 +232,9 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
     }
 
+    /* 将cf暂存到pcf当中 */
     pcf = *cf;
-    /* 设置配置文件的山下文 */
+    /* 设置配置文件的山下文，此时ngx_conf_t中的ctx指向的就是http模块配置上下文 */
     cf->ctx = ctx;
 
     for (m = 0; ngx_modules[m]; m++) {
@@ -248,12 +253,19 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     /* parse inside the http{} block */
 
+    /* 设置要解析的是http模块，并且是http模块的上下文，
+      * 不往server，location等复杂配置块延伸
+      */
     cf->module_type = NGX_HTTP_MODULE;
     cf->cmd_type = NGX_HTTP_MAIN_CONF;
     /* 注意这里可能设置cf的配置文件处理回调,第二个参数为null
       * 表示解析的不是文件，而是配置块
       */
     rv = ngx_conf_parse(cf, NULL);
+
+    /* 函数执行到这里就表示http模块的所有配置已经解析完成
+      * 之后就是后期的解析结果合并处理 
+      */
 
     if (rv != NGX_CONF_OK) {
         goto failed;

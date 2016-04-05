@@ -18,7 +18,7 @@ static void ngx_conf_flush_files(ngx_cycle_t *cycle);
 static ngx_command_t  ngx_conf_commands[] = {
 
     { ngx_string("include"),
-      NGX_ANY_CONF|NGX_CONF_TAKE1,
+      NGX_ANY_CONF|NGX_CONF_TAKE1,        /* 在配置的任何级别上使用include都会调用到该函数 */
       ngx_conf_include,
       0,
       0,
@@ -801,6 +801,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
 }
 
 
+/* 配置文件的包含处理，也就是去处理包含的另一个文件 */
 char *
 ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -814,6 +815,7 @@ ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     ngx_log_debug1(NGX_LOG_DEBUG_CORE, cf->log, 0, "include %s", file.data);
 
+    /* 获取文件的全路径 */
     if (ngx_conf_full_name(cf->cycle, &file, 1) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -1010,6 +1012,8 @@ ngx_conf_log_error(ngx_uint_t level, ngx_conf_t *cf, ngx_err_t err,
 }
 
 
+/* 将配置文件中的daemon指令映射到配置文件当中，
+  * 解析配置指令中的布尔值 */
 char *
 ngx_conf_set_flag_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1019,13 +1023,17 @@ ngx_conf_set_flag_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_flag_t       *fp;
     ngx_conf_post_t  *post;
 
+    /* 获取要设置变量的地址 */
     fp = (ngx_flag_t *) (p + cmd->offset);
 
+    /* 如果不是初始值，则表示已经解析过 */
     if (*fp != NGX_CONF_UNSET) {
         return "is duplicate";
     }
 
     value = cf->args->elts;
+
+    /* value[0]就是daemon */
 
     if (ngx_strcasecmp(value[1].data, (u_char *) "on") == 0) {
         *fp = 1;
@@ -1049,7 +1057,7 @@ ngx_conf_set_flag_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/* 解析字符配置指令 */
 char *
 ngx_conf_set_str_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {

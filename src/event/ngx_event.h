@@ -426,6 +426,7 @@ extern ngx_os_io_t  ngx_io;
 
 
 #define NGX_EVENT_MODULE      0x544E5645  /* "EVNT" */
+/* ±Ì æ «event≈‰÷√øÈ */
 #define NGX_EVENT_CONF        0x02000000
 
 
