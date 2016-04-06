@@ -3142,6 +3142,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         }
     }
 
+    /* clcf表示当前新分配的 */
     clcf = ctx->loc_conf[ngx_http_core_module.ctx_index];
     clcf->loc_conf = ctx->loc_conf;
 

@@ -600,6 +600,7 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 }
 
 
+/* 合并servers */
 static char *
 ngx_http_merge_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
     ngx_http_module_t *module, ngx_uint_t ctx_index)
@@ -661,7 +662,7 @@ failed:
     return rv;
 }
 
-
+/* 合并locations */
 static char *
 ngx_http_merge_locations(ngx_conf_t *cf, ngx_queue_t *locations,
     void **loc_conf, ngx_http_module_t *module, ngx_uint_t ctx_index)
@@ -922,6 +923,7 @@ ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
         lq->inclusive = clcf;
     }
 
+    /* 设置location的名称以及配置文件信息 */
     lq->name = &clcf->name;
     lq->file_name = cf->conf_file->file.name.data;
     lq->line = cf->conf_file->line;
@@ -1191,6 +1193,7 @@ ngx_int_t
 ngx_http_add_listen(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_listen_opt_t *lsopt)
 {
+    /* 表示端口 */
     in_port_t                   p;
     ngx_uint_t                  i;
     struct sockaddr            *sa;
@@ -1237,10 +1240,14 @@ ngx_http_add_listen(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     port = cmcf->ports->elts;
     for (i = 0; i < cmcf->ports->nelts; i++) {
 
+        /* 注意判断条件是端口号要相同，协议族也要相同，
+          * 不同的协议族可以监听相同的端口 
+          */
         if (p != port[i].port || sa->sa_family != port[i].family) {
             continue;
         }
 
+        /* 表明端口和地址已经在端口列表当中 */
         /* a port is already in the port list */
 
         return ngx_http_add_addresses(cf, cscf, &port[i], lsopt);
@@ -1261,6 +1268,7 @@ ngx_http_add_listen(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 }
 
 
+/* 把一个服务器地址添加到监听端口当中 */
 static ngx_int_t
 ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_conf_port_t *port, ngx_http_listen_opt_t *lsopt)
@@ -1285,6 +1293,7 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
      * may fill some fields in inherited sockaddr struct's
      */
 
+    /* 获取监听地址 */
     sa = &lsopt->u.sockaddr;
 
     switch (sa->sa_family) {
@@ -1313,6 +1322,9 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 
     addr = port->addrs.elts;
 
+    /* 处理端口中的地址，如果服务器中存在多个网卡，
+      * 也就是多个ip地址，多个不同的ip地址监听同一个端口
+      */
     for (i = 0; i < port->addrs.nelts; i++) {
 
         if (ngx_memcmp(p, addr[i].opt.u.sockaddr_data + off, len) != 0) {
@@ -1385,6 +1397,7 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
  * configurations to the port list
  */
 
+/* 把服务器地址添加到监听端口当中 */
 static ngx_int_t
 ngx_http_add_address(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_conf_port_t *port, ngx_http_listen_opt_t *lsopt)
@@ -1413,11 +1426,13 @@ ngx_http_add_address(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 
 #endif
 
+    /* 增加一个ngx_http_conf_addr_t服务器地址 */
     addr = ngx_array_push(&port->addrs);
     if (addr == NULL) {
         return NGX_ERROR;
     }
 
+    /* 设置地址的监听信息 */
     addr->opt = *lsopt;
     addr->hash.buckets = NULL;
     addr->hash.size = 0;
@@ -1427,6 +1442,7 @@ ngx_http_add_address(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     addr->nregex = 0;
     addr->regex = NULL;
 #endif
+    /* 设置地址的默认服务器 */
     addr->default_server = cscf;
     addr->servers.elts = NULL;
 
@@ -1436,6 +1452,10 @@ ngx_http_add_address(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 
 /* add the server core module configuration to the address:port */
 
+/* 将服务添加到地址对应的服务列表当中
+  * 注意在nginx中，一个地址可以对应多个服务，如一个地址监听多个端口 
+  * 则这个地址就对应多个端口，也就是在nginx中，地址+端口确定一个服务 
+  */
 static ngx_int_t
 ngx_http_add_server(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_conf_addr_t *addr)
@@ -1454,6 +1474,7 @@ ngx_http_add_server(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     } else {
         server = addr->servers.elts;
         for (i = 0; i < addr->servers.nelts; i++) {
+            /* 如果存在相同的服务器配置则出错 */
             if (server[i] == cscf) {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                    "a duplicate listen %s", addr->opt.addr);
@@ -1467,6 +1488,7 @@ ngx_http_add_server(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
         return NGX_ERROR;
     }
 
+    /* 设置数组中新元素的值 */
     *server = cscf;
 
     return NGX_OK;
