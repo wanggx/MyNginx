@@ -1350,7 +1350,7 @@ ngx_http_core_try_files_phase(ngx_http_request_t *r,
     /* not reached */
 }
 
-
+/* 静态模块的处理回调，开始真正的内容处理 */
 ngx_int_t
 ngx_http_core_content_phase(ngx_http_request_t *r,
     ngx_http_phase_handler_t *ph)
@@ -3539,7 +3539,8 @@ ngx_http_core_create_srv_conf(ngx_conf_t *cf)
     return cscf;
 }
 
-
+/* ngx_http_core_module模块的server合并函数，
+  */
 static char *
 ngx_http_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
 {
@@ -3728,7 +3729,7 @@ static ngx_hash_key_t  ngx_http_core_default_types[] = {
     { ngx_null_string, 0, NULL }
 };
 
-
+/* ngx_http_core_module 合并location */
 static char *
 ngx_http_core_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 {

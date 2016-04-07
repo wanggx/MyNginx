@@ -414,6 +414,7 @@ struct ngx_http_request_s {
     ngx_http_post_subrequest_t       *post_subrequest;
     ngx_http_posted_request_t        *posted_requests;
 
+    /* 表示在phase_engine中的索引 */
     ngx_int_t                         phase_handler;
     /* 生成内容的处理函数 */
     ngx_http_handler_pt               content_handler;

@@ -142,10 +142,11 @@ typedef struct ngx_http_phase_handler_s  ngx_http_phase_handler_t;
 typedef ngx_int_t (*ngx_http_phase_handler_pt)(ngx_http_request_t *r,
     ngx_http_phase_handler_t *ph);
 
+/* http阶段处理结构 */
 struct ngx_http_phase_handler_s {
     ngx_http_phase_handler_pt  checker;       /* 参数携带一个请求和结构自身 */
-    ngx_http_handler_pt        handler;
-    ngx_uint_t                 next;
+    ngx_http_handler_pt        handler;           /* 处理请求的句柄 */
+    ngx_uint_t                 next;                       /* 表示位置索引 */
 };
 
 
@@ -192,7 +193,7 @@ typedef struct {
 
 typedef struct {
     /* array of the ngx_http_server_name_t, "server_name" directive */
-    ngx_array_t                 server_names;
+    ngx_array_t                 server_names;        /* 服务器的名称也可以是多个 */
 
     /* server ctx */
     ngx_http_conf_ctx_t        *ctx;          /* 指向的是http模块的配置上下文 */

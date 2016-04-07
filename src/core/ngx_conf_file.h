@@ -274,6 +274,7 @@ char *ngx_conf_check_num_bounds(ngx_conf_t *cf, void *post, void *data);
         conf = default;                                                      \
     }
 
+/* 同样的道理涉及到配置继承 */
 #define ngx_conf_merge_value(conf, prev, default)                            \
     if (conf == NGX_CONF_UNSET) {                                            \
         conf = (prev == NGX_CONF_UNSET) ? default : prev;                    \
@@ -299,6 +300,9 @@ char *ngx_conf_check_num_bounds(ngx_conf_t *cf, void *post, void *data);
         conf = (prev == NGX_CONF_UNSET) ? default : prev;                    \
     }
 
+/* 如果conf做了设置，则不做处理，如果conf没做设置，
+  * 则prev做了设置，则继承，否则是默认
+  */
 #define ngx_conf_merge_size_value(conf, prev, default)                       \
     if (conf == NGX_CONF_UNSET_SIZE) {                                       \
         conf = (prev == NGX_CONF_UNSET_SIZE) ? default : prev;               \
