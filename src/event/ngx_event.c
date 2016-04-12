@@ -609,6 +609,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     ngx_queue_init(&ngx_posted_accept_events);
     ngx_queue_init(&ngx_posted_events);
 
+    /* 事件模型的时钟初始化 */
     if (ngx_event_timer_init(cycle->log) == NGX_ERROR) {
         return NGX_ERROR;
     }
@@ -662,7 +663,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
     if (ngx_event_flags & NGX_USE_FD_EVENT) {
         struct rlimit  rlmt;
-
+        /* RLIMIT_NOFILE表示一个进程能打开的最大文件数 */
         if (getrlimit(RLIMIT_NOFILE, &rlmt) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "getrlimit(RLIMIT_NOFILE) failed");
@@ -705,11 +706,13 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     }
 
     rev = cycle->read_events;
+    /* 初始化所有的连接的连接状态为关闭 */
     for (i = 0; i < cycle->connection_n; i++) {
         rev[i].closed = 1;
         rev[i].instance = 1;
     }
 
+    /* 分配和连接个数相同的写事件 */
     cycle->write_events = ngx_alloc(sizeof(ngx_event_t) * cycle->connection_n,
                                     cycle->log);
     if (cycle->write_events == NULL) {
@@ -752,6 +755,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         }
 #endif
 
+        /* 获取每个监听套接字对应的连接 */
         c = ngx_get_connection(ls[i].fd, cycle->log);
 
         if (c == NULL) {

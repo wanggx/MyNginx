@@ -515,7 +515,7 @@ struct ngx_http_request_s {
     unsigned                          pipeline:1;
     unsigned                          chunked:1;
     unsigned                          header_only:1;
-    unsigned                          keepalive:1;
+    unsigned                          keepalive:1;           /* 请求是否保活 */
     unsigned                          lingering_close:1;
     unsigned                          discard_body:1;
     unsigned                          reading_body:1;

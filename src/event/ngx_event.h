@@ -66,8 +66,12 @@ struct ngx_event_s {
     /* the pending eof reported by kqueue, epoll or in aio chain operation */
     unsigned         pending_eof:1;
 
-    unsigned         posted:1;
+    /* 表示是否post到队列当中，如果是的，
+      * 则在释放或关闭的时候需要将自己从事件队列中移除
+      */
+    unsigned         posted:1;        
 
+    /* 表示事件是否关闭，1表示关闭  */
     unsigned         closed:1;
 
     /* to test on worker exit */
@@ -119,7 +123,7 @@ struct ngx_event_s {
 
     ngx_log_t       *log;
 
-    ngx_rbtree_node_t   timer;
+    ngx_rbtree_node_t   timer;        /* 事件的时钟 */
 
     /* the posted queue */
     ngx_queue_t      queue;   /* 注意这个队列非常重要，将事件给串联起来 */

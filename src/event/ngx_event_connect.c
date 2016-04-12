@@ -10,7 +10,7 @@
 #include <ngx_event.h>
 #include <ngx_event_connect.h>
 
-
+/* 当从upstream中获得一个后端时，就会调用ngx_event_connect_peer去进行连接 */
 ngx_int_t
 ngx_event_connect_peer(ngx_peer_connection_t *pc)
 {

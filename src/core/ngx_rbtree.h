@@ -19,6 +19,7 @@ typedef ngx_int_t   ngx_rbtree_key_int_t;
 
 typedef struct ngx_rbtree_node_s  ngx_rbtree_node_t;
 
+/* 红黑树的节点 */
 struct ngx_rbtree_node_s {
     ngx_rbtree_key_t       key;
     ngx_rbtree_node_t     *left;
@@ -35,7 +36,7 @@ typedef void (*ngx_rbtree_insert_pt) (ngx_rbtree_node_t *root,
     ngx_rbtree_node_t *node, ngx_rbtree_node_t *sentinel);
 
 struct ngx_rbtree_s {
-    ngx_rbtree_node_t     *root;
+    ngx_rbtree_node_t     *root;              /* 红黑树的根节点 */
     ngx_rbtree_node_t     *sentinel;
     ngx_rbtree_insert_pt   insert;
 };

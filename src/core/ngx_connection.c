@@ -962,6 +962,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 
     /* disable warning: Win32 SOCKET is u_int while UNIX socket is int */
 
+    /* 如果超过了可以监听的最大文件数，则出错 */
     if (ngx_cycle->files && (ngx_uint_t) s >= ngx_cycle->files_n) {
         ngx_log_error(NGX_LOG_ALERT, log, 0,
                       "the new socket has number %d, "
@@ -972,7 +973,9 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 
     c = ngx_cycle->free_connections;
 
+    /* 此时连接池已经被用完 */
     if (c == NULL) {
+        /* 将一些keepalive的连接给释放掉 */
         ngx_drain_connections();
         c = ngx_cycle->free_connections;
     }
@@ -1039,6 +1042,7 @@ ngx_free_connection(ngx_connection_t *c)
 }
 
 
+/* 在该函数中调用ngx_free_connection函数来讲连接添加到cycle中的空闲连接当中 */
 void
 ngx_close_connection(ngx_connection_t *c)
 {
@@ -1071,6 +1075,7 @@ ngx_close_connection(ngx_connection_t *c)
             ngx_del_event(c->write, NGX_WRITE_EVENT, NGX_CLOSE_EVENT);
         }
     }
+
 
     if (c->read->posted) {
         ngx_delete_posted_event(c->read);
@@ -1153,6 +1158,7 @@ ngx_reusable_connection(ngx_connection_t *c, ngx_uint_t reusable)
 }
 
 
+/* 将一些keepalive连接给释放掉 */
 static void
 ngx_drain_connections(void)
 {
@@ -1160,17 +1166,25 @@ ngx_drain_connections(void)
     ngx_queue_t       *q;
     ngx_connection_t  *c;
 
+    /* 清理32个keepalive连接，以回收一些连接供新连接使用 */
     for (i = 0; i < 32; i++) {
+        /* 判断ngx_cycle->reusable_connections_queue队列是否为空 */
         if (ngx_queue_empty(&ngx_cycle->reusable_connections_queue)) {
             break;
         }
 
+        /* reusable连接队列是从头插入的，意味着越靠近队列尾部的连接，
+          * 空闲未被使用的时间就越长，这种情况下，优先回收它，类似LRU
+          */
         q = ngx_queue_last(&ngx_cycle->reusable_connections_queue);
         c = ngx_queue_data(q, ngx_connection_t, queue);
 
         ngx_log_debug0(NGX_LOG_DEBUG_CORE, c->log, 0,
                        "reusing connection");
 
+        /* 这里的handler是ngx_http_keepalive_handler，这函数里，由于close被置1，  
+          * 所以会执行ngx_http_close_connection来释放连接，这样也就发生了keepalive  
+          * 连接被强制断掉的现象了。 */
         c->close = 1;
         c->read->handler(c->read);
     }

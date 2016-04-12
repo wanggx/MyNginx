@@ -9,7 +9,7 @@
 #include <ngx_core.h>
 #include <ngx_event.h>
 
-
+/* 事件全局的时钟红黑树 */
 ngx_rbtree_t              ngx_event_timer_rbtree;
 static ngx_rbtree_node_t  ngx_event_timer_sentinel;
 
@@ -19,6 +19,7 @@ static ngx_rbtree_node_t  ngx_event_timer_sentinel;
  * a minimum timer value only
  */
 
+/* 事件模型时钟初始化 */
 ngx_int_t
 ngx_event_timer_init(ngx_log_t *log)
 {

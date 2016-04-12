@@ -49,7 +49,7 @@ struct ngx_listening_s {
     ngx_msec_t          post_accept_timeout;
 
     ngx_listening_t    *previous;
-    ngx_connection_t   *connection;
+    ngx_connection_t   *connection;           /* 监听套接字对应的连接 */
 
     ngx_uint_t          worker;
 

@@ -2566,6 +2566,7 @@ ngx_http_finalize_connection(ngx_http_request_t *r)
          && r->keepalive
          && clcf->keepalive_timeout > 0)
     {
+        /* 如果是保活请求，则设置保活请求的事件处理回调 */
         ngx_http_set_keepalive(r);
         return;
     }
@@ -2856,7 +2857,7 @@ closed:
     ngx_http_finalize_request(r, NGX_HTTP_CLIENT_CLOSED_REQUEST);
 }
 
-
+/* 设置请求为keepalive */
 static void
 ngx_http_set_keepalive(ngx_http_request_t *r)
 {
@@ -3079,6 +3080,7 @@ ngx_http_set_keepalive(ngx_http_request_t *r)
 #endif
 
     c->idle = 1;
+    /* 这点很重要，将连接添加到cycle->reusable_connections_queue队列当中 */
     ngx_reusable_connection(c, 1);
 
     ngx_add_timer(rev, clcf->keepalive_timeout);

@@ -473,6 +473,7 @@ ngx_http_upstream_create(ngx_http_request_t *r)
 }
 
 
+/* upstream请求初始化函数 */
 void
 ngx_http_upstream_init(ngx_http_request_t *r)
 {
@@ -509,7 +510,7 @@ ngx_http_upstream_init(ngx_http_request_t *r)
     ngx_http_upstream_init_request(r);
 }
 
-
+/* upstream模块请求的初始化 */
 static void
 ngx_http_upstream_init_request(ngx_http_request_t *r)
 {

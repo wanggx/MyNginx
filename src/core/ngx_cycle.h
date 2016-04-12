@@ -44,10 +44,16 @@ struct ngx_cycle_s {
 
     ngx_uint_t                log_use_stderr;  /* unsigned  log_use_stderr:1; */
 
-    ngx_connection_t        **files;
+    /* 里面存放files_n个ngx_connection_t类型的指针 ，
+      * 通过监听套接字的文件描述符为索引来快速查找到相应的 
+      * ngx_connection_t结构，因为files指针数组的长度本来就是进程 
+      * 可以打开的最大文件个数，也就是files_n变量  
+      */
+    ngx_connection_t        **files;                       
     ngx_connection_t         *free_connections;  /* 空闲连接 */
     ngx_uint_t                free_connection_n; /* 空闲连接数 */
 
+    /* 保活连接队列 */
     ngx_queue_t               reusable_connections_queue;
 
     ngx_array_t               listening;         /* 监听数组 */
@@ -56,10 +62,11 @@ struct ngx_cycle_s {
     ngx_list_t                open_files;        /* 打开文件列表 */
     ngx_list_t                shared_memory;     /* 共享内存链 */
 
-    ngx_uint_t                connection_n;      /* 连接数 */
-    ngx_uint_t                files_n;           /* 打开文件个数 */
+    /* 连接数，该连接数通过nginx.conf中的worker_connections来指定 */
+    ngx_uint_t                connection_n;      
+    ngx_uint_t                files_n;           /* 打开文件的最大个数 */
 
-    ngx_connection_t         *connections;       /* 连接 */
+    ngx_connection_t         *connections;       /* 存放connection_n个连接 */
     ngx_event_t              *read_events;       /* 读事件 */
     ngx_event_t              *write_events;      /* 写事件 */
 
