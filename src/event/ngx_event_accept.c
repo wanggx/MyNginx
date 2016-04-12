@@ -157,7 +157,10 @@ ngx_event_accept(ngx_event_t *ev)
 #if (NGX_STAT_STUB)
         (void) ngx_atomic_fetch_add(ngx_stat_active, 1);
 #endif
-
+        /* 注意这里很重要，给每个连接创建一个内存池，
+          * 当连接关闭的时候就将内存池给释放掉,然后在随后的和该 
+          * 连接相关的操作基本上都是从该内存池中申请内存 
+          */
         c->pool = ngx_create_pool(ls->pool_size, ev->log);
         if (c->pool == NULL) {
             ngx_close_accepted_connection(c);
@@ -493,6 +496,7 @@ ngx_close_accepted_connection(ngx_connection_t *c)
                       ngx_close_socket_n " failed");
     }
 
+    /* 同时将连接的内存池给释放掉 */
     if (c->pool) {
         ngx_destroy_pool(c->pool);
     }

@@ -42,6 +42,7 @@ struct ngx_listening_s {
     ngx_log_t           log;
     ngx_log_t          *logp;
 
+    /* 和监听套接字 对应的连接的内存池的大小 */
     size_t              pool_size;
     /* should be here because of the AcceptEx() preread */
     size_t              post_accept_buffer_size;
@@ -122,7 +123,7 @@ typedef enum {
 
 
 struct ngx_connection_s {
-    void               *data;   /* 用来关联其他结构体,如ngx_http_connection_t */
+    void               *data;   /* 用来关联其他结构体,如ngx_http_connection_t ,也可以是ngx_http_request_t*/
     ngx_event_t        *read;   /* 连接的读事件 */
     ngx_event_t        *write;  /* 连接的写事件 */
 

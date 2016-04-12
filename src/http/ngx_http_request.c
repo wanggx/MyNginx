@@ -531,6 +531,7 @@ ngx_http_create_request(ngx_connection_t *c)
 
     cscf = ngx_http_get_module_srv_conf(hc->conf_ctx, ngx_http_core_module);
 
+    /* 给固定请求分配一个内存池 */
     pool = ngx_create_pool(cscf->request_pool_size, c->log);
     if (pool == NULL) {
         return NULL;

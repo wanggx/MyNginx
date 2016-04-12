@@ -3552,6 +3552,7 @@ ngx_http_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
 
     /* TODO: it does not merge, it inits only */
 
+    /* 设置默认链接和请求对应的内存池的大小 */
     ngx_conf_merge_size_value(conf->connection_pool_size,
                               prev->connection_pool_size, 64 * sizeof(void *));
     ngx_conf_merge_size_value(conf->request_pool_size,
