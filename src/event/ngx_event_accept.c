@@ -210,6 +210,7 @@ ngx_event_accept(ngx_event_t *ev)
         c->recv = ngx_recv;
         c->send = ngx_send;
         c->recv_chain = ngx_recv_chain;
+        /* 连接的发送链 */
         c->send_chain = ngx_send_chain;
 
         c->log = log;

@@ -75,6 +75,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
         }
     }
 
+    /* 设置的根据系统环境不同而不同的系统调用函数 */
     c->recv = ngx_recv;
     c->send = ngx_send;
     c->recv_chain = ngx_recv_chain;

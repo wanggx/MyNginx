@@ -1926,7 +1926,7 @@ ngx_http_send_response(ngx_http_request_t *r, ngx_uint_t status,
     return ngx_http_output_filter(r, &out);
 }
 
-
+/* 发送http响应头 */
 ngx_int_t
 ngx_http_send_header(ngx_http_request_t *r)
 {
@@ -1945,6 +1945,7 @@ ngx_http_send_header(ngx_http_request_t *r)
         r->headers_out.status_line.len = 0;
     }
 
+    /* 此处对整个响应头进行过滤 */
     return ngx_http_top_header_filter(r);
 }
 
