@@ -51,7 +51,7 @@ typedef struct {
     ngx_hash_t                     hash;
 } ngx_http_proxy_headers_t;
 
-
+/* 代理模块的本地配置 */
 typedef struct {
     ngx_http_upstream_conf_t       upstream;
 
@@ -3598,7 +3598,7 @@ ngx_http_proxy_init_headers(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *conf,
     return ngx_hash_init(&hash, headers_names.elts, headers_names.nelts);
 }
 
-
+/* 设置代理主机，可以是一个upstream集群也可以是单个服务器 */
 static char *
 ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -3653,6 +3653,7 @@ ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_OK;
     }
 
+    /* 如果是代理的http的，则默认端口号是80 */
     if (ngx_strncasecmp(url->data, (u_char *) "http://", 7) == 0) {
         add = 7;
         port = 80;

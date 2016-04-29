@@ -134,8 +134,9 @@ typedef struct {
     ngx_http_complex_value_t        *value;
 } ngx_http_upstream_local_t;
 
-
+/* upstream模块配置 */
 typedef struct {
+    /* upstream模块集群配置 */
     ngx_http_upstream_srv_conf_t    *upstream;
 
     ngx_msec_t                       connect_timeout;

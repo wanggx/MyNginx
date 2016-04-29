@@ -3084,6 +3084,7 @@ ngx_http_set_keepalive(ngx_http_request_t *r)
     /* 这点很重要，将连接添加到cycle->reusable_connections_queue队列当中 */
     ngx_reusable_connection(c, 1);
 
+    /* 设置保活时钟 */
     ngx_add_timer(rev, clcf->keepalive_timeout);
 
     if (rev->ready) {

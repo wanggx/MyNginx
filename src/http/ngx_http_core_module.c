@@ -3731,7 +3731,7 @@ static ngx_hash_key_t  ngx_http_core_default_types[] = {
     { ngx_null_string, 0, NULL }
 };
 
-/* ngx_http_core_module 合并location */
+/* ngx_http_core_module 合并location，location中配置信息的合并  */
 static char *
 ngx_http_core_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 {

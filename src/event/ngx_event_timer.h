@@ -81,6 +81,7 @@ ngx_event_add_timer(ngx_event_t *ev, ngx_msec_t timer)
                    "event timer add: %d: %M:%M",
                     ngx_event_ident(ev->data), timer, ev->timer.key);
 
+    /* 将当前事件的时钟插入到事件时钟的红黑树当中 */
     ngx_rbtree_insert(&ngx_event_timer_rbtree, &ev->timer);
 
     ev->timer_set = 1;
