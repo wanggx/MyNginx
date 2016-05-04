@@ -63,7 +63,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-p /Users/gxwang/MyProject/nginx/nginx-debug"
+            argument = "-p /Users/gxwang/Desktop/OpenSource/MyNginx/Mac-Debug-Nginx/nginx-debug"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

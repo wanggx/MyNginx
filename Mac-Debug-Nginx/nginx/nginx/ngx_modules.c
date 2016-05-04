@@ -52,6 +52,10 @@ extern ngx_module_t  ngx_http_copy_filter_module;
 extern ngx_module_t  ngx_http_range_body_filter_module;
 extern ngx_module_t  ngx_http_not_modified_filter_module;
 
+/* 自定义模块 */
+extern ngx_module_t  ngx_http_hello_world_module;
+extern ngx_module_t  ngx_http_mysecret_module;
+
 ngx_module_t *ngx_modules[] = {
     &ngx_core_module,
     &ngx_errlog_module,
@@ -100,6 +104,8 @@ ngx_module_t *ngx_modules[] = {
     &ngx_http_copy_filter_module,
     &ngx_http_range_body_filter_module,
     &ngx_http_not_modified_filter_module,
+    &ngx_http_hello_world_module,
+    &ngx_http_mysecret_module,
     NULL
 };
 

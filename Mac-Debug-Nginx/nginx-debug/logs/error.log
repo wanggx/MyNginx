@@ -40,3 +40,40 @@
 2016/05/04 13:44:02 [alert] 499#0: unknown process 502 exited on signal 5
 2016/05/04 13:45:23 [alert] 505#0: unknown process 508 exited on signal 5
 2016/05/04 14:39:14 [alert] 586#0: worker process 589 exited on signal 5
+2016/05/04 19:57:23 [emerg] 1902#0: bind() to 0.0.0.0:8000 failed (48: Address already in use)
+2016/05/04 19:57:23 [emerg] 1902#0: bind() to 0.0.0.0:8000 failed (48: Address already in use)
+2016/05/04 19:57:23 [emerg] 1902#0: bind() to 0.0.0.0:8000 failed (48: Address already in use)
+2016/05/04 19:57:23 [emerg] 1902#0: bind() to 0.0.0.0:8000 failed (48: Address already in use)
+2016/05/04 19:57:23 [emerg] 1902#0: bind() to 0.0.0.0:8000 failed (48: Address already in use)
+2016/05/04 19:57:23 [emerg] 1902#0: still could not bind()
+2016/05/04 19:58:31 [alert] 1938#0: worker process 1941 exited on signal 5
+2016/05/04 19:58:32 [alert] 1938#0: worker process 1946 exited on signal 5
+2016/05/04 19:58:32 [alert] 1938#0: worker process 1947 exited on signal 5
+2016/05/04 19:58:33 [alert] 1938#0: worker process 1948 exited on signal 5
+2016/05/04 19:58:33 [alert] 1938#0: worker process 1949 exited on signal 5
+2016/05/04 19:58:34 [alert] 1938#0: worker process 1950 exited on signal 5
+2016/05/04 19:58:34 [alert] 1938#0: worker process 1951 exited on signal 5
+2016/05/04 19:58:34 [alert] 1938#0: worker process 1952 exited on signal 5
+2016/05/04 19:58:34 [alert] 1938#0: worker process 1953 exited on signal 5
+2016/05/04 19:58:34 [alert] 1938#0: worker process 1954 exited on signal 5
+2016/05/04 19:58:35 [alert] 1938#0: worker process 1955 exited on signal 5
+2016/05/04 19:58:35 [alert] 1938#0: worker process 1956 exited on signal 5
+2016/05/04 19:58:35 [alert] 1938#0: worker process 1957 exited on signal 5
+2016/05/04 19:58:35 [alert] 1938#0: worker process 1958 exited on signal 5
+2016/05/04 19:58:36 [alert] 1938#0: worker process 1959 exited on signal 5
+2016/05/04 20:00:51 [alert] 1938#0: worker process 1960 exited on signal 5
+2016/05/04 20:00:57 [alert] 1938#0: worker process 1977 exited on signal 5
+2016/05/04 20:15:48 [emerg] 2238#0: bind() to 0.0.0.0:8000 failed (48: Address already in use)
+2016/05/04 20:15:48 [emerg] 2238#0: bind() to 0.0.0.0:8000 failed (48: Address already in use)
+2016/05/04 20:15:48 [emerg] 2238#0: bind() to 0.0.0.0:8000 failed (48: Address already in use)
+2016/05/04 20:15:48 [emerg] 2238#0: bind() to 0.0.0.0:8000 failed (48: Address already in use)
+2016/05/04 20:15:48 [emerg] 2238#0: bind() to 0.0.0.0:8000 failed (48: Address already in use)
+2016/05/04 20:15:48 [emerg] 2238#0: still could not bind()
+2016/05/04 20:17:03 [alert] 2267#0: worker process 2270 exited on signal 5
+2016/05/04 20:17:07 [alert] 2267#0: worker process 2280 exited on signal 5
+2016/05/04 20:17:39 [alert] 2267#0: worker process 2281 exited on signal 5
+2016/05/04 20:17:42 [alert] 2267#0: worker process 2285 exited on signal 5
+2016/05/04 20:17:44 [alert] 2267#0: worker process 2287 exited on signal 5
+2016/05/04 20:17:51 [alert] 2267#0: worker process 2289 exited on signal 5
+2016/05/04 20:17:53 [alert] 2267#0: worker process 2290 exited on signal 5
+2016/05/04 20:23:05 [alert] 2267#0: worker process 2291 exited on signal 5

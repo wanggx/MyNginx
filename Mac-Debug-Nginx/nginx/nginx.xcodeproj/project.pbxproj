@@ -130,6 +130,8 @@
 		601558521CD8D88D00D57F5F /* ngx_modules.c in Sources */ = {isa = PBXBuildFile; fileRef = 601558511CD8D88D00D57F5F /* ngx_modules.c */; };
 		601558581CD8EC4500D57F5F /* libz.1.1.3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 601558571CD8EC4500D57F5F /* libz.1.1.3.tbd */; };
 		6015585A1CD8EC5D00D57F5F /* libpcre.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 601558591CD8EC5D00D57F5F /* libpcre.dylib */; };
+		607ECAB41CDA22690098CDCD /* ngx_http_hello_world_module.c in Sources */ = {isa = PBXBuildFile; fileRef = 607ECAB21CDA22690098CDCD /* ngx_http_hello_world_module.c */; };
+		607ECAB51CDA22690098CDCD /* ngx_http_mysecret_module.c in Sources */ = {isa = PBXBuildFile; fileRef = 607ECAB31CDA22690098CDCD /* ngx_http_mysecret_module.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -347,6 +349,8 @@
 		601558511CD8D88D00D57F5F /* ngx_modules.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ngx_modules.c; sourceTree = "<group>"; };
 		601558571CD8EC4500D57F5F /* libz.1.1.3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.1.1.3.tbd; path = usr/lib/libz.1.1.3.tbd; sourceTree = SDKROOT; };
 		601558591CD8EC5D00D57F5F /* libpcre.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpcre.dylib; path = usr/lib/libpcre.dylib; sourceTree = SDKROOT; };
+		607ECAB21CDA22690098CDCD /* ngx_http_hello_world_module.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ngx_http_hello_world_module.c; sourceTree = "<group>"; };
+		607ECAB31CDA22690098CDCD /* ngx_http_mysecret_module.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ngx_http_mysecret_module.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -365,8 +369,7 @@
 		601556861CD8CBBC00D57F5F = {
 			isa = PBXGroup;
 			children = (
-				601558591CD8EC5D00D57F5F /* libpcre.dylib */,
-				601558571CD8EC4500D57F5F /* libz.1.1.3.tbd */,
+				607ECAA81CDA1E070098CDCD /* dylib */,
 				601556911CD8CBBD00D57F5F /* nginx */,
 				601556901CD8CBBD00D57F5F /* Products */,
 			);
@@ -383,9 +386,8 @@
 		601556911CD8CBBD00D57F5F /* nginx */ = {
 			isa = PBXGroup;
 			children = (
-				6015584F1CD8D88D00D57F5F /* ngx_auto_config.h */,
-				601558501CD8D88D00D57F5F /* ngx_auto_headers.h */,
-				601558511CD8D88D00D57F5F /* ngx_modules.c */,
+				607ECAA91CDA1E2C0098CDCD /* myhttpmodules */,
+				607ECAA71CDA1DBC0098CDCD /* auto */,
 				601557E51CD8D75000D57F5F /* os */,
 				601557291CD8D69E00D57F5F /* http */,
 				601556FF1CD8D63000D57F5F /* event */,
@@ -642,6 +644,34 @@
 			name = unix;
 			sourceTree = "<group>";
 		};
+		607ECAA71CDA1DBC0098CDCD /* auto */ = {
+			isa = PBXGroup;
+			children = (
+				6015584F1CD8D88D00D57F5F /* ngx_auto_config.h */,
+				601558501CD8D88D00D57F5F /* ngx_auto_headers.h */,
+				601558511CD8D88D00D57F5F /* ngx_modules.c */,
+			);
+			name = auto;
+			sourceTree = "<group>";
+		};
+		607ECAA81CDA1E070098CDCD /* dylib */ = {
+			isa = PBXGroup;
+			children = (
+				601558571CD8EC4500D57F5F /* libz.1.1.3.tbd */,
+				601558591CD8EC5D00D57F5F /* libpcre.dylib */,
+			);
+			name = dylib;
+			sourceTree = "<group>";
+		};
+		607ECAA91CDA1E2C0098CDCD /* myhttpmodules */ = {
+			isa = PBXGroup;
+			children = (
+				607ECAB21CDA22690098CDCD /* ngx_http_hello_world_module.c */,
+				607ECAB31CDA22690098CDCD /* ngx_http_mysecret_module.c */,
+			);
+			name = myhttpmodules;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -714,6 +744,7 @@
 				601557511CD8D6B400D57F5F /* ngx_http_script.c in Sources */,
 				6015579F1CD8D70500D57F5F /* ngx_http_gzip_filter_module.c in Sources */,
 				601557591CD8D6B400D57F5F /* ngx_http_write_filter_module.c in Sources */,
+				607ECAB51CDA22690098CDCD /* ngx_http_mysecret_module.c in Sources */,
 				601557581CD8D6B400D57F5F /* ngx_http_variables.c in Sources */,
 				6015584C1CD8D77000D57F5F /* ngx_udp_recv.c in Sources */,
 				601557231CD8D68D00D57F5F /* ngx_eventport_module.c in Sources */,
@@ -759,6 +790,7 @@
 				601557B91CD8D70500D57F5F /* ngx_http_upstream_hash_module.c in Sources */,
 				6015579E1CD8D70500D57F5F /* ngx_http_gunzip_filter_module.c in Sources */,
 				601557BA1CD8D70500D57F5F /* ngx_http_upstream_ip_hash_module.c in Sources */,
+				607ECAB41CDA22690098CDCD /* ngx_http_hello_world_module.c in Sources */,
 				6015584E1CD8D77000D57F5F /* ngx_writev_chain.c in Sources */,
 				601558401CD8D77000D57F5F /* ngx_recv.c in Sources */,
 				601558311CD8D77000D57F5F /* ngx_daemon.c in Sources */,
