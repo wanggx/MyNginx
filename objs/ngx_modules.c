@@ -75,8 +75,8 @@ ngx_module_t *ngx_modules[] = {
     &ngx_http_index_module,            /* NGX_HTTP_MODULE */
     &ngx_http_auth_basic_module,    /* NGX_HTTP_MODULE */
     &ngx_http_access_module,           /* NGX_HTTP_MODULE */
-    &ngx_http_limit_conn_module,
-    &ngx_http_limit_req_module,
+    &ngx_http_limit_conn_module,    /* 设置服务器连接数数模块 */
+    &ngx_http_limit_req_module,      /* 限制连接请求数 */
     &ngx_http_geo_module,
     &ngx_http_map_module,
     &ngx_http_split_clients_module,
