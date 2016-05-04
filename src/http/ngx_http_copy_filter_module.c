@@ -149,6 +149,9 @@ ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
     ctx->aio = r->aio;
 #endif
 
+    /* 在静态页面处理过程当中，当执行这一句之后如果成果，
+      * 则客户端页面可以正常显示
+      */
     rc = ngx_output_chain(ctx, in);
 
     if (ctx->in == NULL) {

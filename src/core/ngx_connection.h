@@ -136,7 +136,7 @@ struct ngx_connection_s {
 
     ngx_listening_t    *listening;      /* 连接对应的监听套接字 */
 
-    off_t               sent;
+    off_t               sent;                  /* 连接发送的字节数量 */
 
     ngx_log_t          *log;
 
