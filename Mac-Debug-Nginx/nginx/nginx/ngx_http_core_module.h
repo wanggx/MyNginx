@@ -79,11 +79,14 @@ typedef struct {
 #if (NGX_HTTP_SSL)
     unsigned                   ssl:1;
 #endif
-#if (NGX_HTTP_SPDY)
-    unsigned                   spdy:1;
+#if (NGX_HTTP_V2)
+    unsigned                   http2:1;
 #endif
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
     unsigned                   ipv6only:1;
+#endif
+#if (NGX_HAVE_REUSEPORT)
+    unsigned                   reuseport:1;
 #endif
     unsigned                   so_keepalive:2;
     unsigned                   proxy_protocol:1;
@@ -115,13 +118,13 @@ typedef struct {
 
 
 typedef enum {
-    NGX_HTTP_POST_READ_PHASE = 0,
+    NGX_HTTP_POST_READ_PHASE = 0,  /* 读取请求的阶段 */
 
-    NGX_HTTP_SERVER_REWRITE_PHASE,
+    NGX_HTTP_SERVER_REWRITE_PHASE, /* 这个阶段主要是处理全局的(server block)的rewrite */
 
-    NGX_HTTP_FIND_CONFIG_PHASE,
-    NGX_HTTP_REWRITE_PHASE,
-    NGX_HTTP_POST_REWRITE_PHASE,
+    NGX_HTTP_FIND_CONFIG_PHASE,   /* 根据url查找location */
+    NGX_HTTP_REWRITE_PHASE,            /* location级别的rewrite */
+    NGX_HTTP_POST_REWRITE_PHASE, /* server，location级别的rewrite都是在这个phase进行收尾工作的 */
 
     NGX_HTTP_PREACCESS_PHASE,
 
@@ -129,9 +132,9 @@ typedef enum {
     NGX_HTTP_POST_ACCESS_PHASE,
 
     NGX_HTTP_TRY_FILES_PHASE,
-    NGX_HTTP_CONTENT_PHASE,
+    NGX_HTTP_CONTENT_PHASE,          /* 生成http响应 */
 
-    NGX_HTTP_LOG_PHASE
+    NGX_HTTP_LOG_PHASE                     /* log模块 */
 } ngx_http_phases;
 
 typedef struct ngx_http_phase_handler_s  ngx_http_phase_handler_t;
@@ -139,15 +142,16 @@ typedef struct ngx_http_phase_handler_s  ngx_http_phase_handler_t;
 typedef ngx_int_t (*ngx_http_phase_handler_pt)(ngx_http_request_t *r,
     ngx_http_phase_handler_t *ph);
 
+/* http阶段处理结构 */
 struct ngx_http_phase_handler_s {
-    ngx_http_phase_handler_pt  checker;
-    ngx_http_handler_pt        handler;
-    ngx_uint_t                 next;
+    ngx_http_phase_handler_pt  checker;       /* 参数携带一个请求和结构自身 */
+    ngx_http_handler_pt        handler;           /* 处理请求的句柄 */
+    ngx_uint_t                 next;                       /* 表示位置索引 */
 };
 
 
 typedef struct {
-    ngx_http_phase_handler_t  *handlers;
+    ngx_http_phase_handler_t  *handlers;  /* 是一个动态数组用来保存所有的ngx_http_phase_handler_t结构 */
     ngx_uint_t                 server_rewrite_index;
     ngx_uint_t                 location_rewrite_index;
 } ngx_http_phase_engine_t;
@@ -159,7 +163,7 @@ typedef struct {
 
 
 typedef struct {
-    ngx_array_t                servers;         /* ngx_http_core_srv_conf_t */
+    ngx_array_t                servers;        /* 服务器配置 */ /* ngx_http_core_srv_conf_t */
 
     ngx_http_phase_engine_t    phase_engine;
 
@@ -178,25 +182,26 @@ typedef struct {
 
     ngx_hash_keys_arrays_t    *variables_keys;
 
-    ngx_array_t               *ports;
+    ngx_array_t               *ports;  /* 以[port,addr]的形式存放 */
 
     ngx_uint_t                 try_files;       /* unsigned  try_files:1 */
 
+    /* 请求的阶段处理数组 */
     ngx_http_phase_t           phases[NGX_HTTP_LOG_PHASE + 1];
 } ngx_http_core_main_conf_t;
 
 
 typedef struct {
     /* array of the ngx_http_server_name_t, "server_name" directive */
-    ngx_array_t                 server_names;
+    ngx_array_t                 server_names;        /* 服务器的名称也可以是多个 */
 
     /* server ctx */
-    ngx_http_conf_ctx_t        *ctx;
+    ngx_http_conf_ctx_t        *ctx;          /* 指向的是http模块的配置上下文 */
 
-    ngx_str_t                   server_name;
+    ngx_str_t                   server_name;   /* 相当于一个域名如 www.baidu.com */
 
-    size_t                      connection_pool_size;
-    size_t                      request_pool_size;
+    size_t                      connection_pool_size;    /* 连接的内存池大小 */
+    size_t                      request_pool_size;  /* 请求的内存池的大小 */
     size_t                      client_header_buffer_size;
 
     ngx_bufs_t                  large_client_header_buffers;
@@ -245,8 +250,8 @@ struct ngx_http_addr_conf_s {
 #if (NGX_HTTP_SSL)
     unsigned                   ssl:1;
 #endif
-#if (NGX_HTTP_SPDY)
-    unsigned                   spdy:1;
+#if (NGX_HTTP_V2)
+    unsigned                   http2:1;
 #endif
     unsigned                   proxy_protocol:1;
 };
@@ -275,13 +280,14 @@ typedef struct {
 } ngx_http_port_t;
 
 
+/* http监听地址结构 */
 typedef struct {
-    ngx_int_t                  family;
-    in_port_t                  port;
-    ngx_array_t                addrs;     /* array of ngx_http_conf_addr_t */
+    ngx_int_t                  family;  /* 协议族 */
+    in_port_t                  port;    /* 端口号 */
+    ngx_array_t                addrs;   /* 监听地址 */  /* array of ngx_http_conf_addr_t */
 } ngx_http_conf_port_t;
 
-
+/* 配置地址，和上面的ngx_http_conf_port_t中的addrs相关联 */
 typedef struct {
     ngx_http_listen_opt_t      opt;
 
@@ -296,6 +302,7 @@ typedef struct {
 
     /* the default server configuration for this address:port */
     ngx_http_core_srv_conf_t  *default_server;
+    /* 服务器配置数组 */
     ngx_array_t                servers;  /* array of ngx_http_core_srv_conf_t */
 } ngx_http_conf_addr_t;
 
@@ -318,7 +325,9 @@ typedef struct {
 } ngx_http_try_file_t;
 
 
+/* 核心location配置模块 */
 struct ngx_http_core_loc_conf_s {
+    /* 匹配的名称 */
     ngx_str_t     name;          /* location name */
 
 #if (NGX_PCRE)
@@ -329,7 +338,7 @@ struct ngx_http_core_loc_conf_s {
     unsigned      lmt_excpt:1;
     unsigned      named:1;
 
-    unsigned      exact_match:1;
+    unsigned      exact_match:1;  /* 是否精确匹配 */
     unsigned      noregex:1;
 
     unsigned      auto_redirect:1;
@@ -346,6 +355,7 @@ struct ngx_http_core_loc_conf_s {
 #endif
 
     /* pointer to the modules' loc_conf */
+    /* 指向ngx_http_conf_ctx_t中的loc_conf */
     void        **loc_conf;
 
     uint32_t      limit_except;
@@ -379,6 +389,7 @@ struct ngx_http_core_loc_conf_s {
 
     ngx_msec_t    client_body_timeout;     /* client_body_timeout */
     ngx_msec_t    send_timeout;            /* send_timeout */
+    /* http连接的保活时间 */
     ngx_msec_t    keepalive_timeout;       /* keepalive_timeout */
     ngx_msec_t    lingering_time;          /* lingering_time */
     ngx_msec_t    lingering_timeout;       /* lingering_timeout */
@@ -452,14 +463,14 @@ struct ngx_http_core_loc_conf_s {
     ngx_uint_t    types_hash_max_size;
     ngx_uint_t    types_hash_bucket_size;
 
-    ngx_queue_t  *locations;
+    ngx_queue_t  *locations;  /* 其实就是一个ngx_http_location_queue_t队列 */
 
 #if 0
     ngx_http_core_loc_conf_t  *prev_location;
 #endif
 };
 
-
+/* location的队列 */
 typedef struct {
     ngx_queue_t                      queue;
     ngx_http_core_loc_conf_t        *exact;

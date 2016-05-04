@@ -66,6 +66,7 @@ static ngx_int_t ngx_http_add_addrs6(ngx_conf_t *cf, ngx_http_port_t *hport,
     ngx_http_conf_addr_t *addr);
 #endif
 
+/* http模块数量 */
 ngx_uint_t   ngx_http_max_module;
 
 
@@ -116,6 +117,11 @@ ngx_module_t  ngx_http_module = {
 };
 
 
+/* http配置指令的回调，同时也对http模块进行了一些前后阶段性的操作
+  * cf是不断解析配置时携带的配置信息 
+  * cmd表示模块中命令的指针 
+  * conf表示相应模块在cycle中conf_ctx中的指针
+  */
 static char *
 ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -128,30 +134,37 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_http_core_srv_conf_t   **cscfp;
     ngx_http_core_main_conf_t   *cmcf;
 
-    /* the main http context */
+    if (*(ngx_http_conf_ctx_t **) conf) {
+        return "is duplicate";
+    }
 
+    /* the main http context */
+	/* http模块的配置上下文到这里才开始分配 */
     ctx = ngx_pcalloc(cf->pool, sizeof(ngx_http_conf_ctx_t));
     if (ctx == NULL) {
         return NGX_CONF_ERROR;
     }
 
+	/* 更改conf的值，也就是http模块的配置内存 */
     *(ngx_http_conf_ctx_t **) conf = ctx;
 
 
     /* count the number of the http modules and set up their indices */
 
+    /* 扫描所有模块，获取http模块的数量 */
     ngx_http_max_module = 0;
     for (m = 0; ngx_modules[m]; m++) {
         if (ngx_modules[m]->type != NGX_HTTP_MODULE) {
             continue;
         }
-
+        /* 此处设定http模块中同类模块的缩影 */
         ngx_modules[m]->ctx_index = ngx_http_max_module++;
     }
 
 
     /* the http main_conf context, it is the same in the all http contexts */
 
+    /* 为main_conf分配ngx_http_max_module个指针空间 */
     ctx->main_conf = ngx_pcalloc(cf->pool,
                                  sizeof(void *) * ngx_http_max_module);
     if (ctx->main_conf == NULL) {
@@ -164,6 +177,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
      * the server{}s' srv_conf's
      */
 
+    /* 为srv_conf分配ngx_http_max_module个指针空间 */
     ctx->srv_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_http_max_module);
     if (ctx->srv_conf == NULL) {
         return NGX_CONF_ERROR;
@@ -174,7 +188,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
      * the http null loc_conf context, it is used to merge
      * the server{}s' loc_conf's
      */
-
+    /* 为loc_conf分配ngx_http_max_module个指针空间 */
     ctx->loc_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_http_max_module);
     if (ctx->loc_conf == NULL) {
         return NGX_CONF_ERROR;
@@ -186,6 +200,9 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
      * of the all http modules
      */
 
+    /* 此时ngx_http_conf_ctx_t中的二维数组中的第一维已经分配了内存，
+      * 该for循环用来初始化并给第二维数组来分配内存
+      */
     for (m = 0; ngx_modules[m]; m++) {
         if (ngx_modules[m]->type != NGX_HTTP_MODULE) {
             continue;
@@ -194,7 +211,11 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         module = ngx_modules[m]->ctx;
         mi = ngx_modules[m]->ctx_index;
 
+        /* 为每个模块创建main_conf配置 */
         if (module->create_main_conf) {
+        /* 注意这里返回的配置结构，会根据不同的模块有所差别，
+          * 也就是不同模块，配置结构不同，下面的srv_conf，loc_conf也是同样的道理
+          */
             ctx->main_conf[mi] = module->create_main_conf(cf);
             if (ctx->main_conf[mi] == NULL) {
                 return NGX_CONF_ERROR;
@@ -216,9 +237,14 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
     }
 
+    /* 将cf暂存到pcf当中 */
     pcf = *cf;
+    /* 设置配置文件的山下文，此时ngx_conf_t中的ctx指向的就是http模块配置上下文 */
     cf->ctx = ctx;
 
+    /* 对http模块进行配置前处理，因为此时仅仅是分配了内存，
+      * 还没有开始解析http模块的配置
+      */
     for (m = 0; ngx_modules[m]; m++) {
         if (ngx_modules[m]->type != NGX_HTTP_MODULE) {
             continue;
@@ -235,9 +261,19 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     /* parse inside the http{} block */
 
+    /* 设置要解析的是http模块，并且是http模块的上下文，
+      * 不往server，location等复杂配置块延伸
+      */
     cf->module_type = NGX_HTTP_MODULE;
     cf->cmd_type = NGX_HTTP_MAIN_CONF;
+    /* 注意这里可能设置cf的配置文件处理回调,第二个参数为null
+      * 表示解析的不是文件，而是配置块
+      */
     rv = ngx_conf_parse(cf, NULL);
+
+    /* 函数执行到这里就表示http模块的所有配置已经解析完成
+      * 之后就是后期的解析结果合并处理 
+      */
 
     if (rv != NGX_CONF_OK) {
         goto failed;
@@ -277,6 +313,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     /* create location trees */
 
+    /* 初始化和创建每个server的location树 */
     for (s = 0; s < cmcf->servers.nelts; s++) {
 
         clcf = cscfp[s]->ctx->loc_conf[ngx_http_core_module.ctx_index];
@@ -290,7 +327,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
     }
 
-
+    /* http各个处理阶段的初始化，只分配了内存 */
     if (ngx_http_init_phases(cf, cmcf) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -299,7 +336,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-
+    /* 对http模块进行后期配置，如设置静态网页的请求处理句柄 */
     for (m = 0; ngx_modules[m]; m++) {
         if (ngx_modules[m]->type != NGX_HTTP_MODULE) {
             continue;
@@ -314,6 +351,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
     }
 
+    /* 初始化http的各种变量 */
     if (ngx_http_variables_init_vars(cf) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -325,7 +363,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     *cf = pcf;
 
-
+    /* 初始化http各个阶段的处理函数 */
     if (ngx_http_init_phase_handlers(cf, cmcf) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -333,6 +371,9 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     /* optimize the lists of ports, addresses and server names */
 
+    /* 所有http配置块解析之后开始创建对应的监听套接口
+       * 这里的创建只是名义上的创建，只是创建了结构体变量，并存放在cycle的listening当中
+       */
     if (ngx_http_optimize_servers(cf, cmcf, cmcf->ports) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -443,7 +484,7 @@ ngx_http_init_headers_in_hash(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
     return NGX_OK;
 }
 
-
+/* 初始化http请求的各个阶段的处理回调 */
 static ngx_int_t
 ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 {
@@ -472,9 +513,11 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
         return NGX_ERROR;
     }
 
+    /* 设置指针关系 */
     cmcf->phase_engine.handlers = ph;
     n = 0;
 
+    /* 初始化请求各个阶段的checker */
     for (i = 0; i < NGX_HTTP_LOG_PHASE; i++) {
         h = cmcf->phases[i].handlers.elts;
 
@@ -560,6 +603,7 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 }
 
 
+/* 合并servers */
 static char *
 ngx_http_merge_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
     ngx_http_module_t *module, ngx_uint_t ctx_index)
@@ -575,6 +619,7 @@ ngx_http_merge_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
     saved = *ctx;
     rv = NGX_CONF_OK;
 
+    /* 扫描main_conf中的servers数组 */
     for (s = 0; s < cmcf->servers.nelts; s++) {
 
         /* merge the server{}s' srv_conf's */
@@ -621,7 +666,7 @@ failed:
     return rv;
 }
 
-
+/* 合并locations */
 static char *
 ngx_http_merge_locations(ngx_conf_t *cf, ngx_queue_t *locations,
     void **loc_conf, ngx_http_module_t *module, ngx_uint_t ctx_index)
@@ -666,7 +711,7 @@ ngx_http_merge_locations(ngx_conf_t *cf, ngx_queue_t *locations,
     return NGX_CONF_OK;
 }
 
-
+/* 对location进行初始化 */
 static ngx_int_t
 ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_core_loc_conf_t *pclcf)
@@ -795,7 +840,7 @@ ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     return NGX_OK;
 }
 
-
+/* 创建location树 */
 static ngx_int_t
 ngx_http_init_static_location_trees(ngx_conf_t *cf,
     ngx_http_core_loc_conf_t *pclcf)
@@ -848,7 +893,11 @@ ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
 {
     ngx_http_location_queue_t  *lq;
 
+    /* 如果队列为空，则给队列进行初始化 */
     if (*locations == NULL) {
+        /* 注意queue成员是ngx_http_location_queue_t结构的第一个成员，
+          * 内存对齐
+          */
         *locations = ngx_palloc(cf->temp_pool,
                                 sizeof(ngx_http_location_queue_t));
         if (*locations == NULL) {
@@ -858,6 +907,7 @@ ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
         ngx_queue_init(*locations);
     }
 
+    /* 分配一个ngx_http_location_queue_t结构 */
     lq = ngx_palloc(cf->temp_pool, sizeof(ngx_http_location_queue_t));
     if (lq == NULL) {
         return NGX_ERROR;
@@ -877,12 +927,15 @@ ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
         lq->inclusive = clcf;
     }
 
+    /* 设置location的名称以及配置文件信息 */
     lq->name = &clcf->name;
     lq->file_name = cf->conf_file->file.name.data;
     lq->line = cf->conf_file->line;
 
+    /* 初始化队列 */
     ngx_queue_init(&lq->list);
 
+    /* 将location插入到lq的queue队列末尾 */
     ngx_queue_insert_tail(*locations, &lq->queue);
 
     return NGX_OK;
@@ -1139,11 +1192,12 @@ inclusive:
     return node;
 }
 
-
+/* 将[port,addr]添加到ports当中 */
 ngx_int_t
 ngx_http_add_listen(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_listen_opt_t *lsopt)
 {
+    /* 表示端口 */
     in_port_t                   p;
     ngx_uint_t                  i;
     struct sockaddr            *sa;
@@ -1190,10 +1244,14 @@ ngx_http_add_listen(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     port = cmcf->ports->elts;
     for (i = 0; i < cmcf->ports->nelts; i++) {
 
+        /* 注意判断条件是端口号要相同，协议族也要相同，
+          * 不同的协议族可以监听相同的端口 
+          */
         if (p != port[i].port || sa->sa_family != port[i].family) {
             continue;
         }
 
+        /* 表明端口和地址已经在端口列表当中 */
         /* a port is already in the port list */
 
         return ngx_http_add_addresses(cf, cscf, &port[i], lsopt);
@@ -1214,6 +1272,7 @@ ngx_http_add_listen(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 }
 
 
+/* 把一个服务器地址添加到监听端口当中 */
 static ngx_int_t
 ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_conf_port_t *port, ngx_http_listen_opt_t *lsopt)
@@ -1229,8 +1288,8 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 #if (NGX_HTTP_SSL)
     ngx_uint_t             ssl;
 #endif
-#if (NGX_HTTP_SPDY)
-    ngx_uint_t             spdy;
+#if (NGX_HTTP_V2)
+    ngx_uint_t             http2;
 #endif
 
     /*
@@ -1238,6 +1297,7 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
      * may fill some fields in inherited sockaddr struct's
      */
 
+    /* 获取监听地址 */
     sa = &lsopt->u.sockaddr;
 
     switch (sa->sa_family) {
@@ -1266,6 +1326,9 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 
     addr = port->addrs.elts;
 
+    /* 处理端口中的地址，如果服务器中存在多个网卡，
+      * 也就是多个ip地址，多个不同的ip地址监听同一个端口
+      */
     for (i = 0; i < port->addrs.nelts; i++) {
 
         if (ngx_memcmp(p, addr[i].opt.u.sockaddr_data + off, len) != 0) {
@@ -1286,8 +1349,8 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 #if (NGX_HTTP_SSL)
         ssl = lsopt->ssl || addr[i].opt.ssl;
 #endif
-#if (NGX_HTTP_SPDY)
-        spdy = lsopt->spdy || addr[i].opt.spdy;
+#if (NGX_HTTP_V2)
+        http2 = lsopt->http2 || addr[i].opt.http2;
 #endif
 
         if (lsopt->set) {
@@ -1320,8 +1383,8 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 #if (NGX_HTTP_SSL)
         addr[i].opt.ssl = ssl;
 #endif
-#if (NGX_HTTP_SPDY)
-        addr[i].opt.spdy = spdy;
+#if (NGX_HTTP_V2)
+        addr[i].opt.http2 = http2;
 #endif
 
         return NGX_OK;
@@ -1338,6 +1401,7 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
  * configurations to the port list
  */
 
+/* 把服务器地址添加到监听端口当中 */
 static ngx_int_t
 ngx_http_add_address(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_conf_port_t *port, ngx_http_listen_opt_t *lsopt)
@@ -1353,21 +1417,26 @@ ngx_http_add_address(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
         }
     }
 
-#if (NGX_HTTP_SPDY && NGX_HTTP_SSL                                            \
+#if (NGX_HTTP_V2 && NGX_HTTP_SSL                                              \
      && !defined TLSEXT_TYPE_application_layer_protocol_negotiation           \
      && !defined TLSEXT_TYPE_next_proto_neg)
-    if (lsopt->spdy && lsopt->ssl) {
+
+    if (lsopt->http2 && lsopt->ssl) {
         ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
-                           "nginx was built without OpenSSL ALPN or NPN "
-                           "support, SPDY is not enabled for %s", lsopt->addr);
+                           "nginx was built with OpenSSL that lacks ALPN "
+                           "and NPN support, HTTP/2 is not enabled for %s",
+                           lsopt->addr);
     }
+
 #endif
 
+    /* 增加一个ngx_http_conf_addr_t服务器地址 */
     addr = ngx_array_push(&port->addrs);
     if (addr == NULL) {
         return NGX_ERROR;
     }
 
+    /* 设置地址的监听信息 */
     addr->opt = *lsopt;
     addr->hash.buckets = NULL;
     addr->hash.size = 0;
@@ -1377,6 +1446,7 @@ ngx_http_add_address(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     addr->nregex = 0;
     addr->regex = NULL;
 #endif
+    /* 设置地址的默认服务器 */
     addr->default_server = cscf;
     addr->servers.elts = NULL;
 
@@ -1386,6 +1456,10 @@ ngx_http_add_address(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 
 /* add the server core module configuration to the address:port */
 
+/* 将服务添加到地址对应的服务列表当中
+  * 注意在nginx中，一个地址可以对应多个服务，如一个地址监听多个端口 
+  * 则这个地址就对应多个端口，也就是在nginx中，地址+端口确定一个服务 
+  */
 static ngx_int_t
 ngx_http_add_server(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_conf_addr_t *addr)
@@ -1404,6 +1478,7 @@ ngx_http_add_server(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     } else {
         server = addr->servers.elts;
         for (i = 0; i < addr->servers.nelts; i++) {
+            /* 如果存在相同的服务器配置则出错 */
             if (server[i] == cscf) {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                    "a duplicate listen %s", addr->opt.addr);
@@ -1417,12 +1492,13 @@ ngx_http_add_server(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
         return NGX_ERROR;
     }
 
+    /* 设置数组中新元素的值 */
     *server = cscf;
 
     return NGX_OK;
 }
 
-
+/* 此时是在http模块配置文件解析完成之后，开始创建监听套接字 */
 static ngx_int_t
 ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
     ngx_array_t *ports)
@@ -1461,6 +1537,7 @@ ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
             }
         }
 
+        /* 初始化http监听 */
         if (ngx_http_init_listening(cf, &port[p]) != NGX_OK) {
             return NGX_ERROR;
         }
@@ -1625,7 +1702,7 @@ failed:
     return NGX_ERROR;
 }
 
-
+/* 对端口所对应的地址进行排序 */
 static ngx_int_t
 ngx_http_cmp_conf_addrs(const void *one, const void *two)
 {
@@ -1671,7 +1748,7 @@ ngx_http_cmp_dns_wildcards(const void *one, const void *two)
     return ngx_dns_strcmp(first->key.data, second->key.data);
 }
 
-
+/* 初始化端口的监听 */
 static ngx_int_t
 ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
 {
@@ -1700,13 +1777,14 @@ ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
 
     i = 0;
 
+    /* 依次处理一个端口对应的多个地址 */
     while (i < last) {
 
         if (bind_wildcard && !addr[i].opt.bind) {
             i++;
             continue;
         }
-
+        /* 添加http监听 */
         ls = ngx_http_add_listening(cf, &addr[i]);
         if (ls == NULL) {
             return NGX_ERROR;
@@ -1719,13 +1797,7 @@ ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
 
         ls->servers = hport;
 
-        if (i == last - 1) {
-            hport->naddrs = last;
-
-        } else {
-            hport->naddrs = 1;
-            i = 0;
-        }
+        hport->naddrs = i + 1;
 
         switch (ls->sockaddr->sa_family) {
 
@@ -1743,6 +1815,10 @@ ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
             break;
         }
 
+        if (ngx_clone_listening(cf, ls) != NGX_OK) {
+            return NGX_ERROR;
+        }
+
         addr++;
         last--;
     }
@@ -1750,7 +1826,7 @@ ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
     return NGX_OK;
 }
 
-
+/* 根据地址来添加一个监听套接字，此时该监听套接字还并没有执行listen系统调用 */
 static ngx_listening_t *
 ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
 {
@@ -1758,6 +1834,7 @@ ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
     ngx_http_core_loc_conf_t  *clcf;
     ngx_http_core_srv_conf_t  *cscf;
 
+    /* 创建一个监听套接字，就相当于分配了一个 */
     ls = ngx_create_listening(cf, &addr->opt.u.sockaddr, addr->opt.socklen);
     if (ls == NULL) {
         return NULL;
@@ -1765,6 +1842,7 @@ ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
 
     ls->addr_ntop = 1;
 
+    /* 初始化监听套接字的连接处理 */
     ls->handler = ngx_http_init_connection;
 
     cscf = addr->default_server;
@@ -1790,6 +1868,7 @@ ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
     }
 #endif
 
+    /* 设置监听套接字的最大读取等待队列，接收缓冲和发送缓冲 */
     ls->backlog = addr->opt.backlog;
     ls->rcvbuf = addr->opt.rcvbuf;
     ls->sndbuf = addr->opt.sndbuf;
@@ -1821,6 +1900,10 @@ ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
     ls->fastopen = addr->opt.fastopen;
 #endif
 
+#if (NGX_HAVE_REUSEPORT)
+    ls->reuseport = addr->opt.reuseport;
+#endif
+
     return ls;
 }
 
@@ -1850,8 +1933,8 @@ ngx_http_add_addrs(ngx_conf_t *cf, ngx_http_port_t *hport,
 #if (NGX_HTTP_SSL)
         addrs[i].conf.ssl = addr[i].opt.ssl;
 #endif
-#if (NGX_HTTP_SPDY)
-        addrs[i].conf.spdy = addr[i].opt.spdy;
+#if (NGX_HTTP_V2)
+        addrs[i].conf.http2 = addr[i].opt.http2;
 #endif
         addrs[i].conf.proxy_protocol = addr[i].opt.proxy_protocol;
 
@@ -1915,9 +1998,10 @@ ngx_http_add_addrs6(ngx_conf_t *cf, ngx_http_port_t *hport,
 #if (NGX_HTTP_SSL)
         addrs6[i].conf.ssl = addr[i].opt.ssl;
 #endif
-#if (NGX_HTTP_SPDY)
-        addrs6[i].conf.spdy = addr[i].opt.spdy;
+#if (NGX_HTTP_V2)
+        addrs6[i].conf.http2 = addr[i].opt.http2;
 #endif
+        addrs6[i].conf.proxy_protocol = addr[i].opt.proxy_protocol;
 
         if (addr[i].hash.buckets == NULL
             && (addr[i].wc_head == NULL

@@ -494,6 +494,7 @@ ngx_kqueue_notify(ngx_event_handler_pt handler)
 #endif
 
 
+/* kqueue事件模型的事件处理 */
 static ngx_int_t
 ngx_kqueue_process_events(ngx_cycle_t *cycle, ngx_msec_t timer,
     ngx_uint_t flags)

@@ -771,9 +771,10 @@ ngx_http_uwsgi_eval(ngx_http_request_t *r, ngx_http_uwsgi_loc_conf_t * uwcf)
 
     } else {
         u->resolved->host = url.host;
-        u->resolved->port = url.port;
-        u->resolved->no_port = url.no_port;
     }
+
+    u->resolved->port = url.port;
+    u->resolved->no_port = url.no_port;
 
     return NGX_OK;
 }
@@ -1724,9 +1725,8 @@ ngx_http_uwsgi_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
                               prev->upstream.ssl_session_reuse, 1);
 
     ngx_conf_merge_bitmask_value(conf->ssl_protocols, prev->ssl_protocols,
-                                 (NGX_CONF_BITMASK_SET|NGX_SSL_SSLv3
-                                  |NGX_SSL_TLSv1|NGX_SSL_TLSv1_1
-                                  |NGX_SSL_TLSv1_2));
+                                 (NGX_CONF_BITMASK_SET|NGX_SSL_TLSv1
+                                  |NGX_SSL_TLSv1_1|NGX_SSL_TLSv1_2));
 
     ngx_conf_merge_str_value(conf->ssl_ciphers, prev->ssl_ciphers,
                              "DEFAULT");

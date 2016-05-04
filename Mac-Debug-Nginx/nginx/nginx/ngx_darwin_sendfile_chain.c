@@ -5,7 +5,7 @@
  */
 
 
-#include "ngx_config.h"
+#include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_event.h>
 
@@ -132,6 +132,11 @@ ngx_darwin_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
                            "sendfile: @%O %O h:%uz",
                            file->file_pos, sent, header.size);
 
+            /* 这里开始真正的发送文件，
+              * 当输入localhost的时候默认的是index.html 
+              * 那么此时这里的file->file->name就是xxxx/html/index.html , 
+              * 发送过去之后，客户端页面就可以正常显示了。 
+              */
             rc = sendfile(file->file->fd, c->fd, file->file_pos,
                           &sent, &hdtr, 0);
 

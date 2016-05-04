@@ -773,9 +773,10 @@ ngx_http_fastcgi_eval(ngx_http_request_t *r, ngx_http_fastcgi_loc_conf_t *flcf)
 
     } else {
         u->resolved->host = url.host;
-        u->resolved->port = url.port;
-        u->resolved->no_port = url.no_port;
     }
+
+    u->resolved->port = url.port;
+    u->resolved->no_port = url.no_port;
 
     return NGX_OK;
 }
@@ -1770,7 +1771,6 @@ ngx_http_fastcgi_process_header(ngx_http_request_t *r)
 #if (NGX_HTTP_CACHE)
 
         if (f->large_stderr && r->cache) {
-            u_char                     *start;
             ssize_t                     len;
             ngx_http_fastcgi_header_t  *fh;
 

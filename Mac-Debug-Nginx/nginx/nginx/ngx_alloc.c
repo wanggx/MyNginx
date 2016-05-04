@@ -14,6 +14,7 @@ ngx_uint_t  ngx_pagesize_shift;
 ngx_uint_t  ngx_cacheline_size;
 
 
+/* 使用malloc分配了size大小的内存，同时使用了日志 */
 void *
 ngx_alloc(size_t size, ngx_log_t *log)
 {

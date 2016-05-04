@@ -10,7 +10,7 @@
 
 
 #define NGX_HTTP_MAX_URI_CHANGES           10
-#define NGX_HTTP_MAX_SUBREQUESTS           200
+#define NGX_HTTP_MAX_SUBREQUESTS           50
 
 /* must be 2^n */
 #define NGX_HTTP_LC_HEADER_LEN             32
@@ -23,6 +23,7 @@
 #define NGX_HTTP_VERSION_9                 9
 #define NGX_HTTP_VERSION_10                1000
 #define NGX_HTTP_VERSION_11                1001
+#define NGX_HTTP_VERSION_20                2000
 
 #define NGX_HTTP_UNKNOWN                   0x0001
 #define NGX_HTTP_GET                       0x0002
@@ -124,7 +125,7 @@
  */
 #define NGX_HTTP_CLIENT_CLOSED_REQUEST     499
 
-
+/* 服务器内部错误 */
 #define NGX_HTTP_INTERNAL_SERVER_ERROR     500
 #define NGX_HTTP_NOT_IMPLEMENTED           501
 #define NGX_HTTP_BAD_GATEWAY               502
@@ -270,6 +271,7 @@ typedef struct {
     ngx_array_t                       cache_control;
 
     off_t                             content_length_n;
+    off_t                             content_offset;
     time_t                            date_time;
     time_t                            last_modified_time;
 } ngx_http_headers_out_t;
@@ -359,13 +361,14 @@ typedef void (*ngx_http_event_handler_pt)(ngx_http_request_t *r);
 struct ngx_http_request_s {
     uint32_t                          signature;         /* "HTTP" */
 
-    ngx_connection_t                 *connection;
+    ngx_connection_t                 *connection;   /* 为请求服务的连接 */
 
     void                            **ctx;
     void                            **main_conf;
     void                            **srv_conf;
     void                            **loc_conf;
 
+    /* 请求的读写事件处理 */
     ngx_http_event_handler_pt         read_event_handler;
     ngx_http_event_handler_pt         write_event_handler;
 
@@ -380,7 +383,9 @@ struct ngx_http_request_s {
     ngx_pool_t                       *pool;
     ngx_buf_t                        *header_in;
 
+    /* 代表请求头部 */
     ngx_http_headers_in_t             headers_in;
+    /* 代表响应头部 */
     ngx_http_headers_out_t            headers_out;
 
     ngx_http_request_body_t          *request_body;
@@ -403,12 +408,15 @@ struct ngx_http_request_s {
 
     ngx_chain_t                      *out;
     ngx_http_request_t               *main;
-    ngx_http_request_t               *parent;
+    /* 当前请求的父请求 */
+    ngx_http_request_t               *parent;   
     ngx_http_postponed_request_t     *postponed;
     ngx_http_post_subrequest_t       *post_subrequest;
     ngx_http_posted_request_t        *posted_requests;
 
+    /* 表示在phase_engine中的索引 */
     ngx_int_t                         phase_handler;
+    /* 生成内容的处理函数 */
     ngx_http_handler_pt               content_handler;
     ngx_uint_t                        access_code;
 
@@ -430,17 +438,17 @@ struct ngx_http_request_s {
 
     ngx_uint_t                        err_status;
 
-    ngx_http_connection_t            *http_connection;
-#if (NGX_HTTP_SPDY)
-    ngx_http_spdy_stream_t           *spdy_stream;
+    ngx_http_connection_t            *http_connection;   /* 请求的http连接信息 */
+#if (NGX_HTTP_V2)
+    ngx_http_v2_stream_t             *stream;
 #endif
 
     ngx_http_log_handler_pt           log_handler;
 
     ngx_http_cleanup_t               *cleanup;
 
+    unsigned                          count:16;
     unsigned                          subrequests:8;
-    unsigned                          count:8;
     unsigned                          blocked:8;
 
     unsigned                          aio:1;
@@ -507,7 +515,7 @@ struct ngx_http_request_s {
     unsigned                          pipeline:1;
     unsigned                          chunked:1;
     unsigned                          header_only:1;
-    unsigned                          keepalive:1;
+    unsigned                          keepalive:1;           /* 请求是否保活 */
     unsigned                          lingering_close:1;
     unsigned                          discard_body:1;
     unsigned                          reading_body:1;
@@ -529,6 +537,7 @@ struct ngx_http_request_s {
     unsigned                          filter_need_in_memory:1;
     unsigned                          filter_need_temporary:1;
     unsigned                          allow_ranges:1;
+    unsigned                          subrequest_ranges:1;
     unsigned                          single_range:1;
     unsigned                          disable_not_modified:1;
 
@@ -584,17 +593,6 @@ typedef struct {
 
 extern ngx_http_header_t       ngx_http_headers_in[];
 extern ngx_http_header_out_t   ngx_http_headers_out[];
-
-
-#define ngx_http_set_connection_log(c, l)                                     \
-                                                                              \
-    c->log->file = l->file;                                                   \
-    c->log->next = l->next;                                                   \
-    c->log->writer = l->writer;                                               \
-    c->log->wdata = l->wdata;                                                 \
-    if (!(c->log->log_level & NGX_LOG_DEBUG_CONNECTION)) {                    \
-        c->log->log_level = l->log_level;                                     \
-    }
 
 
 #define ngx_http_set_log_request(log, r)                                      \

@@ -58,10 +58,9 @@ typedef struct {
     ngx_uint_t                       bl_state;
 
     ngx_uint_t                       status;
-    time_t                           response_sec;
-    ngx_uint_t                       response_msec;
-    time_t                           header_sec;
-    ngx_uint_t                       header_msec;
+    ngx_msec_t                       response_time;
+    ngx_msec_t                       connect_time;
+    ngx_msec_t                       header_time;
     off_t                            response_length;
 
     ngx_str_t                       *peer;
@@ -123,6 +122,10 @@ struct ngx_http_upstream_srv_conf_s {
     in_port_t                        port;
     in_port_t                        default_port;
     ngx_uint_t                       no_port;  /* unsigned no_port:1 */
+
+#if (NGX_HTTP_UPSTREAM_ZONE)
+    ngx_shm_zone_t                  *shm_zone;
+#endif
 };
 
 
@@ -131,8 +134,9 @@ typedef struct {
     ngx_http_complex_value_t        *value;
 } ngx_http_upstream_local_t;
 
-
+/* upstream模块配置 */
 typedef struct {
+    /* upstream模块集群配置 */
     ngx_http_upstream_srv_conf_t    *upstream;
 
     ngx_msec_t                       connect_timeout;
@@ -190,6 +194,7 @@ typedef struct {
     ngx_msec_t                       cache_lock_age;
 
     ngx_flag_t                       cache_revalidate;
+    ngx_flag_t                       cache_convert_head;
 
     ngx_array_t                     *cache_valid;
     ngx_array_t                     *cache_bypass;
@@ -366,6 +371,7 @@ struct ngx_http_upstream_s {
     unsigned                         upgrade:1;
 
     unsigned                         request_sent:1;
+    unsigned                         request_body_sent:1;
     unsigned                         header_sent:1;
 };
 

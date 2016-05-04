@@ -14,6 +14,7 @@
 #include <ngx_event.h>
 
 
+/* 向队列中添加一个事件 */
 #define ngx_post_event(ev, q)                                                 \
                                                                               \
     if (!(ev)->posted) {                                                      \

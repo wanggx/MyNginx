@@ -19,7 +19,7 @@
 #define NGX_LOG_CRIT              3
 #define NGX_LOG_ERR               4
 #define NGX_LOG_WARN              5
-#define NGX_LOG_NOTICE            6
+#define NGX_LOG_NOTICE            6  /* 默认的日志级别 */
 #define NGX_LOG_INFO              7
 #define NGX_LOG_DEBUG             8
 
@@ -30,6 +30,7 @@
 #define NGX_LOG_DEBUG_HTTP        0x100
 #define NGX_LOG_DEBUG_MAIL        0x200
 #define NGX_LOG_DEBUG_MYSQL       0x400
+#define NGX_LOG_DEBUG_STREAM      0x800
 
 /*
  * do not forget to update debug_levels[] in src/core/ngx_log.c
@@ -37,7 +38,7 @@
  */
 
 #define NGX_LOG_DEBUG_FIRST       NGX_LOG_DEBUG_CORE
-#define NGX_LOG_DEBUG_LAST        NGX_LOG_DEBUG_MYSQL
+#define NGX_LOG_DEBUG_LAST        NGX_LOG_DEBUG_STREAM
 #define NGX_LOG_DEBUG_CONNECTION  0x80000000
 #define NGX_LOG_DEBUG_ALL         0x7ffffff0
 
@@ -48,17 +49,17 @@ typedef void (*ngx_log_writer_pt) (ngx_log_t *log, ngx_uint_t level,
 
 
 struct ngx_log_s {
-    ngx_uint_t           log_level;
-    ngx_open_file_t     *file;
+    ngx_uint_t           log_level;  /* 日志级别 */
+    ngx_open_file_t     *file;       /* 日志对应的文件 */
 
     ngx_atomic_uint_t    connection;
 
     time_t               disk_full_time;
 
-    ngx_log_handler_pt   handler;
+    ngx_log_handler_pt   handler;      /* 日志的回调处理函数 */
     void                *data;
 
-    ngx_log_writer_pt    writer;
+    ngx_log_writer_pt    writer;       /* 日志写回调 */
     void                *wdata;
 
     /*
@@ -69,7 +70,7 @@ struct ngx_log_s {
 
     char                *action;
 
-    ngx_log_t           *next;
+    ngx_log_t           *next;  /* 下一个日志 */
 };
 
 
@@ -110,7 +111,7 @@ void ngx_log_error_core(ngx_uint_t level, ngx_log_t *log, ngx_err_t err,
 
 /*********************************/
 
-#else /* NO VARIADIC MACROS */
+#else /* no variadic macros */
 
 #define NGX_HAVE_VARIADIC_MACROS  0
 
@@ -122,7 +123,7 @@ void ngx_cdecl ngx_log_debug_core(ngx_log_t *log, ngx_err_t err,
     const char *fmt, ...);
 
 
-#endif /* VARIADIC MACROS */
+#endif /* variadic macros */
 
 
 /*********************************/
@@ -165,7 +166,7 @@ void ngx_cdecl ngx_log_debug_core(ngx_log_t *log, ngx_err_t err,
                        arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
 
 
-#else /* NO VARIADIC MACROS */
+#else /* no variadic macros */
 
 #define ngx_log_debug0(level, log, err, fmt)                                  \
     if ((log)->log_level & level)                                             \
@@ -210,7 +211,7 @@ void ngx_cdecl ngx_log_debug_core(ngx_log_t *log, ngx_err_t err,
 
 #endif
 
-#else /* NO NGX_DEBUG */
+#else /* !NGX_DEBUG */
 
 #define ngx_log_debug0(level, log, err, fmt)
 #define ngx_log_debug1(level, log, err, fmt, arg1)
@@ -251,6 +252,13 @@ static ngx_inline void
 ngx_write_stderr(char *text)
 {
     (void) ngx_write_fd(ngx_stderr, text, ngx_strlen(text));
+}
+
+
+static ngx_inline void
+ngx_write_stdout(char *text)
+{
+    (void) ngx_write_fd(ngx_stdout, text, ngx_strlen(text));
 }
 
 

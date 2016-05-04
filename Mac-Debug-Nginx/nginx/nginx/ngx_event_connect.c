@@ -10,7 +10,7 @@
 #include <ngx_event.h>
 #include <ngx_event_connect.h>
 
-
+/* 当从upstream中获得一个后端时，就会调用ngx_event_connect_peer去进行连接 */
 ngx_int_t
 ngx_event_connect_peer(ngx_peer_connection_t *pc)
 {
@@ -75,6 +75,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
         }
     }
 
+    /* 设置的根据系统环境不同而不同的系统调用函数 */
     c->recv = ngx_recv;
     c->send = ngx_send;
     c->recv_chain = ngx_recv_chain;
@@ -171,12 +172,10 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
         return NGX_OK;
     }
 
-    if (ngx_event_flags & NGX_USE_AIO_EVENT) {
+    if (ngx_event_flags & NGX_USE_IOCP_EVENT) {
 
         ngx_log_debug1(NGX_LOG_DEBUG_EVENT, pc->log, ngx_socket_errno,
                        "connect(): %d", rc);
-
-        /* aio, iocp */
 
         if (ngx_blocking(s) == -1) {
             ngx_log_error(NGX_LOG_ALERT, pc->log, ngx_socket_errno,

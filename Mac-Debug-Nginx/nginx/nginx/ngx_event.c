@@ -17,7 +17,6 @@ extern ngx_module_t ngx_kqueue_module;
 extern ngx_module_t ngx_eventport_module;
 extern ngx_module_t ngx_devpoll_module;
 extern ngx_module_t ngx_epoll_module;
-extern ngx_module_t ngx_rtsig_module;
 extern ngx_module_t ngx_select_module;
 
 
@@ -41,6 +40,7 @@ sig_atomic_t          ngx_event_timer_alarm;
 
 static ngx_uint_t     ngx_event_max_module;
 
+/* 表示系统中使用的是那种事件模型，如linux中的epoll模型或mac的kqueue模型 */
 ngx_uint_t            ngx_event_flags;
 ngx_event_actions_t   ngx_event_actions;
 
@@ -127,13 +127,6 @@ static ngx_command_t  ngx_event_core_commands[] = {
       0,
       NULL },
 
-    { ngx_string("connections"),
-      NGX_EVENT_CONF|NGX_CONF_TAKE1,
-      ngx_event_connections,
-      0,
-      0,
-      NULL },
-
     { ngx_string("use"),
       NGX_EVENT_CONF|NGX_CONF_TAKE1,
       ngx_event_use,
@@ -197,7 +190,7 @@ ngx_module_t  ngx_event_core_module = {
     NGX_MODULE_V1_PADDING
 };
 
-
+/* 在worker进程中死循环不断调用这个函数用来处理事件和时钟 */
 void
 ngx_process_events_and_timers(ngx_cycle_t *cycle)
 {
@@ -212,7 +205,9 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
         timer = ngx_event_find_timer();
         flags = NGX_UPDATE_TIME;
 
-#if (NGX_OLD_THREADS)
+#if (NGX_WIN32)
+
+        /* handle signals from master in case of network inactivity */
 
         if (timer == NGX_TIMER_INFINITE || timer > 500) {
             timer = 500;
@@ -245,6 +240,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 
     delta = ngx_current_msec;
 
+    /* 开始处理事件 */
     (void) ngx_process_events(cycle, timer, flags);
 
     delta = ngx_current_msec - delta;
@@ -252,6 +248,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                    "timer delta: %M", delta);
 
+    /* 处理接受队列中的事件 */
     ngx_event_process_posted(cycle, &ngx_posted_accept_events);
 
     if (ngx_accept_mutex_held) {
@@ -262,10 +259,12 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
         ngx_event_expire_timers();
     }
 
+    /* 处理普通队列中的事件 */
     ngx_event_process_posted(cycle, &ngx_posted_events);
 }
 
 
+/* 监听读事件 */
 ngx_int_t
 ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
 {
@@ -274,6 +273,7 @@ ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
         /* kqueue, epoll */
 
         if (!rev->active && !rev->ready) {
+            /* 添加读事件 */
             if (ngx_add_event(rev, NGX_READ_EVENT, NGX_CLEAR_EVENT)
                 == NGX_ERROR)
             {
@@ -328,12 +328,12 @@ ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
         }
     }
 
-    /* aio, iocp, rtsig */
+    /* iocp */
 
     return NGX_OK;
 }
 
-
+/* 处理写事件 */
 ngx_int_t
 ngx_handle_write_event(ngx_event_t *wev, size_t lowat)
 {
@@ -407,7 +407,7 @@ ngx_handle_write_event(ngx_event_t *wev, size_t lowat)
         }
     }
 
-    /* aio, iocp, rtsig */
+    /* iocp */
 
     return NGX_OK;
 }
@@ -425,7 +425,7 @@ ngx_event_init_conf(ngx_cycle_t *cycle, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/* 事件模型初始化 */
 static ngx_int_t
 ngx_event_module_init(ngx_cycle_t *cycle)
 {
@@ -506,7 +506,7 @@ ngx_event_module_init(ngx_cycle_t *cycle)
 #endif
 
     shm.size = size;
-    shm.name.len = sizeof("nginx_shared_zone");
+    shm.name.len = sizeof("nginx_shared_zone") - 1;
     shm.name.data = (u_char *) "nginx_shared_zone";
     shm.log = cycle->log;
 
@@ -570,7 +570,7 @@ ngx_timer_signal_handler(int signo)
 
 #endif
 
-
+/* 事件驱动模块初始化，也就是worker进程初始化时会调用到这里 */
 static ngx_int_t
 ngx_event_process_init(ngx_cycle_t *cycle)
 {
@@ -605,9 +605,11 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
 #endif
 
+    /* 初始化两个时间接收队列 */
     ngx_queue_init(&ngx_posted_accept_events);
     ngx_queue_init(&ngx_posted_events);
 
+    /* 事件模型的时钟初始化 */
     if (ngx_event_timer_init(cycle->log) == NGX_ERROR) {
         return NGX_ERROR;
     }
@@ -623,6 +625,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
         module = ngx_modules[m]->ctx;
 
+        /* 调用事件模型的初始化回调 */
         if (module->actions.init(cycle, ngx_timer_resolution) != NGX_OK) {
             /* fatal */
             exit(2);
@@ -660,7 +663,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
     if (ngx_event_flags & NGX_USE_FD_EVENT) {
         struct rlimit  rlmt;
-
+        /* RLIMIT_NOFILE表示一个进程能打开的最大文件数 */
         if (getrlimit(RLIMIT_NOFILE, &rlmt) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "getrlimit(RLIMIT_NOFILE) failed");
@@ -676,6 +679,15 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         }
     }
 
+#else
+
+    if (ngx_timer_resolution && !(ngx_event_flags & NGX_USE_TIMER_EVENT)) {
+        ngx_log_error(NGX_LOG_WARN, cycle->log, 0,
+                      "the \"timer_resolution\" directive is not supported "
+                      "with the configured event method, ignored");
+        ngx_timer_resolution = 0;
+    }
+
 #endif
 
     cycle->connections =
@@ -686,6 +698,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
     c = cycle->connections;
 
+    /* 分配读事件 */
     cycle->read_events = ngx_alloc(sizeof(ngx_event_t) * cycle->connection_n,
                                    cycle->log);
     if (cycle->read_events == NULL) {
@@ -693,11 +706,13 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     }
 
     rev = cycle->read_events;
+    /* 初始化所有的连接的连接状态为关闭 */
     for (i = 0; i < cycle->connection_n; i++) {
         rev[i].closed = 1;
         rev[i].instance = 1;
     }
 
+    /* 分配和连接个数相同的写事件 */
     cycle->write_events = ngx_alloc(sizeof(ngx_event_t) * cycle->connection_n,
                                     cycle->log);
     if (cycle->write_events == NULL) {
@@ -716,6 +731,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         i--;
 
         c[i].data = next;
+        /* 设置连接的读事件和写事件 */
         c[i].read = &cycle->read_events[i];
         c[i].write = &cycle->write_events[i];
         c[i].fd = (ngx_socket_t) -1;
@@ -723,14 +739,23 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         next = &c[i];
     } while (i);
 
+    /* 刚开始设置所有的连接为空闲连接 */
     cycle->free_connections = next;
     cycle->free_connection_n = cycle->connection_n;
 
     /* for each listening socket */
 
     ls = cycle->listening.elts;
+    /* 循环处理监听套接字，也就是监听套接字的事件处理为ngx_event_accept函数 */
     for (i = 0; i < cycle->listening.nelts; i++) {
 
+#if (NGX_HAVE_REUSEPORT)
+        if (ls[i].reuseport && ls[i].worker != ngx_worker) {
+            continue;
+        }
+#endif
+
+        /* 获取每个监听套接字对应的连接 */
         c = ngx_get_connection(ls[i].fd, cycle->log);
 
         if (c == NULL) {
@@ -811,19 +836,17 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
         rev->handler = ngx_event_accept;
 
-        if (ngx_use_accept_mutex) {
+        if (ngx_use_accept_mutex
+#if (NGX_HAVE_REUSEPORT)
+            && !ls[i].reuseport
+#endif
+           )
+        {
             continue;
         }
 
-        if (ngx_event_flags & NGX_USE_RTSIG_EVENT) {
-            if (ngx_add_conn(c) == NGX_ERROR) {
-                return NGX_ERROR;
-            }
-
-        } else {
-            if (ngx_add_event(rev, NGX_READ_EVENT, 0) == NGX_ERROR) {
-                return NGX_ERROR;
-            }
+        if (ngx_add_event(rev, NGX_READ_EVENT, 0) == NGX_ERROR) {
+            return NGX_ERROR;
         }
 
 #endif
@@ -929,8 +952,9 @@ ngx_events_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     *cf = pcf;
 
-    if (rv != NGX_CONF_OK)
+    if (rv != NGX_CONF_OK) {
         return rv;
+    }
 
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->type != NGX_EVENT_MODULE) {
@@ -960,12 +984,6 @@ ngx_event_connections(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     if (ecf->connections != NGX_CONF_UNSET_UINT) {
         return "is duplicate";
-    }
-
-    if (ngx_strcmp(cmd->name.data, "connections") == 0) {
-        ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
-                           "the \"connections\" directive is deprecated, "
-                           "use the \"worker_connections\" directive instead");
     }
 
     value = cf->args->elts;
@@ -1180,7 +1198,7 @@ ngx_event_core_create_conf(ngx_cycle_t *cycle)
     return ecf;
 }
 
-
+/* 事件核心模块初始化 */
 static char *
 ngx_event_core_init_conf(ngx_cycle_t *cycle, void *conf)
 {
@@ -1189,16 +1207,13 @@ ngx_event_core_init_conf(ngx_cycle_t *cycle, void *conf)
 #if (NGX_HAVE_EPOLL) && !(NGX_TEST_BUILD_EPOLL)
     int                  fd;
 #endif
-#if (NGX_HAVE_RTSIG)
-    ngx_uint_t           rtsig;
-    ngx_core_conf_t     *ccf;
-#endif
     ngx_int_t            i;
     ngx_module_t        *module;
     ngx_event_module_t  *event_module;
 
     module = NULL;
 
+/* 下面的几个宏非常特别，会特殊系统来确定使用不同多路io复用模型 */
 #if (NGX_HAVE_EPOLL) && !(NGX_TEST_BUILD_EPOLL)
 
     fd = epoll_create(100);
@@ -1209,18 +1224,6 @@ ngx_event_core_init_conf(ngx_cycle_t *cycle, void *conf)
 
     } else if (ngx_errno != NGX_ENOSYS) {
         module = &ngx_epoll_module;
-    }
-
-#endif
-
-#if (NGX_HAVE_RTSIG)
-
-    if (module == NULL) {
-        module = &ngx_rtsig_module;
-        rtsig = 1;
-
-    } else {
-        rtsig = 0;
     }
 
 #endif
@@ -1281,31 +1284,5 @@ ngx_event_core_init_conf(ngx_cycle_t *cycle, void *conf)
     ngx_conf_init_value(ecf->accept_mutex, 1);
     ngx_conf_init_msec_value(ecf->accept_mutex_delay, 500);
 
-
-#if (NGX_HAVE_RTSIG)
-
-    if (!rtsig) {
-        return NGX_CONF_OK;
-    }
-
-    if (ecf->accept_mutex) {
-        return NGX_CONF_OK;
-    }
-
-    ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
-
-    if (ccf->worker_processes == 0) {
-        return NGX_CONF_OK;
-    }
-
-    ngx_log_error(NGX_LOG_EMERG, cycle->log, 0,
-                  "the \"rtsig\" method requires \"accept_mutex\" to be on");
-
-    return NGX_CONF_ERROR;
-
-#else
-
     return NGX_CONF_OK;
-
-#endif
 }

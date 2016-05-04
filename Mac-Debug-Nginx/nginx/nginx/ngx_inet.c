@@ -26,15 +26,15 @@ ngx_inet_addr(u_char *text, size_t len)
     n = 0;
 
     for (p = text; p < text + len; p++) {
-
-        if (octet > 255) {
-            return INADDR_NONE;
-        }
-
         c = *p;
 
         if (c >= '0' && c <= '9') {
             octet = octet * 10 + (c - '0');
+
+            if (octet > 255) {
+                return INADDR_NONE;
+            }
+
             continue;
         }
 
@@ -176,7 +176,9 @@ ngx_inet6_addr(u_char *p, size_t len, u_char *addr)
 
 #endif
 
-
+/* port参数表示是否携带端口号
+ * 将地址转化为文本
+ */
 size_t
 ngx_sock_ntop(struct sockaddr *sa, socklen_t socklen, u_char *text, size_t len,
     ngx_uint_t port)

@@ -31,11 +31,12 @@ struct ngx_shm_zone_s {
     ngx_shm_t                 shm;
     ngx_shm_zone_init_pt      init;
     void                     *tag;
+    ngx_uint_t                noreuse;  /* unsigned  noreuse:1; */
 };
 
 
 struct ngx_cycle_s {
-    void                  ****conf_ctx;
+    void                  ****conf_ctx; /* 配置上下文数据(含所有模块)*/
     ngx_pool_t               *pool;
 
     ngx_log_t                *log;
@@ -43,50 +44,58 @@ struct ngx_cycle_s {
 
     ngx_uint_t                log_use_stderr;  /* unsigned  log_use_stderr:1; */
 
-    ngx_connection_t        **files;
-    ngx_connection_t         *free_connections;
-    ngx_uint_t                free_connection_n;
+    /* 里面存放files_n个ngx_connection_t类型的指针 ，
+      * 通过监听套接字的文件描述符为索引来快速查找到相应的 
+      * ngx_connection_t结构，因为files指针数组的长度本来就是进程 
+      * 可以打开的最大文件个数，也就是files_n变量  
+      */
+    ngx_connection_t        **files;                       
+    ngx_connection_t         *free_connections;  /* 空闲连接 */
+    ngx_uint_t                free_connection_n; /* 空闲连接数 */
 
+    /* 保活连接队列 */
     ngx_queue_t               reusable_connections_queue;
 
-    ngx_array_t               listening;
-    ngx_array_t               paths;
-    ngx_list_t                open_files;
-    ngx_list_t                shared_memory;
+    ngx_array_t               listening;         /* 监听数组 */
+    ngx_array_t               paths;             /* 路径数组 */
+    ngx_array_t               config_dump;
+    ngx_list_t                open_files;        /* 打开文件列表 */
+    ngx_list_t                shared_memory;     /* 共享内存链 */
 
-    ngx_uint_t                connection_n;
-    ngx_uint_t                files_n;
+    /* 连接数，该连接数通过nginx.conf中的worker_connections来指定 */
+    ngx_uint_t                connection_n;      
+    ngx_uint_t                files_n;           /* 打开文件的最大个数 */
 
-    ngx_connection_t         *connections;
-    ngx_event_t              *read_events;
-    ngx_event_t              *write_events;
+    ngx_connection_t         *connections;       /* 存放connection_n个连接 */
+    ngx_event_t              *read_events;       /* 读事件 */
+    ngx_event_t              *write_events;      /* 写事件 */
 
     ngx_cycle_t              *old_cycle;
 
-    ngx_str_t                 conf_file;
-    ngx_str_t                 conf_param;
-    ngx_str_t                 conf_prefix;
-    ngx_str_t                 prefix;
-    ngx_str_t                 lock_file;
-    ngx_str_t                 hostname;
+    ngx_str_t                 conf_file;         /* 配置文件路径nginx.conf 如conf/nginx.conf */
+    ngx_str_t                 conf_param;        /* 配置参数 ，默认情况下是没设置的 */
+    ngx_str_t                 conf_prefix;       /* 配置前缀 */
+    ngx_str_t                 prefix;            /* 前缀 */
+    ngx_str_t                 lock_file;         /* 锁文件 */
+    ngx_str_t                 hostname;          /* 主机名 */
 };
 
-
+/* 核心模块的配置上下文 */
 typedef struct {
-     ngx_flag_t               daemon;
+     ngx_flag_t               daemon;           /* 是否开启僵尸进程 */
      ngx_flag_t               master;
 
      ngx_msec_t               timer_resolution;
 
-     ngx_int_t                worker_processes;
+     ngx_int_t                worker_processes;  /* worker进程数量 */
      ngx_int_t                debug_points;
 
      ngx_int_t                rlimit_nofile;
-     ngx_int_t                rlimit_sigpending;
      off_t                    rlimit_core;
 
      int                      priority;
 
+     ngx_uint_t               cpu_affinity_auto;
      ngx_uint_t               cpu_affinity_n;
      uint64_t                *cpu_affinity;
 
@@ -102,22 +111,7 @@ typedef struct {
 
      ngx_array_t              env;
      char                   **environment;
-
-#if (NGX_OLD_THREADS)
-     ngx_int_t                worker_threads;
-     size_t                   thread_stack_size;
-#endif
-
 } ngx_core_conf_t;
-
-
-#if (NGX_OLD_THREADS)
-
-typedef struct {
-     ngx_pool_t              *pool;   /* pcre's malloc() pool */
-} ngx_core_tls_t;
-
-#endif
 
 
 #define ngx_is_init_cycle(cycle)  (cycle->conf_ctx == NULL)
@@ -139,10 +133,8 @@ extern volatile ngx_cycle_t  *ngx_cycle;
 extern ngx_array_t            ngx_old_cycles;
 extern ngx_module_t           ngx_core_module;
 extern ngx_uint_t             ngx_test_config;
+extern ngx_uint_t             ngx_dump_config;
 extern ngx_uint_t             ngx_quiet_mode;
-#if (NGX_OLD_THREADS)
-extern ngx_tls_key_t          ngx_core_tls_key;
-#endif
 
 
 #endif /* _NGX_CYCLE_H_INCLUDED_ */

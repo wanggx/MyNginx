@@ -96,18 +96,6 @@ static ngx_conf_post_t  ngx_http_core_lowat_post =
 static ngx_conf_post_handler_pt  ngx_http_core_pool_size_p =
     ngx_http_core_pool_size;
 
-static ngx_conf_deprecated_t  ngx_conf_deprecated_optimize_server_names = {
-    ngx_conf_deprecated, "optimize_server_names", "server_name_in_redirect"
-};
-
-static ngx_conf_deprecated_t  ngx_conf_deprecated_open_file_cache_retest = {
-    ngx_conf_deprecated, "open_file_cache_retest", "open_file_cache_valid"
-};
-
-static ngx_conf_deprecated_t  ngx_conf_deprecated_satisfy_any = {
-    ngx_conf_deprecated, "satisfy_any", "satisfy"
-};
-
 
 static ngx_conf_enum_t  ngx_http_core_request_body_in_file[] = {
     { ngx_string("off"), NGX_HTTP_REQUEST_BODY_FILE_OFF },
@@ -182,7 +170,7 @@ static ngx_str_t  ngx_http_gzip_private = ngx_string("private");
 
 #endif
 
-
+/* http核心模块的命令列表 */
 static ngx_command_t  ngx_http_core_commands[] = {
 
     { ngx_string("variables_hash_max_size"),
@@ -254,13 +242,6 @@ static ngx_command_t  ngx_http_core_commands[] = {
       NGX_HTTP_SRV_CONF_OFFSET,
       offsetof(ngx_http_core_srv_conf_t, large_client_header_buffers),
       NULL },
-
-    { ngx_string("optimize_server_names"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_CONF_FLAG,
-      ngx_conf_set_flag_slot,
-      NGX_HTTP_LOC_CONF_OFFSET,
-      offsetof(ngx_http_core_loc_conf_t, server_name_in_redirect),
-      &ngx_conf_deprecated_optimize_server_names },
 
     { ngx_string("ignore_invalid_headers"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_CONF_FLAG,
@@ -519,13 +500,6 @@ static ngx_command_t  ngx_http_core_commands[] = {
       offsetof(ngx_http_core_loc_conf_t, satisfy),
       &ngx_http_core_satisfy },
 
-    { ngx_string("satisfy_any"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
-      ngx_conf_set_flag_slot,
-      NGX_HTTP_LOC_CONF_OFFSET,
-      offsetof(ngx_http_core_loc_conf_t, satisfy),
-      &ngx_conf_deprecated_satisfy_any },
-
     { ngx_string("internal"),
       NGX_HTTP_LOC_CONF|NGX_CONF_NOARGS,
       ngx_http_core_internal,
@@ -689,13 +663,6 @@ static ngx_command_t  ngx_http_core_commands[] = {
       offsetof(ngx_http_core_loc_conf_t, open_file_cache_valid),
       NULL },
 
-    { ngx_string("open_file_cache_retest"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_sec_slot,
-      NGX_HTTP_LOC_CONF_OFFSET,
-      offsetof(ngx_http_core_loc_conf_t, open_file_cache_valid),
-      &ngx_conf_deprecated_open_file_cache_retest },
-
     { ngx_string("open_file_cache_min_uses"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_num_slot,
@@ -809,9 +776,10 @@ ngx_module_t  ngx_http_core_module = {
 };
 
 
-ngx_str_t  ngx_http_core_get_method = { 3, (u_char *) "GET " };
+ngx_str_t  ngx_http_core_get_method = { 3, (u_char *) "GET" };
 
 
+/* 请求的处理句柄 */
 void
 ngx_http_handler(ngx_http_request_t *r)
 {
@@ -856,7 +824,7 @@ ngx_http_handler(ngx_http_request_t *r)
     ngx_http_core_run_phases(r);
 }
 
-
+/* 开始执行http请求的各个阶段 */
 void
 ngx_http_core_run_phases(ngx_http_request_t *r)
 {
@@ -1382,7 +1350,7 @@ ngx_http_core_try_files_phase(ngx_http_request_t *r,
     /* not reached */
 }
 
-
+/* 静态模块的处理回调，开始真正的内容处理 */
 ngx_int_t
 ngx_http_core_content_phase(ngx_http_request_t *r,
     ngx_http_phase_handler_t *ph)
@@ -1449,7 +1417,7 @@ ngx_http_update_location_config(ngx_http_request_t *r)
     }
 
     if (r == r->main) {
-        ngx_http_set_connection_log(r->connection, clcf->error_log);
+        ngx_set_connection_log(r->connection, clcf->error_log);
     }
 
     if ((ngx_io.flags & NGX_IO_SENDFILE) && clcf->sendfile) {
@@ -1958,7 +1926,7 @@ ngx_http_send_response(ngx_http_request_t *r, ngx_uint_t status,
     return ngx_http_output_filter(r, &out);
 }
 
-
+/* 发送http响应头 */
 ngx_int_t
 ngx_http_send_header(ngx_http_request_t *r)
 {
@@ -1977,6 +1945,7 @@ ngx_http_send_header(ngx_http_request_t *r)
         r->headers_out.status_line.len = 0;
     }
 
+    /* 此处对整个响应头进行过滤 */
     return ngx_http_top_header_filter(r);
 }
 
@@ -2003,6 +1972,7 @@ ngx_http_output_filter(ngx_http_request_t *r, ngx_chain_t *in)
 }
 
 
+/* 将请求的一个URL转换到服务器本地的一个绝对路径 */
 u_char *
 ngx_http_map_uri_to_path(ngx_http_request_t *r, ngx_str_t *path,
     size_t *root_length, size_t reserved)
@@ -2165,13 +2135,6 @@ ngx_http_gzip_ok(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
-#if (NGX_HTTP_SPDY)
-    if (r->spdy_stream) {
-        r->gzip_ok = 1;
-        return NGX_OK;
-    }
-#endif
-
     ae = r->headers_in.accept_encoding;
     if (ae == NULL) {
         return NGX_DECLINED;
@@ -2232,7 +2195,7 @@ ngx_http_gzip_ok(ngx_http_request_t *r)
             return NGX_DECLINED;
         }
 
-        expires = ngx_http_parse_time(e->value.data, e->value.len);
+        expires = ngx_parse_http_time(e->value.data, e->value.len);
         if (expires == NGX_ERROR) {
             return NGX_DECLINED;
         }
@@ -2240,7 +2203,7 @@ ngx_http_gzip_ok(ngx_http_request_t *r)
         d = r->headers_out.date;
 
         if (d) {
-            date = ngx_http_parse_time(d->value.data, d->value.len);
+            date = ngx_parse_http_time(d->value.data, d->value.len);
             if (date == NGX_ERROR) {
                 return NGX_DECLINED;
             }
@@ -2460,12 +2423,19 @@ ngx_http_subrequest(ngx_http_request_t *r,
     ngx_http_core_srv_conf_t      *cscf;
     ngx_http_postponed_request_t  *pr, *p;
 
-    r->main->subrequests--;
-
-    if (r->main->subrequests == 0) {
+    if (r->subrequests == 0) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                       "subrequests cycle while processing \"%V\"", uri);
-        r->main->subrequests = 1;
+        return NGX_ERROR;
+    }
+
+    /*
+     * 1000 is reserved for other purposes.
+     */
+    if (r->main->count >= 65535 - 1000) {
+        ngx_log_error(NGX_LOG_CRIT, r->connection->log, 0,
+                      "request reference counter overflow "
+                      "while processing \"%V\"", uri);
         return NGX_ERROR;
     }
 
@@ -2506,8 +2476,8 @@ ngx_http_subrequest(ngx_http_request_t *r,
 
     sr->request_body = r->request_body;
 
-#if (NGX_HTTP_SPDY)
-    sr->spdy_stream = r->spdy_stream;
+#if (NGX_HTTP_V2)
+    sr->stream = r->stream;
 #endif
 
     sr->method = NGX_HTTP_GET;
@@ -2570,6 +2540,7 @@ ngx_http_subrequest(ngx_http_request_t *r,
     sr->main_filter_need_in_memory = r->main_filter_need_in_memory;
 
     sr->uri_changes = NGX_HTTP_MAX_URI_CHANGES + 1;
+    sr->subrequests = r->subrequests - 1;
 
     tp = ngx_timeofday();
     sr->start_sec = tp->sec;
@@ -2963,7 +2934,7 @@ ngx_http_get_forwarded_addr_internal(ngx_http_request_t *r, ngx_addr_t *addr,
     return NGX_DECLINED;
 }
 
-
+/* 解析http模块的server */
 static char *
 ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 {
@@ -2983,6 +2954,9 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         return NGX_CONF_ERROR;
     }
 
+    /* 为ctx分配空间，将ctx->main_conf指向ngx_http_module的config信息的main_conf，
+      * 这样就保证了在解析http块、server块和location块时，使用的main_conf是同一份。
+      */
     http_ctx = cf->ctx;
     ctx->main_conf = http_ctx->main_conf;
 
@@ -3000,6 +2974,21 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         return NGX_CONF_ERROR;
     }
 
+    /* 保证解析的main_conf是同一份，而srv_conf和loc_conf是复制的一份
+      * 调用所有模块的create_srv_conf和create_loc_conf回调函数创建模块的srv config和loc config， 
+      * 并更新ctx的srv_conf和loc_conf数组。这里， 
+      * 大家可能还记得在解析http块的ngx_http_block函数中， 
+      * 已经为ngx_http_conf_ctx_t分配空间， 
+      * 并调用所有http module的回调函数创建main、srv和loc配置结构。 
+      * 而这里在解析server块时，又重新创建了一个ngx_http_conf_ctx_t结构， 
+      * 并创建所有http module的srv和loc配置结构。 
+      * 大家可能很纳闷，为什么要重复分配这个空间呢？ 
+      * 实际上，这里是为了处理有些指令是可以同时出现在http块和server块中的情况， 
+      * 如果在server块中没有定义这个指令则会从http块继承， 
+      * 否则会直接覆盖http块中的定义。具体srv和loc块的合并在后续ngx_http_block中会处理。 
+      * 后面的location块的解析时，也同样会分配ngx_http_conf_ctx_t的内存， 
+      * 不过只会创建所有http module的loc的配置结构。
+      */
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->type != NGX_HTTP_MODULE) {
             continue;
@@ -3029,17 +3018,19 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 
     /* the server configuration context */
 
+    /* cscf得到的只是一个默认值，通过create_srv_conf创建的 */
     cscf = ctx->srv_conf[ngx_http_core_module.ctx_index];
     cscf->ctx = ctx;
 
-
     cmcf = ctx->main_conf[ngx_http_core_module.ctx_index];
 
+    /* 新增一个ngx_http_core_srv_conf_t结构 */
     cscfp = ngx_array_push(&cmcf->servers);
     if (cscfp == NULL) {
         return NGX_CONF_ERROR;
     }
 
+    /* 设置新增加的元素内容 */
     *cscfp = cscf;
 
 
@@ -3047,12 +3038,23 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 
     pcf = *cf;
     cf->ctx = ctx;
+    /* 指明是解析http模块的server复杂配置项 */
     cf->cmd_type = NGX_HTTP_SRV_CONF;
 
+    /* 再次循环调用 */
     rv = ngx_conf_parse(cf, NULL);
 
+    /* 恢复原来数据 */
     *cf = pcf;
 
+    /* 这段代码是用于设置默认的监听socket，
+      *正常可以通过listen指令指定监听的端口、ip地址等信息，
+      *如果server块中没有指定listen指令，
+      * 则这里会设置成默认监听80端口或8000端口，
+      * 并且接收的ip地址是INADDR_ANY，也就是说接收任意网卡上的连接 
+      * ngx_http_add_listen定义在ngx_http.c中，用于添加监听的socket 
+      * 后面在介绍nginx的事件模型初始化时会再详细介绍。
+      */
     if (rv == NGX_CONF_OK && !cscf->listen) {
         ngx_memzero(&lsopt, sizeof(ngx_http_listen_opt_t));
 
@@ -3064,6 +3066,7 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 #else
         sin->sin_port = htons((getuid() == 0) ? 80 : 8000);
 #endif
+        /* 监听任何地址 */
         sin->sin_addr.s_addr = INADDR_ANY;
 
         lsopt.socklen = sizeof(struct sockaddr_in);
@@ -3082,6 +3085,7 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         (void) ngx_sock_ntop(&lsopt.u.sockaddr, lsopt.socklen, lsopt.addr,
                              NGX_SOCKADDR_STRLEN, 1);
 
+        /* 添加监听套接字 */
         if (ngx_http_add_listen(cf, cscf, &lsopt) != NGX_OK) {
             return NGX_CONF_ERROR;
         }
@@ -3091,6 +3095,9 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 }
 
 
+/* http模块location的解析
+  * location也是一个复杂配置项，所以最后也会调用到ngx_conf_parse函数当中
+  */
 static char *
 ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 {
@@ -3110,9 +3117,11 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     }
 
     pctx = cf->ctx;
+    /* 依然指向同一份main_conf 和同一份srv_conf */
     ctx->main_conf = pctx->main_conf;
     ctx->srv_conf = pctx->srv_conf;
 
+    /* 重新生成一份loc_conf */
     ctx->loc_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_http_max_module);
     if (ctx->loc_conf == NULL) {
         return NGX_CONF_ERROR;
@@ -3134,35 +3143,40 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         }
     }
 
+    /* clcf表示当前新分配的 */
     clcf = ctx->loc_conf[ngx_http_core_module.ctx_index];
     clcf->loc_conf = ctx->loc_conf;
 
     value = cf->args->elts;
 
+    /* 分析location的匹配规则 */
     if (cf->args->nelts == 3) {
 
         len = value[1].len;
         mod = value[1].data;
         name = &value[2];
 
+        /* 字符串精确匹配 */
         if (len == 1 && mod[0] == '=') {
 
             clcf->name = *name;
             clcf->exact_match = 1;
 
         } else if (len == 2 && mod[0] == '^' && mod[1] == '~') {
-
+            /* 前缀匹配 */
             clcf->name = *name;
             clcf->noregex = 1;
 
         } else if (len == 1 && mod[0] == '~') {
 
+            /* 区分大小写正则匹配 */
             if (ngx_http_core_regex_location(cf, clcf, name, 0) != NGX_OK) {
                 return NGX_CONF_ERROR;
             }
 
         } else if (len == 2 && mod[0] == '~' && mod[1] == '*') {
 
+            /* 不区分大小写正则匹配 */
             if (ngx_http_core_regex_location(cf, clcf, name, 1) != NGX_OK) {
                 return NGX_CONF_ERROR;
             }
@@ -3219,9 +3233,10 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         }
     }
 
+    /* 获取ngx_http_core_module模块的location配置 */
     pclcf = pctx->loc_conf[ngx_http_core_module.ctx_index];
 
-    if (pclcf->name.len) {
+    if (cf->cmd_type == NGX_HTTP_LOC_CONF) {
 
         /* nested location */
 
@@ -3269,6 +3284,8 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         }
     }
 
+    /*把这个location的配置添加到locations队列里， 
+      *后面会依据这个队列将所有的静态location组织成树结构 */
     if (ngx_http_add_location(cf, &pclcf->locations, clcf) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -3277,6 +3294,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     cf->ctx = ctx;
     cf->cmd_type = NGX_HTTP_LOC_CONF;
 
+    /* 继续用来解析location块内的指令，如proxy_pass等等 */
     rv = ngx_conf_parse(cf, NULL);
 
     *cf = save;
@@ -3522,7 +3540,8 @@ ngx_http_core_create_srv_conf(ngx_conf_t *cf)
     return cscf;
 }
 
-
+/* ngx_http_core_module模块的server合并函数，
+  */
 static char *
 ngx_http_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
 {
@@ -3534,8 +3553,9 @@ ngx_http_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
 
     /* TODO: it does not merge, it inits only */
 
+    /* 设置默认链接和请求对应的内存池的大小 */
     ngx_conf_merge_size_value(conf->connection_pool_size,
-                              prev->connection_pool_size, 256);
+                              prev->connection_pool_size, 64 * sizeof(void *));
     ngx_conf_merge_size_value(conf->request_pool_size,
                               prev->request_pool_size, 4096);
     ngx_conf_merge_msec_value(conf->client_header_timeout,
@@ -3711,7 +3731,7 @@ static ngx_hash_key_t  ngx_http_core_default_types[] = {
     { ngx_null_string, 0, NULL }
 };
 
-
+/* ngx_http_core_module 合并location，location中配置信息的合并  */
 static char *
 ngx_http_core_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 {
@@ -3989,7 +4009,7 @@ ngx_http_core_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     return NGX_CONF_OK;
 }
 
-
+/* http监听套接口的解析 */
 static char *
 ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -4203,6 +4223,19 @@ ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 #endif
         }
 
+        if (ngx_strcmp(value[n].data, "reuseport") == 0) {
+#if (NGX_HAVE_REUSEPORT)
+            lsopt.reuseport = 1;
+            lsopt.set = 1;
+            lsopt.bind = 1;
+#else
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "reuseport is not supported "
+                               "on this platform, ignored");
+#endif
+            continue;
+        }
+
         if (ngx_strcmp(value[n].data, "ssl") == 0) {
 #if (NGX_HTTP_SSL)
             lsopt.ssl = 1;
@@ -4215,16 +4248,24 @@ ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 #endif
         }
 
-        if (ngx_strcmp(value[n].data, "spdy") == 0) {
-#if (NGX_HTTP_SPDY)
-            lsopt.spdy = 1;
+        if (ngx_strcmp(value[n].data, "http2") == 0) {
+#if (NGX_HTTP_V2)
+            lsopt.http2 = 1;
             continue;
 #else
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "the \"spdy\" parameter requires "
-                               "ngx_http_spdy_module");
+                               "the \"http2\" parameter requires "
+                               "ngx_http_v2_module");
             return NGX_CONF_ERROR;
 #endif
+        }
+
+        if (ngx_strcmp(value[n].data, "spdy") == 0) {
+            ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
+                               "invalid parameter \"spdy\": "
+                               "ngx_http_spdy_module was superseded "
+                               "by ngx_http_v2_module");
+            continue;
         }
 
         if (ngx_strncmp(value[n].data, "so_keepalive=", 13) == 0) {
@@ -4335,7 +4376,7 @@ ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_ERROR;
 }
 
-
+/* http模块服务器名称的解析 */
 static char *
 ngx_http_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -4436,7 +4477,7 @@ ngx_http_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/* 设置服务的根目录 */
 static char *
 ngx_http_core_root(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -4500,7 +4541,9 @@ ngx_http_core_root(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     clcf->alias = alias ? clcf->name.len : 0;
     clcf->root = value[1];
 
-    if (!alias && clcf->root.data[clcf->root.len - 1] == '/') {
+    if (!alias && clcf->root.len > 0
+        && clcf->root.data[clcf->root.len - 1] == '/')
+    {
         clcf->root.len--;
     }
 
@@ -4794,7 +4837,7 @@ ngx_http_core_directio(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/* 设置访问错误页 */
 static char *
 ngx_http_core_error_page(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {

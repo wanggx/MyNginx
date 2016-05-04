@@ -236,7 +236,7 @@ static ngx_http_log_var_t  ngx_http_log_vars[] = {
     { ngx_null_string, 0, NULL }
 };
 
-
+/* http访问过程中日志的处理 */
 static ngx_int_t
 ngx_http_log_handler(ngx_http_request_t *r)
 {

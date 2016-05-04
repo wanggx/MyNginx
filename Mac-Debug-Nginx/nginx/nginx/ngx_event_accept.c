@@ -11,10 +11,12 @@
 
 
 static ngx_int_t ngx_enable_accept_events(ngx_cycle_t *cycle);
-static ngx_int_t ngx_disable_accept_events(ngx_cycle_t *cycle);
+static ngx_int_t ngx_disable_accept_events(ngx_cycle_t *cycle, ngx_uint_t all);
 static void ngx_close_accepted_connection(ngx_connection_t *c);
 
-
+/* 事件驱动模型接收到事件后，对事件的处理函数，
+ * 也是对访问进行服务的地方，监听套接字的事件处理函数
+ */
 void
 ngx_event_accept(ngx_event_t *ev)
 {
@@ -40,12 +42,10 @@ ngx_event_accept(ngx_event_t *ev)
         ev->timedout = 0;
     }
 
+    /* 获取事件驱动模型的配置内容 */
     ecf = ngx_event_get_conf(ngx_cycle->conf_ctx, ngx_event_core_module);
 
-    if (ngx_event_flags & NGX_USE_RTSIG_EVENT) {
-        ev->available = 1;
-
-    } else if (!(ngx_event_flags & NGX_USE_KQUEUE_EVENT)) {
+    if (!(ngx_event_flags & NGX_USE_KQUEUE_EVENT)) {
         ev->available = ecf->multi_accept;
     }
 
@@ -70,6 +70,7 @@ ngx_event_accept(ngx_event_t *ev)
         s = accept(lc->fd, (struct sockaddr *) sa, &socklen);
 #endif
 
+        /* accept失败 */
         if (s == (ngx_socket_t) -1) {
             err = ngx_socket_errno;
 
@@ -112,7 +113,7 @@ ngx_event_accept(ngx_event_t *ev)
             }
 
             if (err == NGX_EMFILE || err == NGX_ENFILE) {
-                if (ngx_disable_accept_events((ngx_cycle_t *) ngx_cycle)
+                if (ngx_disable_accept_events((ngx_cycle_t *) ngx_cycle, 1)
                     != NGX_OK)
                 {
                     return;
@@ -141,6 +142,7 @@ ngx_event_accept(ngx_event_t *ev)
         ngx_accept_disabled = ngx_cycle->connection_n / 8
                               - ngx_cycle->free_connection_n;
 
+        /* 得到一个空闲可用的连接 */
         c = ngx_get_connection(s, ev->log);
 
         if (c == NULL) {
@@ -155,7 +157,10 @@ ngx_event_accept(ngx_event_t *ev)
 #if (NGX_STAT_STUB)
         (void) ngx_atomic_fetch_add(ngx_stat_active, 1);
 #endif
-
+        /* 注意这里很重要，给每个连接创建一个内存池，
+          * 当连接关闭的时候就将内存池给释放掉,然后在随后的和该 
+          * 连接相关的操作基本上都是从该内存池中申请内存 
+          */
         c->pool = ngx_create_pool(ls->pool_size, ev->log);
         if (c->pool == NULL) {
             ngx_close_accepted_connection(c);
@@ -176,10 +181,10 @@ ngx_event_accept(ngx_event_t *ev)
             return;
         }
 
-        /* set a blocking mode for aio and non-blocking mode for others */
+        /* set a blocking mode for iocp and non-blocking mode for others */
 
         if (ngx_inherited_nonblocking) {
-            if (ngx_event_flags & NGX_USE_AIO_EVENT) {
+            if (ngx_event_flags & NGX_USE_IOCP_EVENT) {
                 if (ngx_blocking(s) == -1) {
                     ngx_log_error(NGX_LOG_ALERT, ev->log, ngx_socket_errno,
                                   ngx_blocking_n " failed");
@@ -189,7 +194,7 @@ ngx_event_accept(ngx_event_t *ev)
             }
 
         } else {
-            if (!(ngx_event_flags & (NGX_USE_AIO_EVENT|NGX_USE_RTSIG_EVENT))) {
+            if (!(ngx_event_flags & NGX_USE_IOCP_EVENT)) {
                 if (ngx_nonblocking(s) == -1) {
                     ngx_log_error(NGX_LOG_ALERT, ev->log, ngx_socket_errno,
                                   ngx_nonblocking_n " failed");
@@ -201,9 +206,11 @@ ngx_event_accept(ngx_event_t *ev)
 
         *log = ls->log;
 
+        /* 设置连接的操作回调，也就是连接的接收和发送函数 */
         c->recv = ngx_recv;
         c->send = ngx_send;
         c->recv_chain = ngx_recv_chain;
+        /* 连接的发送链 */
         c->send_chain = ngx_send_chain;
 
         c->log = log;
@@ -232,11 +239,13 @@ ngx_event_accept(ngx_event_t *ev)
 
         wev->ready = 1;
 
-        if (ngx_event_flags & (NGX_USE_AIO_EVENT|NGX_USE_RTSIG_EVENT)) {
-            /* rtsig, aio, iocp */
+        if (ngx_event_flags & NGX_USE_IOCP_EVENT) {
             rev->ready = 1;
         }
 
+        /* deferred_accept为1则意味着当accept这个请求时，请求的具体数据以及到达了，
+           * 也就是数据准备好了
+           */
         if (ev->deferred_accept) {
             rev->ready = 1;
 #if (NGX_HAVE_KQUEUE)
@@ -357,13 +366,14 @@ ngx_event_accept(ngx_event_t *ev)
         log->data = NULL;
         log->handler = NULL;
 
+        /* 开始处理接收的连接 */
         ls->handler(c);
 
         if (ngx_event_flags & NGX_USE_KQUEUE_EVENT) {
             ev->available--;
         }
-
-    } while (ev->available);
+    /* 当配置文件当中有multi_accept on;时，对应的ev->available为1，否则为0*/
+    } while (ev->available);        
 }
 
 
@@ -375,10 +385,7 @@ ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                        "accept mutex locked");
 
-        if (ngx_accept_mutex_held
-            && ngx_accept_events == 0
-            && !(ngx_event_flags & NGX_USE_RTSIG_EVENT))
-        {
+        if (ngx_accept_mutex_held && ngx_accept_events == 0) {
             return NGX_OK;
         }
 
@@ -397,7 +404,7 @@ ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
                    "accept mutex lock failed: %ui", ngx_accept_mutex_held);
 
     if (ngx_accept_mutex_held) {
-        if (ngx_disable_accept_events(cycle) == NGX_ERROR) {
+        if (ngx_disable_accept_events(cycle, 0) == NGX_ERROR) {
             return NGX_ERROR;
         }
 
@@ -420,20 +427,12 @@ ngx_enable_accept_events(ngx_cycle_t *cycle)
 
         c = ls[i].connection;
 
-        if (c->read->active) {
+        if (c == NULL || c->read->active) {
             continue;
         }
 
-        if (ngx_event_flags & NGX_USE_RTSIG_EVENT) {
-
-            if (ngx_add_conn(c) == NGX_ERROR) {
-                return NGX_ERROR;
-            }
-
-        } else {
-            if (ngx_add_event(c->read, NGX_READ_EVENT, 0) == NGX_ERROR) {
-                return NGX_ERROR;
-            }
+        if (ngx_add_event(c->read, NGX_READ_EVENT, 0) == NGX_ERROR) {
+            return NGX_ERROR;
         }
     }
 
@@ -442,7 +441,7 @@ ngx_enable_accept_events(ngx_cycle_t *cycle)
 
 
 static ngx_int_t
-ngx_disable_accept_events(ngx_cycle_t *cycle)
+ngx_disable_accept_events(ngx_cycle_t *cycle, ngx_uint_t all)
 {
     ngx_uint_t         i;
     ngx_listening_t   *ls;
@@ -453,21 +452,27 @@ ngx_disable_accept_events(ngx_cycle_t *cycle)
 
         c = ls[i].connection;
 
-        if (!c->read->active) {
+        if (c == NULL || !c->read->active) {
             continue;
         }
 
-        if (ngx_event_flags & NGX_USE_RTSIG_EVENT) {
-            if (ngx_del_conn(c, NGX_DISABLE_EVENT) == NGX_ERROR) {
-                return NGX_ERROR;
-            }
+#if (NGX_HAVE_REUSEPORT)
 
-        } else {
-            if (ngx_del_event(c->read, NGX_READ_EVENT, NGX_DISABLE_EVENT)
-                == NGX_ERROR)
-            {
-                return NGX_ERROR;
-            }
+        /*
+         * do not disable accept on worker's own sockets
+         * when disabling accept events due to accept mutex
+         */
+
+        if (ls[i].reuseport && !all) {
+            continue;
+        }
+
+#endif
+
+        if (ngx_del_event(c->read, NGX_READ_EVENT, NGX_DISABLE_EVENT)
+            == NGX_ERROR)
+        {
+            return NGX_ERROR;
         }
     }
 
@@ -475,6 +480,7 @@ ngx_disable_accept_events(ngx_cycle_t *cycle)
 }
 
 
+/* 关闭连接 */
 static void
 ngx_close_accepted_connection(ngx_connection_t *c)
 {
@@ -485,11 +491,13 @@ ngx_close_accepted_connection(ngx_connection_t *c)
     fd = c->fd;
     c->fd = (ngx_socket_t) -1;
 
+    /* 关闭套接字 */
     if (ngx_close_socket(fd) == -1) {
         ngx_log_error(NGX_LOG_ALERT, c->log, ngx_socket_errno,
                       ngx_close_socket_n " failed");
     }
 
+    /* 同时将连接的内存池给释放掉 */
     if (c->pool) {
         ngx_destroy_pool(c->pool);
     }

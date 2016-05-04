@@ -9,9 +9,10 @@
 #include <ngx_core.h>
 #include <ngx_event.h>
 
-
+/*NGX_HAVE_KQUEUE宏是标识是否使用bsd的kqueue事件模型 */
 #if (NGX_HAVE_KQUEUE)
 
+/* 连接的接收函数 */
 ssize_t
 ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
 {
@@ -148,6 +149,7 @@ ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
 
         } else if (n > 0) {
 
+            /* 如果数据还没有全部到达，则设置数据没有准备好标记 */
             if ((size_t) n < size
                 && !(ngx_event_flags & NGX_USE_GREEDY_EVENT))
             {
@@ -156,7 +158,7 @@ ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
 
             return n;
         }
-
+        /* 如果数据接收失败，则设置错误号 */
         err = ngx_socket_errno;
 
         if (err == NGX_EAGAIN || err == NGX_EINTR) {

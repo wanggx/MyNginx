@@ -25,15 +25,15 @@ static void ngx_signal_handler(int signo);
 static void ngx_process_get_status(void);
 static void ngx_unlock_mutexes(ngx_pid_t pid);
 
-
+/* 启动的参数个数和参数数组 */
 int              ngx_argc;
 char           **ngx_argv;
 char           **ngx_os_argv;
 
-ngx_int_t        ngx_process_slot;
+ngx_int_t        ngx_process_slot;   /* 进程数组中的索引 */
 ngx_socket_t     ngx_channel;
-ngx_int_t        ngx_last_process;
-ngx_process_t    ngx_processes[NGX_MAX_PROCESSES];
+ngx_int_t        ngx_last_process;   /* 最后一个进程的索引值 */
+ngx_process_t    ngx_processes[NGX_MAX_PROCESSES];  /* 系统中进程数组 */
 
 
 ngx_signal_t  signals[] = {
@@ -90,11 +90,12 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     u_long     on;
     ngx_pid_t  pid;
     ngx_int_t  s;
-
+    /* 如果respawn参数大于0，则相当于创建某个指定的进程 */
     if (respawn >= 0) {
         s = respawn;
 
     } else {
+        /* 获取一个合适的进程数组索引，新建的子进程信息就放在全局进程结构的s索引处 */
         for (s = 0; s < ngx_last_process; s++) {
             if (ngx_processes[s].pid == -1) {
                 break;
@@ -113,7 +114,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     if (respawn != NGX_PROCESS_DETACHED) {
 
         /* Solaris 9 still has no AF_LOCAL */
-
+        /* 创建AF_UNIX套接字用于两个进程通信 */
         if (socketpair(AF_UNIX, SOCK_STREAM, 0, ngx_processes[s].channel) == -1)
         {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
@@ -173,6 +174,10 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
             return NGX_INVALID_PID;
         }
 
+        /* 父进程创建一对通道，父进程使用的是0通道，子进程使用的是1通道，
+            * 在worker进程的初始化过程当中会将该文件描述符添加到读监听集里面，
+            * 主要目的是两个子进程之间通信 
+            */
         ngx_channel = ngx_processes[s].channel[1];
 
     } else {
@@ -180,9 +185,13 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         ngx_processes[s].channel[1] = -1;
     }
 
+    /* 设置创建子进程在全局进程结构中的索引 */
     ngx_process_slot = s;
 
-
+    /* 错误返回-1
+      * 子进程返回0
+      * 父进程返回子进程的pid
+      */
     pid = fork();
 
     switch (pid) {
@@ -195,15 +204,19 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
 
     case 0:
         ngx_pid = ngx_getpid();
+        /* 开始执行子进程的函数，注意子进程是一个服务进程，所以在proc函数在执行之后
+           * 就会一直循环 
+           */
         proc(cycle, data);
         break;
 
     default:
         break;
     }
-
+    /* 此处之下就都是父进程执行的代码 */
     ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "start %s %P", name, pid);
 
+    /* 设置子进程的相关信息 */
     ngx_processes[s].pid = pid;
     ngx_processes[s].exited = 0;
 
@@ -212,10 +225,11 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     }
 
     ngx_processes[s].proc = proc;
-    ngx_processes[s].data = data;
+    ngx_processes[s].data = data;   /* 数据其实就是1，2，3 */
     ngx_processes[s].name = name;
     ngx_processes[s].exiting = 0;
 
+    /* 根据respawn参数来确定 respawn，just_spawn,detached的值 */
     switch (respawn) {
 
     case NGX_PROCESS_NORESPAWN:
@@ -249,6 +263,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         break;
     }
 
+    /* 创建完一个子进程时，会相应的增加ngx_last_process变量 */
     if (s == ngx_last_process) {
         ngx_last_process++;
     }
@@ -280,12 +295,14 @@ ngx_execute_proc(ngx_cycle_t *cycle, void *data)
 }
 
 
+/* 注册系统中信号处理 */
 ngx_int_t
 ngx_init_signals(ngx_log_t *log)
 {
     ngx_signal_t      *sig;
     struct sigaction   sa;
 
+    /* 依次处理信号数组 */
     for (sig = signals; sig->signo != 0; sig++) {
         ngx_memzero(&sa, sizeof(struct sigaction));
         sa.sa_handler = sig->handler;
@@ -609,7 +626,7 @@ ngx_debug_point(void)
     }
 }
 
-
+/* 向进程发送名称为name的信号 */
 ngx_int_t
 ngx_os_signal_process(ngx_cycle_t *cycle, char *name, ngx_int_t pid)
 {

@@ -16,6 +16,9 @@ ngx_os_io_t  ngx_io;
 static void ngx_drain_connections(void);
 
 
+/* 根据地址来创建监听套接字，同时将创建的套接字给返回，
+ * 在函数内部将创建的套接字添加到cycle的listening当中
+ */
 ngx_listening_t *
 ngx_create_listening(ngx_conf_t *cf, void *sockaddr, socklen_t socklen)
 {
@@ -24,6 +27,7 @@ ngx_create_listening(ngx_conf_t *cf, void *sockaddr, socklen_t socklen)
     struct sockaddr  *sa;
     u_char            text[NGX_SOCKADDR_STRLEN];
 
+    /* 注意将新创建的监听套接字push到cycle数组当中 */
     ls = ngx_array_push(&cf->cycle->listening);
     if (ls == NULL) {
         return NULL;
@@ -91,6 +95,43 @@ ngx_create_listening(ngx_conf_t *cf, void *sockaddr, socklen_t socklen)
 
 
 ngx_int_t
+ngx_clone_listening(ngx_conf_t *cf, ngx_listening_t *ls)
+{
+#if (NGX_HAVE_REUSEPORT)
+
+    ngx_int_t         n;
+    ngx_core_conf_t  *ccf;
+    ngx_listening_t   ols;
+
+    if (!ls->reuseport) {
+        return NGX_OK;
+    }
+
+    ols = *ls;
+
+    ccf = (ngx_core_conf_t *) ngx_get_conf(cf->cycle->conf_ctx,
+                                           ngx_core_module);
+
+    for (n = 1; n < ccf->worker_processes; n++) {
+
+        /* create a socket for each worker process */
+
+        ls = ngx_array_push(&cf->cycle->listening);
+        if (ls == NULL) {
+            return NGX_ERROR;
+        }
+
+        *ls = ols;
+        ls->worker = n;
+    }
+
+#endif
+
+    return NGX_OK;
+}
+
+
+ngx_int_t
 ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 {
     size_t                     len;
@@ -106,8 +147,12 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 #if (NGX_HAVE_DEFERRED_ACCEPT && defined TCP_DEFER_ACCEPT)
     int                        timeout;
 #endif
+#if (NGX_HAVE_REUSEPORT)
+    int                        reuseport;
+#endif
 
     ls = cycle->listening.elts;
+	/* 遍历监听数组中的数值 */
     for (i = 0; i < cycle->listening.nelts; i++) {
 
         ls[i].sockaddr = ngx_palloc(cycle->pool, NGX_SOCKADDRLEN);
@@ -116,6 +161,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
         }
 
         ls[i].socklen = NGX_SOCKADDRLEN;
+        /* 获取套接字的地址信息 */
         if (getsockname(ls[i].fd, ls[i].sockaddr, &ls[i].socklen) == -1) {
             ngx_log_error(NGX_LOG_CRIT, cycle->log, ngx_socket_errno,
                           "getsockname() of the inherited "
@@ -124,6 +170,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
             continue;
         }
 
+		/* 判断地址簇 */
         switch (ls[i].sockaddr->sa_family) {
 
 #if (NGX_HAVE_INET6)
@@ -170,6 +217,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 
         olen = sizeof(int);
 
+		/* 获取监听套接字的接收缓存大小 */
         if (getsockopt(ls[i].fd, SOL_SOCKET, SO_RCVBUF, (void *) &ls[i].rcvbuf,
                        &olen)
             == -1)
@@ -183,6 +231,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 
         olen = sizeof(int);
 
+		/* 获取监听套接字的发送缓存大小 */
         if (getsockopt(ls[i].fd, SOL_SOCKET, SO_SNDBUF, (void *) &ls[i].sndbuf,
                        &olen)
             == -1)
@@ -213,6 +262,25 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
         }
 
 #endif
+#endif
+
+#if (NGX_HAVE_REUSEPORT)
+
+        reuseport = 0;
+        olen = sizeof(int);
+
+        if (getsockopt(ls[i].fd, SOL_SOCKET, SO_REUSEPORT,
+                       (void *) &reuseport, &olen)
+            == -1)
+        {
+            ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_socket_errno,
+                          "getsockopt(SO_REUSEPORT) %V failed, ignored",
+                          &ls[i].addr_text);
+
+        } else {
+            ls[i].reuseport = reuseport ? 1 : 0;
+        }
+
 #endif
 
 #if (NGX_HAVE_TCP_FASTOPEN)
@@ -301,6 +369,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 }
 
 
+/* 真正的开始cycle中的所有监听套接字的listen系统调用 */
 ngx_int_t
 ngx_open_listening_sockets(ngx_cycle_t *cycle)
 {
@@ -331,6 +400,31 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
             if (ls[i].ignore) {
                 continue;
             }
+
+#if (NGX_HAVE_REUSEPORT)
+
+            if (ls[i].add_reuseport) {
+
+                /*
+                 * to allow transition from a socket without SO_REUSEPORT
+                 * to multiple sockets with SO_REUSEPORT, we have to set
+                 * SO_REUSEPORT on the old socket before opening new ones
+                 */
+
+                int  reuseport = 1;
+
+                if (setsockopt(ls[i].fd, SOL_SOCKET, SO_REUSEPORT,
+                               (const void *) &reuseport, sizeof(int))
+                    == -1)
+                {
+                    ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_socket_errno,
+                                  "setsockopt(SO_REUSEPORT) %V failed, ignored",
+                                  &ls[i].addr_text);
+                }
+
+                ls[i].add_reuseport = 0;
+            }
+#endif
 
             if (ls[i].fd != (ngx_socket_t) -1) {
                 continue;
@@ -370,6 +464,32 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                 return NGX_ERROR;
             }
 
+#if (NGX_HAVE_REUSEPORT)
+
+            if (ls[i].reuseport) {
+                int  reuseport;
+
+                reuseport = 1;
+
+                if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT,
+                               (const void *) &reuseport, sizeof(int))
+                    == -1)
+                {
+                    ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
+                                  "setsockopt(SO_REUSEPORT) %V failed, ignored",
+                                  &ls[i].addr_text);
+
+                    if (ngx_close_socket(s) == -1) {
+                        ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
+                                      ngx_close_socket_n " %V failed",
+                                      &ls[i].addr_text);
+                    }
+
+                    return NGX_ERROR;
+                }
+            }
+#endif
+
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
 
             if (ls[i].sockaddr->sa_family == AF_INET6) {
@@ -389,7 +509,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
 #endif
             /* TODO: close on exit */
 
-            if (!(ngx_event_flags & NGX_USE_AIO_EVENT)) {
+            if (!(ngx_event_flags & NGX_USE_IOCP_EVENT)) {
                 if (ngx_nonblocking(s) == -1) {
                     ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
                                   ngx_nonblocking_n " %V failed",
@@ -457,9 +577,19 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
 #endif
 
             if (listen(s, ls[i].backlog) == -1) {
-                ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                              "listen() to %V, backlog %d failed",
-                              &ls[i].addr_text, ls[i].backlog);
+                err = ngx_socket_errno;
+
+                /*
+                 * on OpenVZ after suspend/resume EADDRINUSE
+                 * may be returned by listen() instead of bind(), see
+                 * https://bugzilla.openvz.org/show_bug.cgi?id=2470
+                 */
+
+                if (err != NGX_EADDRINUSE || !ngx_test_config) {
+                    ngx_log_error(NGX_LOG_EMERG, log, err,
+                                  "listen() to %V, backlog %d failed",
+                                  &ls[i].addr_text, ls[i].backlog);
+                }
 
                 if (ngx_close_socket(s) == -1) {
                     ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
@@ -467,7 +597,15 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                                   &ls[i].addr_text);
                 }
 
-                return NGX_ERROR;
+                if (err != NGX_EADDRINUSE) {
+                    return NGX_ERROR;
+                }
+
+                if (!ngx_test_config) {
+                    failed = 1;
+                }
+
+                continue;
             }
 
             ls[i].listen = 1;
@@ -495,7 +633,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
     return NGX_OK;
 }
 
-
+/* 配置监听套接字的一些相关属性，可以在nginx的配置文件配置这些属性 */
 void
 ngx_configure_listening_sockets(ngx_cycle_t *cycle)
 {
@@ -764,10 +902,7 @@ ngx_close_listening_sockets(ngx_cycle_t *cycle)
 
         if (c) {
             if (c->read->active) {
-                if (ngx_event_flags & NGX_USE_RTSIG_EVENT) {
-                    ngx_del_conn(c, NGX_CLOSE_EVENT);
-
-                } else if (ngx_event_flags & NGX_USE_EPOLL_EVENT) {
+                if (ngx_event_flags & NGX_USE_EPOLL_EVENT) {
 
                     /*
                      * it seems that Linux-2.6.x OpenVZ sends events
@@ -817,7 +952,7 @@ ngx_close_listening_sockets(ngx_cycle_t *cycle)
     cycle->listening.nelts = 0;
 }
 
-
+/* 获取套接字对应的连接 */
 ngx_connection_t *
 ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 {
@@ -827,6 +962,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 
     /* disable warning: Win32 SOCKET is u_int while UNIX socket is int */
 
+    /* 如果超过了可以监听的最大文件数，则出错 */
     if (ngx_cycle->files && (ngx_uint_t) s >= ngx_cycle->files_n) {
         ngx_log_error(NGX_LOG_ALERT, log, 0,
                       "the new socket has number %d, "
@@ -837,7 +973,9 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 
     c = ngx_cycle->free_connections;
 
+    /* 此时连接池已经被用完 */
     if (c == NULL) {
+        /* 将一些keepalive的连接给释放掉 */
         ngx_drain_connections();
         c = ngx_cycle->free_connections;
     }
@@ -853,6 +991,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
     ngx_cycle->free_connections = c->data;
     ngx_cycle->free_connection_n--;
 
+    /* 设置套接字描述符对应的连接 */
     if (ngx_cycle->files) {
         ngx_cycle->files[s] = c;
     }
@@ -860,6 +999,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
     rev = c->read;
     wev = c->write;
 
+    /* 连接数据进行清除 */
     ngx_memzero(c, sizeof(ngx_connection_t));
 
     c->read = rev;
@@ -878,6 +1018,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
     rev->index = NGX_INVALID_INDEX;
     wev->index = NGX_INVALID_INDEX;
 
+    /* 读写时间携带的数据是连接 */
     rev->data = c;
     wev->data = c;
 
@@ -887,6 +1028,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 }
 
 
+/* 释放一个连接，并没有释放内存，而是存放在cycle的空闲链表当中  */
 void
 ngx_free_connection(ngx_connection_t *c)
 {
@@ -900,6 +1042,7 @@ ngx_free_connection(ngx_connection_t *c)
 }
 
 
+/* 在该函数中调用ngx_free_connection函数来讲连接添加到cycle中的空闲连接当中 */
 void
 ngx_close_connection(ngx_connection_t *c)
 {
@@ -932,6 +1075,7 @@ ngx_close_connection(ngx_connection_t *c)
             ngx_del_event(c->write, NGX_WRITE_EVENT, NGX_CLOSE_EVENT);
         }
     }
+
 
     if (c->read->posted) {
         ngx_delete_posted_event(c->read);
@@ -1014,6 +1158,7 @@ ngx_reusable_connection(ngx_connection_t *c, ngx_uint_t reusable)
 }
 
 
+/* 将一些keepalive连接给释放掉 */
 static void
 ngx_drain_connections(void)
 {
@@ -1021,19 +1166,47 @@ ngx_drain_connections(void)
     ngx_queue_t       *q;
     ngx_connection_t  *c;
 
+    /* 清理32个keepalive连接，以回收一些连接供新连接使用 */
     for (i = 0; i < 32; i++) {
+        /* 判断ngx_cycle->reusable_connections_queue队列是否为空 */
         if (ngx_queue_empty(&ngx_cycle->reusable_connections_queue)) {
             break;
         }
 
+        /* reusable连接队列是从头插入的，意味着越靠近队列尾部的连接，
+          * 空闲未被使用的时间就越长，这种情况下，优先回收它，类似LRU
+          */
         q = ngx_queue_last(&ngx_cycle->reusable_connections_queue);
         c = ngx_queue_data(q, ngx_connection_t, queue);
 
         ngx_log_debug0(NGX_LOG_DEBUG_CORE, c->log, 0,
                        "reusing connection");
 
+        /* 这里的handler是ngx_http_keepalive_handler，这函数里，由于close被置1，  
+          * 所以会执行ngx_http_close_connection来释放连接，这样也就发生了keepalive  
+          * 连接被强制断掉的现象了。 */
         c->close = 1;
         c->read->handler(c->read);
+    }
+}
+
+
+void
+ngx_close_idle_connections(ngx_cycle_t *cycle)
+{
+    ngx_uint_t         i;
+    ngx_connection_t  *c;
+
+    c = cycle->connections;
+
+    for (i = 0; i < cycle->connection_n; i++) {
+
+        /* THREAD: lock */
+
+        if (c[i].fd != (ngx_socket_t) -1 && c[i].idle) {
+            c[i].close = 1;
+            c[i].read->handler(c[i].read);
+        }
     }
 }
 

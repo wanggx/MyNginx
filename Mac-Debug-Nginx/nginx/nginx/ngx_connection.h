@@ -18,16 +18,16 @@ typedef struct ngx_listening_s  ngx_listening_t;
 struct ngx_listening_s {
     ngx_socket_t        fd;
 
-    struct sockaddr    *sockaddr;
-    socklen_t           socklen;    /* size of sockaddr */
-    size_t              addr_text_max_len;
-    ngx_str_t           addr_text;
+    struct sockaddr    *sockaddr;   /* 监听套接字的地址 */
+    socklen_t           socklen;    /* size of sockaddr 监听套接字的长度 */ 
+    size_t              addr_text_max_len; /* 地址文本内容的最大长度 */
+    ngx_str_t           addr_text;  /* 地址的文本内容 */
 
     int                 type;
 
-    int                 backlog;
-    int                 rcvbuf;
-    int                 sndbuf;
+    int                 backlog;   /* 监听套接字监听等待队列长度 */
+    int                 rcvbuf;    /* 套接字的接收缓冲大小 */
+    int                 sndbuf;    /* 套接字的发送缓冲大小 */
 #if (NGX_HAVE_KEEPALIVE_TUNABLE)
     int                 keepidle;
     int                 keepintvl;
@@ -35,13 +35,14 @@ struct ngx_listening_s {
 #endif
 
     /* handler of accepted connection */
-    ngx_connection_handler_pt   handler;
+    ngx_connection_handler_pt   handler;   /* 处理接收的连接 */
 
     void               *servers;  /* array of ngx_http_in_addr_t, for example */
 
     ngx_log_t           log;
     ngx_log_t          *logp;
 
+    /* 和监听套接字 对应的连接的内存池的大小 */
     size_t              pool_size;
     /* should be here because of the AcceptEx() preread */
     size_t              post_accept_buffer_size;
@@ -49,7 +50,9 @@ struct ngx_listening_s {
     ngx_msec_t          post_accept_timeout;
 
     ngx_listening_t    *previous;
-    ngx_connection_t   *connection;
+    ngx_connection_t   *connection;           /* 监听套接字对应的连接 */
+
+    ngx_uint_t          worker;
 
     unsigned            open:1;
     unsigned            remain:1;
@@ -65,6 +68,10 @@ struct ngx_listening_s {
 
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
     unsigned            ipv6only:1;
+#endif
+#if (NGX_HAVE_REUSEPORT)
+    unsigned            reuseport:1;
+    unsigned            add_reuseport:1;
 #endif
     unsigned            keepalive:2;
 
@@ -112,28 +119,28 @@ typedef enum {
 
 #define NGX_LOWLEVEL_BUFFERED  0x0f
 #define NGX_SSL_BUFFERED       0x01
-#define NGX_SPDY_BUFFERED      0x02
+#define NGX_HTTP_V2_BUFFERED   0x02
 
 
 struct ngx_connection_s {
-    void               *data;
-    ngx_event_t        *read;
-    ngx_event_t        *write;
+    void               *data;   /* 用来关联其他结构体,如ngx_http_connection_t ,也可以是ngx_http_request_t*/
+    ngx_event_t        *read;   /* 连接的读事件 */
+    ngx_event_t        *write;  /* 连接的写事件 */
 
-    ngx_socket_t        fd;
+    ngx_socket_t        fd;     /* 连接对应文件描述符 */
 
-    ngx_recv_pt         recv;
-    ngx_send_pt         send;
+    ngx_recv_pt         recv;  /* 连接的接受函数 */
+    ngx_send_pt         send; /* 连接的发送函数 */
     ngx_recv_chain_pt   recv_chain;
     ngx_send_chain_pt   send_chain;
 
-    ngx_listening_t    *listening;
+    ngx_listening_t    *listening;      /* 连接对应的监听套接字 */
 
-    off_t               sent;
+    off_t               sent;                  /* 连接发送的字节数量 */
 
     ngx_log_t          *log;
 
-    ngx_pool_t         *pool;
+    ngx_pool_t         *pool;       /* 连接的内存池 */
 
     struct sockaddr    *sockaddr;
     socklen_t           socklen;
@@ -150,7 +157,7 @@ struct ngx_connection_s {
 
     ngx_buf_t          *buffer;
 
-    ngx_queue_t         queue;
+    ngx_queue_t         queue;   /* 构成连接的队列 */
 
     ngx_atomic_uint_t   number;
 
@@ -190,13 +197,26 @@ struct ngx_connection_s {
 };
 
 
+#define ngx_set_connection_log(c, l)                                         \
+                                                                             \
+    c->log->file = l->file;                                                  \
+    c->log->next = l->next;                                                  \
+    c->log->writer = l->writer;                                              \
+    c->log->wdata = l->wdata;                                                \
+    if (!(c->log->log_level & NGX_LOG_DEBUG_CONNECTION)) {                   \
+        c->log->log_level = l->log_level;                                    \
+    }
+
+
 ngx_listening_t *ngx_create_listening(ngx_conf_t *cf, void *sockaddr,
     socklen_t socklen);
+ngx_int_t ngx_clone_listening(ngx_conf_t *cf, ngx_listening_t *ls);
 ngx_int_t ngx_set_inherited_sockets(ngx_cycle_t *cycle);
 ngx_int_t ngx_open_listening_sockets(ngx_cycle_t *cycle);
 void ngx_configure_listening_sockets(ngx_cycle_t *cycle);
 void ngx_close_listening_sockets(ngx_cycle_t *cycle);
 void ngx_close_connection(ngx_connection_t *c);
+void ngx_close_idle_connections(ngx_cycle_t *cycle);
 ngx_int_t ngx_connection_local_sockaddr(ngx_connection_t *c, ngx_str_t *s,
     ngx_uint_t port);
 ngx_int_t ngx_connection_error(ngx_connection_t *c, ngx_err_t err, char *text);

@@ -28,13 +28,13 @@ typedef struct {
 
 
 struct ngx_event_s {
-    void            *data;
+    void            *data;   /* 事件携带数据 */
 
     unsigned         write:1;
 
     unsigned         accept:1;
 
-    /* used to detect the stale events in kqueue, rtsig, and epoll */
+    /* used to detect the stale events in kqueue and epoll */
     unsigned         instance:1;
 
     /*
@@ -57,7 +57,7 @@ struct ngx_event_s {
     unsigned         error:1;
 
     unsigned         timedout:1;
-    unsigned         timer_set:1;
+    unsigned         timer_set:1;    /* 表示是否设置了时钟 */
 
     unsigned         delayed:1;
 
@@ -66,7 +66,19 @@ struct ngx_event_s {
     /* the pending eof reported by kqueue, epoll or in aio chain operation */
     unsigned         pending_eof:1;
 
-    unsigned         posted:1;
+    /* 表示是否post到队列当中，如果是的，
+      * 则在释放或关闭的时候需要将自己从事件队列中移除
+      */
+    unsigned         posted:1;        
+
+    /* 表示事件是否关闭，1表示关闭  */
+    unsigned         closed:1;
+
+    /* to test on worker exit */
+    unsigned         channel:1;
+    unsigned         resolver:1;
+
+    unsigned         cancelable:1;
 
 #if (NGX_WIN32)
     /* setsockopt(SO_UPDATE_ACCEPT_CONTEXT) was successful */
@@ -99,37 +111,22 @@ struct ngx_event_s {
 #else
     unsigned         available:1;
 #endif
-
+    /* 事件的处理回调 */
     ngx_event_handler_pt  handler;
 
 
-#if (NGX_HAVE_AIO)
-
 #if (NGX_HAVE_IOCP)
     ngx_event_ovlp_t ovlp;
-#else
-    struct aiocb     aiocb;
-#endif
-
 #endif
 
     ngx_uint_t       index;
 
     ngx_log_t       *log;
 
-    ngx_rbtree_node_t   timer;
+    ngx_rbtree_node_t   timer;        /* 事件的时钟 */
 
     /* the posted queue */
-    ngx_queue_t      queue;
-
-    unsigned         closed:1;
-
-    /* to test on worker exit */
-    unsigned         channel:1;
-    unsigned         resolver:1;
-
-    unsigned         cancelable:1;
-
+    ngx_queue_t      queue;   /* 注意这个队列非常重要，将事件给串联起来 */
 
 #if 0
 
@@ -181,7 +178,10 @@ struct ngx_event_aio_s {
 
 #endif
 
-
+/* 这个结构是nginx底层事件模型的抽象，具体的io模型会有自己的实现，
+ * 比如epoll、select。通过这一层的抽象屏蔽了底层的不同实现，
+ * 我们可以轻易从一种模型迁移至其他模型。这实际上就是C的面向接口编程，值得学习。
+ */
 typedef struct {
     ngx_int_t  (*add)(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags);
     ngx_int_t  (*del)(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags);
@@ -236,7 +236,7 @@ extern ngx_event_actions_t   ngx_event_actions;
 #define NGX_USE_LOWAT_EVENT      0x00000010
 
 /*
- * The event filter requires to do i/o operation until EAGAIN: epoll, rtsig.
+ * The event filter requires to do i/o operation until EAGAIN: epoll.
  */
 #define NGX_USE_GREEDY_EVENT     0x00000020
 
@@ -246,25 +246,23 @@ extern ngx_event_actions_t   ngx_event_actions;
 #define NGX_USE_EPOLL_EVENT      0x00000040
 
 /*
- * No need to add or delete the event filters: rtsig.
+ * Obsolete.
  */
 #define NGX_USE_RTSIG_EVENT      0x00000080
 
 /*
- * No need to add or delete the event filters: overlapped, aio_read,
- * aioread, io_submit.
+ * Obsolete.
  */
 #define NGX_USE_AIO_EVENT        0x00000100
 
 /*
  * Need to add socket or handle only once: i/o completion port.
- * It also requires NGX_HAVE_AIO and NGX_USE_AIO_EVENT to be set.
  */
 #define NGX_USE_IOCP_EVENT       0x00000200
 
 /*
  * The event filter has no opaque data and requires file descriptors table:
- * poll, /dev/poll, rtsig.
+ * poll, /dev/poll.
  */
 #define NGX_USE_FD_EVENT         0x00000400
 
@@ -289,7 +287,7 @@ extern ngx_event_actions_t   ngx_event_actions;
 /*
  * The event filter is deleted just before the closing file.
  * Has no meaning for select and poll.
- * kqueue, epoll, rtsig, eventport:  allows to avoid explicit delete,
+ * kqueue, epoll, eventport:         allows to avoid explicit delete,
  *                                   because filter automatically is deleted
  *                                   on file close,
  *
@@ -363,7 +361,9 @@ extern ngx_event_actions_t   ngx_event_actions;
 
 #elif (NGX_HAVE_EPOLL)
 
+/* 表明是读事件 */
 #define NGX_READ_EVENT     (EPOLLIN|EPOLLRDHUP)
+/* 表明是写事件 */
 #define NGX_WRITE_EVENT    EPOLLOUT
 
 #define NGX_LEVEL_EVENT    0
@@ -430,6 +430,7 @@ extern ngx_os_io_t  ngx_io;
 
 
 #define NGX_EVENT_MODULE      0x544E5645  /* "EVNT" */
+/* 表示是event配置块 */
 #define NGX_EVENT_CONF        0x02000000
 
 
@@ -485,7 +486,9 @@ extern ngx_atomic_t  *ngx_stat_waiting;
 
 
 #define NGX_UPDATE_TIME         1
-#define NGX_POST_EVENTS         2
+
+/* 是否将事件post到队列中然后在进行处理 */
+#define NGX_POST_EVENTS         2           
 
 
 extern sig_atomic_t           ngx_event_timer_alarm;

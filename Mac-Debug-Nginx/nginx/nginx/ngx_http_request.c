@@ -190,7 +190,7 @@ ngx_http_header_t  ngx_http_headers_in[] = {
     { ngx_null_string, 0, NULL }
 };
 
-
+/* 在ngx_event_accept函数中接收一个新的连接，然后来调用该函数处理接收连接 */
 void
 ngx_http_init_connection(ngx_connection_t *c)
 {
@@ -206,6 +206,7 @@ ngx_http_init_connection(ngx_connection_t *c)
     ngx_http_in6_addr_t    *addr6;
 #endif
 
+    /* 分配一个http连接数据结构 */
     hc = ngx_pcalloc(c->pool, sizeof(ngx_http_connection_t));
     if (hc == NULL) {
         ngx_http_close_connection(c);
@@ -308,13 +309,14 @@ ngx_http_init_connection(ngx_connection_t *c)
 
     c->log_error = NGX_ERROR_INFO;
 
+    /* 这里是连接的读事件和写事件的处理函数 */
     rev = c->read;
     rev->handler = ngx_http_wait_request_handler;
     c->write->handler = ngx_http_empty_handler;
 
-#if (NGX_HTTP_SPDY)
-    if (hc->addr_conf->spdy) {
-        rev->handler = ngx_http_spdy_init;
+#if (NGX_HTTP_V2)
+    if (hc->addr_conf->http2) {
+        rev->handler = ngx_http_v2_init;
     }
 #endif
 
@@ -348,14 +350,17 @@ ngx_http_init_connection(ngx_connection_t *c)
         c->log->action = "reading PROXY protocol";
     }
 
+    /* 如果ready为1，则此时可以明确的知道有数据可以读，
+      * 所以没有必要再下面把连接对象添加到事件监听机制里面
+      */
     if (rev->ready) {
-        /* the deferred accept(), rtsig, aio, iocp */
+        /* the deferred accept(), iocp */
 
         if (ngx_use_accept_mutex) {
             ngx_post_event(rev, &ngx_posted_events);
             return;
         }
-
+        /* 代表有数据可以读了，则立即进行处理 */
         rev->handler(rev);
         return;
     }
@@ -363,13 +368,14 @@ ngx_http_init_connection(ngx_connection_t *c)
     ngx_add_timer(rev, c->listening->post_accept_timeout);
     ngx_reusable_connection(c, 1);
 
+    /* 将一个新的连接的读事件添加到epoll模型当中 */
     if (ngx_handle_read_event(rev, 0) != NGX_OK) {
         ngx_http_close_connection(c);
         return;
     }
 }
 
-
+/* 等待http请求头的事件处理函数 */
 static void
 ngx_http_wait_request_handler(ngx_event_t *rev)
 {
@@ -396,6 +402,7 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
         return;
     }
 
+    /* 获取http连接的真实数据 */
     hc = c->data;
     cscf = ngx_http_get_module_srv_conf(hc->conf_ctx, ngx_http_core_module);
 
@@ -425,6 +432,7 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
         b->end = b->last + size;
     }
 
+    /* 从连接中去接受数据 */
     n = c->recv(c, b->last, size);
 
     if (n == NGX_AGAIN) {
@@ -433,9 +441,10 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
             ngx_add_timer(rev, c->listening->post_accept_timeout);
             ngx_reusable_connection(c, 1);
         }
-
+        /* 如果连接的数据还没有准备好，则在继续监听连接的读事件 */
         if (ngx_handle_read_event(rev, 0) != NGX_OK) {
-            ngx_http_close_connection(c);
+            /* 如果无法监听在关闭该连接 */
+            ngx_http_close_connection(c);   
             return;
         }
 
@@ -467,7 +476,7 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
     if (hc->proxy_protocol) {
         hc->proxy_protocol = 0;
 
-        p = ngx_proxy_protocol_parse(c, b->pos, b->last);
+        p = ngx_proxy_protocol_read(c, b->pos, b->last);
 
         if (p == NULL) {
             ngx_http_close_connection(c);
@@ -489,17 +498,21 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
 
     ngx_reusable_connection(c, 0);
 
+    /* 创建一个新的请求 */
     c->data = ngx_http_create_request(c);
     if (c->data == NULL) {
         ngx_http_close_connection(c);
         return;
     }
-
+    /* 如果一切正常，则开始处理请求行 */
     rev->handler = ngx_http_process_request_line;
     ngx_http_process_request_line(rev);
 }
 
 
+/* 根据一个连接来创建一个http请求
+  * 初始化请求的相关信息和一些时间处理句柄
+  */
 ngx_http_request_t *
 ngx_http_create_request(ngx_connection_t *c)
 {
@@ -518,23 +531,27 @@ ngx_http_create_request(ngx_connection_t *c)
 
     cscf = ngx_http_get_module_srv_conf(hc->conf_ctx, ngx_http_core_module);
 
+    /* 给固定请求分配一个内存池 */
     pool = ngx_create_pool(cscf->request_pool_size, c->log);
     if (pool == NULL) {
         return NULL;
     }
 
+    /* 分配一个ngx_http_request_t结构*/
     r = ngx_pcalloc(pool, sizeof(ngx_http_request_t));
     if (r == NULL) {
         ngx_destroy_pool(pool);
         return NULL;
     }
 
+    /* 设置请求的内存池和相关数据，如请求连接 */
     r->pool = pool;
 
     r->http_connection = hc;
     r->signature = NGX_HTTP_MODULE;
     r->connection = c;
 
+    /* 设置请求的配置文件 */
     r->main_conf = hc->conf_ctx->main_conf;
     r->srv_conf = hc->conf_ctx->srv_conf;
     r->loc_conf = hc->conf_ctx->loc_conf;
@@ -543,7 +560,7 @@ ngx_http_create_request(ngx_connection_t *c)
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
-    ngx_http_set_connection_log(r->connection, clcf->error_log);
+    ngx_set_connection_log(r->connection, clcf->error_log);
 
     r->header_in = hc->nbusy ? hc->busy[0] : c->buffer;
 
@@ -675,7 +692,7 @@ ngx_http_ssl_handshake(ngx_event_t *rev)
     if (hc->proxy_protocol) {
         hc->proxy_protocol = 0;
 
-        p = ngx_proxy_protocol_parse(c, buf, buf + n);
+        p = ngx_proxy_protocol_read(c, buf, buf + n);
 
         if (p == NULL) {
             ngx_http_close_connection(c);
@@ -764,18 +781,17 @@ ngx_http_ssl_handshake_handler(ngx_connection_t *c)
 
         c->ssl->no_wait_shutdown = 1;
 
-#if (NGX_HTTP_SPDY                                                            \
+#if (NGX_HTTP_V2                                                              \
      && (defined TLSEXT_TYPE_application_layer_protocol_negotiation           \
          || defined TLSEXT_TYPE_next_proto_neg))
         {
-        unsigned int             len;
-        const unsigned char     *data;
-        ngx_http_connection_t   *hc;
-        static const ngx_str_t   spdy = ngx_string(NGX_SPDY_NPN_NEGOTIATED);
+        unsigned int            len;
+        const unsigned char    *data;
+        ngx_http_connection_t  *hc;
 
         hc = c->data;
 
-        if (hc->addr_conf->spdy) {
+        if (hc->addr_conf->http2) {
 
 #ifdef TLSEXT_TYPE_application_layer_protocol_negotiation
             SSL_get0_alpn_selected(c->ssl->connection, &data, &len);
@@ -790,10 +806,8 @@ ngx_http_ssl_handshake_handler(ngx_connection_t *c)
             SSL_get0_next_proto_negotiated(c->ssl->connection, &data, &len);
 #endif
 
-            if (len == spdy.len
-                && ngx_strncmp(data, spdy.data, spdy.len) == 0)
-            {
-                ngx_http_spdy_init(c->read);
+            if (len == 2 && data[0] == 'h' && data[1] == '2') {
+                ngx_http_v2_init(c->read);
                 return;
             }
         }
@@ -840,6 +854,10 @@ ngx_http_ssl_servername(ngx_ssl_conn_t *ssl_conn, int *ad, void *arg)
 
     c = ngx_ssl_get_connection(ssl_conn);
 
+    if (c->ssl->renegotiation) {
+        return SSL_TLSEXT_ERR_NOACK;
+    }
+
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "SSL server name: \"%s\"", servername);
 
@@ -875,7 +893,7 @@ ngx_http_ssl_servername(ngx_ssl_conn_t *ssl_conn, int *ad, void *arg)
 
     clcf = ngx_http_get_module_loc_conf(hc->conf_ctx, ngx_http_core_module);
 
-    ngx_http_set_connection_log(c, clcf->error_log);
+    ngx_set_connection_log(c, clcf->error_log);
 
     sscf = ngx_http_get_module_srv_conf(hc->conf_ctx, ngx_http_ssl_module);
 
@@ -908,7 +926,9 @@ ngx_http_ssl_servername(ngx_ssl_conn_t *ssl_conn, int *ad, void *arg)
 
 #endif
 
-
+/* 解析成功初步意味着算是一个合法的http客户端请求
+  * 在该函数中会调用ngx_http_process_request函数，最后已完成实际的请求处理 
+  */
 static void
 ngx_http_process_request_line(ngx_event_t *rev)
 {
@@ -933,16 +953,19 @@ ngx_http_process_request_line(ngx_event_t *rev)
 
     rc = NGX_AGAIN;
 
+    /* 因为请求的数据可能分多次到达，所以要循环的读 */
     for ( ;; ) {
 
         if (rc == NGX_AGAIN) {
             n = ngx_http_read_request_header(r);
 
+            /* 如果还没有读到数据 则函数先返回了 */
             if (n == NGX_AGAIN || n == NGX_ERROR) {
                 return;
             }
         }
 
+        /* 如果从连接中读取到了数据 */
         rc = ngx_http_parse_request_line(r, r->header_in);
 
         if (rc == NGX_OK) {
@@ -1361,7 +1384,7 @@ ngx_http_process_request_headers(ngx_event_t *rev)
     }
 }
 
-
+/* 读取请求的头部，就相当于从连接的套接字里面读取请求的数据 */
 static ssize_t
 ngx_http_read_request_header(ngx_http_request_t *r)
 {
@@ -1375,6 +1398,7 @@ ngx_http_read_request_header(ngx_http_request_t *r)
 
     n = r->header_in->last - r->header_in->pos;
 
+    /* 如果有读取的数据则直接返回 */
     if (n > 0) {
         return n;
     }
@@ -1392,6 +1416,7 @@ ngx_http_read_request_header(ngx_http_request_t *r)
             ngx_add_timer(rev, cscf->client_header_timeout);
         }
 
+        /* 如果此时还没有读到请求的数据，则继续监听读并返回 */
         if (ngx_handle_read_event(rev, 0) != NGX_OK) {
             ngx_http_close_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
             return NGX_ERROR;
@@ -1791,7 +1816,7 @@ ngx_http_process_request_header(ngx_http_request_t *r)
         }
     }
 
-    if (r->method & NGX_HTTP_TRACE) {
+    if (r->method == NGX_HTTP_TRACE) {
         ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
                       "client sent TRACE method");
         ngx_http_finalize_request(r, NGX_HTTP_NOT_ALLOWED);
@@ -1830,7 +1855,7 @@ ngx_http_process_request_header(ngx_http_request_t *r)
     return NGX_OK;
 }
 
-
+/* 处理请求 */
 void
 ngx_http_process_request(ngx_http_request_t *r)
 {
@@ -2081,7 +2106,7 @@ ngx_http_set_virtual_server(ngx_http_request_t *r, ngx_str_t *host)
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
-    ngx_http_set_connection_log(r->connection, clcf->error_log);
+    ngx_set_connection_log(r->connection, clcf->error_log);
 
     return NGX_OK;
 }
@@ -2253,7 +2278,7 @@ ngx_http_post_request(ngx_http_request_t *r, ngx_http_posted_request_t *pr)
     return NGX_OK;
 }
 
-
+/* 处理请求 */
 void
 ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
 {
@@ -2346,7 +2371,6 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
         if (r == c->data) {
 
             r->main->count--;
-            r->main->subrequests++;
 
             if (!r->logged) {
 
@@ -2508,8 +2532,8 @@ ngx_http_finalize_connection(ngx_http_request_t *r)
 {
     ngx_http_core_loc_conf_t  *clcf;
 
-#if (NGX_HTTP_SPDY)
-    if (r->spdy_stream) {
+#if (NGX_HTTP_V2)
+    if (r->stream) {
         ngx_http_close_request(r, 0);
         return;
     }
@@ -2543,6 +2567,7 @@ ngx_http_finalize_connection(ngx_http_request_t *r)
          && r->keepalive
          && clcf->keepalive_timeout > 0)
     {
+        /* 如果是保活请求，则设置保活请求的事件处理回调 */
         ngx_http_set_keepalive(r);
         return;
     }
@@ -2574,8 +2599,8 @@ ngx_http_set_write_handler(ngx_http_request_t *r)
                                 ngx_http_test_reading;
     r->write_event_handler = ngx_http_writer;
 
-#if (NGX_HTTP_SPDY)
-    if (r->spdy_stream) {
+#if (NGX_HTTP_V2)
+    if (r->stream) {
         return NGX_OK;
     }
 #endif
@@ -2665,8 +2690,8 @@ ngx_http_writer(ngx_http_request_t *r)
 
     if (r->buffered || r->postponed || (r == r->main && c->buffered)) {
 
-#if (NGX_HTTP_SPDY)
-        if (r->spdy_stream) {
+#if (NGX_HTTP_V2)
+        if (r->stream) {
             return;
         }
 #endif
@@ -2733,9 +2758,9 @@ ngx_http_test_reading(ngx_http_request_t *r)
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0, "http test reading");
 
-#if (NGX_HTTP_SPDY)
+#if (NGX_HTTP_V2)
 
-    if (r->spdy_stream) {
+    if (r->stream) {
         if (c->error) {
             err = 0;
             goto closed;
@@ -2833,7 +2858,7 @@ closed:
     ngx_http_finalize_request(r, NGX_HTTP_CLIENT_CLOSED_REQUEST);
 }
 
-
+/* 设置请求为keepalive */
 static void
 ngx_http_set_keepalive(ngx_http_request_t *r)
 {
@@ -3056,8 +3081,10 @@ ngx_http_set_keepalive(ngx_http_request_t *r)
 #endif
 
     c->idle = 1;
+    /* 这点很重要，将连接添加到cycle->reusable_connections_queue队列当中 */
     ngx_reusable_connection(c, 1);
 
+    /* 设置保活时钟 */
     ngx_add_timer(rev, clcf->keepalive_timeout);
 
     if (rev->ready) {
@@ -3408,9 +3435,9 @@ ngx_http_close_request(ngx_http_request_t *r, ngx_int_t rc)
         return;
     }
 
-#if (NGX_HTTP_SPDY)
-    if (r->spdy_stream) {
-        ngx_http_spdy_close_stream(r->spdy_stream, rc);
+#if (NGX_HTTP_V2)
+    if (r->stream) {
+        ngx_http_v2_close_stream(r->stream, rc);
         return;
     }
 #endif
@@ -3520,6 +3547,7 @@ ngx_http_log_request(ngx_http_request_t *r)
     log_handler = cmcf->phases[NGX_HTTP_LOG_PHASE].handlers.elts;
     n = cmcf->phases[NGX_HTTP_LOG_PHASE].handlers.nelts;
 
+    /* 开始处理请求 */
     for (i = 0; i < n; i++) {
         log_handler[i](r);
     }

@@ -29,12 +29,14 @@ ngx_os_io_t ngx_os_io = {
 };
 
 
+/* 和操作系统相关的初始化 */
 ngx_int_t
 ngx_os_init(ngx_log_t *log)
 {
     ngx_uint_t  n;
 
 #if (NGX_HAVE_OS_SPECIFIC_INIT)
+    /* 操作系统的特殊初始化，如ngx_os_io等等的初始化 */
     if (ngx_os_specific_init(log) != NGX_OK) {
         return NGX_ERROR;
     }
@@ -63,7 +65,7 @@ ngx_os_init(ngx_log_t *log)
 
     if (getrlimit(RLIMIT_NOFILE, &rlmt) == -1) {
         ngx_log_error(NGX_LOG_ALERT, log, errno,
-                      "getrlimit(RLIMIT_NOFILE) failed)");
+                      "getrlimit(RLIMIT_NOFILE) failed");
         return NGX_ERROR;
     }
 

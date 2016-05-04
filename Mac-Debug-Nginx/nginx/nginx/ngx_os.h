@@ -23,6 +23,7 @@ typedef ssize_t (*ngx_send_pt)(ngx_connection_t *c, u_char *buf, size_t size);
 typedef ngx_chain_t *(*ngx_send_chain_pt)(ngx_connection_t *c, ngx_chain_t *in,
     off_t limit);
 
+/* 操作系统io操作结构 */
 typedef struct {
     ngx_recv_pt        recv;
     ngx_recv_chain_pt  recv_chain;
@@ -47,14 +48,6 @@ ssize_t ngx_udp_unix_recv(ngx_connection_t *c, u_char *buf, size_t size);
 ssize_t ngx_unix_send(ngx_connection_t *c, u_char *buf, size_t size);
 ngx_chain_t *ngx_writev_chain(ngx_connection_t *c, ngx_chain_t *in,
     off_t limit);
-
-#if (NGX_HAVE_AIO)
-ssize_t ngx_aio_read(ngx_connection_t *c, u_char *buf, size_t size);
-ssize_t ngx_aio_read_chain(ngx_connection_t *c, ngx_chain_t *cl, off_t limit);
-ssize_t ngx_aio_write(ngx_connection_t *c, u_char *buf, size_t size);
-ngx_chain_t *ngx_aio_write_chain(ngx_connection_t *c, ngx_chain_t *in,
-    off_t limit);
-#endif
 
 
 #if (IOV_MAX > 64)

@@ -18,7 +18,7 @@ static void ngx_conf_flush_files(ngx_cycle_t *cycle);
 static ngx_command_t  ngx_conf_commands[] = {
 
     { ngx_string("include"),
-      NGX_ANY_CONF|NGX_CONF_TAKE1,
+      NGX_ANY_CONF|NGX_CONF_TAKE1,        /* 在配置的任何级别上使用include都会调用到该函数 */
       ngx_conf_include,
       0,
       0,
@@ -96,15 +96,18 @@ ngx_conf_param(ngx_conf_t *cf)
     return rv;
 }
 
-
+/* 解析配置文件 */
 char *
 ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 {
     char             *rv;
+    u_char           *p;
+    off_t             size;
     ngx_fd_t          fd;
     ngx_int_t         rc;
-    ngx_buf_t         buf;
+    ngx_buf_t         buf, *tbuf;
     ngx_conf_file_t  *prev, conf_file;
+    ngx_conf_dump_t  *cd;
     enum {
         parse_file = 0,
         parse_block,
@@ -119,7 +122,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
     if (filename) {
 
         /* open configuration file */
-
+        /* 打开nginx.conf配置文件 */
         fd = ngx_open_file(filename->data, NGX_FILE_RDONLY, NGX_FILE_OPEN, 0);
         if (fd == NGX_INVALID_FILE) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, ngx_errno,
@@ -131,7 +134,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
         prev = cf->conf_file;
 
         cf->conf_file = &conf_file;
-
+        /* 获取文件的信息实际调用的是fstat函数 */
         if (ngx_fd_info(fd, &cf->conf_file->file.info) == NGX_FILE_ERROR) {
             ngx_log_error(NGX_LOG_EMERG, cf->log, ngx_errno,
                           ngx_fd_info_n " \"%s\" failed", filename->data);
@@ -144,11 +147,14 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
             goto failed;
         }
 
+        /* 初始化buf的指针 */
         buf.pos = buf.start;
         buf.last = buf.start;
         buf.end = buf.last + NGX_CONF_BUFFER;
+        /* 缓存中值可以修改 */
         buf.temporary = 1;
 
+        /* 设置配置文件的基本信息 */
         cf->conf_file->file.fd = fd;
         cf->conf_file->file.name.len = filename->len;
         cf->conf_file->file.name.data = filename->data;
@@ -156,7 +162,43 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
         cf->conf_file->file.log = cf->log;
         cf->conf_file->line = 1;
 
+        /* 解析整个文件 */
         type = parse_file;
+
+        if (ngx_dump_config
+#if (NGX_DEBUG)
+            || 1
+#endif
+           )
+        {
+            p = ngx_pstrdup(cf->cycle->pool, filename);
+            if (p == NULL) {
+                goto failed;
+            }
+
+            /* 获取配置文件大小 */
+            size = ngx_file_size(&cf->conf_file->file.info);
+
+            /* 在内存池中获取一个能够容下文件大小的空间 */
+            tbuf = ngx_create_temp_buf(cf->cycle->pool, (size_t) size);
+            if (tbuf == NULL) {
+                goto failed;
+            }
+
+            cd = ngx_array_push(&cf->cycle->config_dump);
+            if (cd == NULL) {
+                goto failed;
+            }
+
+            cd->name.len = filename->len;
+            cd->name.data = p;
+            cd->buffer = tbuf;
+
+            cf->conf_file->dump = tbuf;
+
+        } else {
+            cf->conf_file->dump = NULL;
+        }
 
     } else if (cf->conf_file->file.fd != NGX_INVALID_FILE) {
 
@@ -217,6 +259,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 
         /* rc == NGX_OK || rc == NGX_CONF_BLOCK_START */
 
+        /* 如果配置文件处理句柄不为空，则使用配置文件携带的句柄，否则使用ngx_conf_handler */
         if (cf->handler) {
 
             /*
@@ -230,6 +273,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
             }
 
             rv = (*cf->handler)(cf, NULL, cf->handler_conf);
+            /* 如果处理成功了，则继续处理下一个 */
             if (rv == NGX_CONF_OK) {
                 continue;
             }
@@ -243,7 +287,8 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
             goto failed;
         }
 
-
+        /* 配置文件处理句柄，在该函数中又会循环递归调用本函数 
+            */
         rc = ngx_conf_handler(cf, rc);
 
         if (rc == NGX_ERROR) {
@@ -279,7 +324,7 @@ done:
     return NGX_CONF_OK;
 }
 
-
+/* 默认的配置文件处理句柄 */
 static ngx_int_t
 ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 {
@@ -289,10 +334,12 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
     ngx_str_t      *name;
     ngx_command_t  *cmd;
 
+    /* 从配置文件中读取的数据，然后在下面进行分析来确定调用某个命令  */
     name = cf->args->elts;
 
     found = 0;
 
+    /* 进行所有的模块扫描 */
     for (i = 0; ngx_modules[i]; i++) {
 
         cmd = ngx_modules[i]->commands;
@@ -300,18 +347,24 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             continue;
         }
 
+        /* 循环处理模块中的所有命令 */
         for ( /* void */ ; cmd->name.len; cmd++) {
 
+            /* 首先判断字符串长度 */
             if (name->len != cmd->name.len) {
                 continue;
             }
 
+            /* 和命令的名称进行对比，不相同则不执行这个命令  */
             if (ngx_strcmp(name->data, cmd->name.data) != 0) {
                 continue;
             }
 
             found = 1;
 
+            /* 注意这一句很重要，如果不是NGX_CONF_MODULE模块，
+              * 且满足第二个条件，则不会执行模块的命令
+              */
             if (ngx_modules[i]->type != NGX_CONF_MODULE
                 && ngx_modules[i]->type != cf->module_type)
             {
@@ -373,7 +426,9 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             /* set up the directive's configuration context */
 
             conf = NULL;
-
+			/* 获取相应模块的配置上下文，在ngx_init_cycle函数中已经为所有的模块分配了指针空间
+			 * 同时核心模块通过ceate_conf回调来创建了模块指针指向的内存空间
+			 */
             if (cmd->type & NGX_DIRECT_CONF) {
                 conf = ((void **) cf->ctx)[ngx_modules[i]->index];
 
@@ -388,7 +443,10 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
                 }
             }
 
-            rv = cmd->set(cf, cmd, conf);
+            /* 执行到这里表示已经找到配置解释执行 
+			 * conf指向每个模块的配置内容的指针
+			 */
+            rv = cmd->set(cf, cmd, conf);/* 调用命令的set函数 */
 
             if (rv == NGX_CONF_OK) {
                 return NGX_OK;
@@ -426,7 +484,9 @@ invalid:
     return NGX_ERROR;
 }
 
-
+/* 真正解析配置文件的地方
+ * 返回配置项中的token的数量 
+ */
 static ngx_int_t
 ngx_conf_read_token(ngx_conf_t *cf)
 {
@@ -437,7 +497,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
     ngx_uint_t   found, need_space, last_space, sharp_comment, variable;
     ngx_uint_t   quoted, s_quoted, d_quoted, start_line;
     ngx_str_t   *word;
-    ngx_buf_t   *b;
+    ngx_buf_t   *b, *dump;
 
     found = 0;
     need_space = 0;
@@ -450,6 +510,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
 
     cf->args->nelts = 0;
     b = cf->conf_file->buffer;
+    dump = cf->conf_file->dump;
     start = b->pos;
     start_line = cf->conf_file->line;
 
@@ -531,6 +592,10 @@ ngx_conf_read_token(ngx_conf_t *cf)
             b->pos = b->start + len;
             b->last = b->pos + n;
             start = b->start;
+
+            if (dump) {
+                dump->last = ngx_cpymem(dump->last, b->pos, size);
+            }
         }
 
         ch = *b->pos++;
@@ -674,17 +739,19 @@ ngx_conf_read_token(ngx_conf_t *cf)
                 found = 1;
             }
 
+			/* 如果找到了一个token，则将其添加到cf的args当中 */
             if (found) {
                 word = ngx_array_push(cf->args);
                 if (word == NULL) {
                     return NGX_ERROR;
                 }
 
-                word->data = ngx_pnalloc(cf->pool, b->pos - start + 1);
+                word->data = ngx_pnalloc(cf->pool, b->pos - 1 - start + 1);
                 if (word->data == NULL) {
                     return NGX_ERROR;
                 }
 
+				/* 向word中拷贝数据 */
                 for (dst = word->data, src = start, len = 0;
                      src < b->pos - 1;
                      len++)
@@ -734,6 +801,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
 }
 
 
+/* 配置文件的包含处理，也就是去处理包含的另一个文件 */
 char *
 ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -747,6 +815,7 @@ ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     ngx_log_debug1(NGX_LOG_DEBUG_CORE, cf->log, 0, "include %s", file.data);
 
+    /* 获取文件的全路径 */
     if (ngx_conf_full_name(cf->cycle, &file, 1) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -800,11 +869,13 @@ ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 
+/* 获取配置文件的全路径 */
 ngx_int_t
 ngx_conf_full_name(ngx_cycle_t *cycle, ngx_str_t *name, ngx_uint_t conf_prefix)
 {
     ngx_str_t  *prefix;
 
+    /* 决定使用哪个配置文件 */
     prefix = conf_prefix ? &cycle->conf_prefix : &cycle->prefix;
 
     return ngx_get_full_name(cycle->pool, prefix, name);
@@ -826,13 +897,14 @@ ngx_conf_open_file(ngx_cycle_t *cycle, ngx_str_t *name)
     if (name->len) {
         full = *name;
 
+        /* 获取配置文件的全路径到full当中 */
         if (ngx_conf_full_name(cycle, &full, 0) != NGX_OK) {
             return NULL;
         }
 
         part = &cycle->open_files.part;
         file = part->elts;
-
+        /* 从已经打开的文件当中查看全路径为full的文件有没有打开，如果打开则直接返回 */
         for (i = 0; /* void */ ; i++) {
 
             if (i >= part->nelts) {
@@ -854,6 +926,7 @@ ngx_conf_open_file(ngx_cycle_t *cycle, ngx_str_t *name)
         }
     }
 
+    /* 重新获取一个配置文件句柄 */
     file = ngx_list_push(&cycle->open_files);
     if (file == NULL) {
         return NULL;
@@ -939,6 +1012,8 @@ ngx_conf_log_error(ngx_uint_t level, ngx_conf_t *cf, ngx_err_t err,
 }
 
 
+/* 将配置文件中的daemon指令映射到配置文件当中，
+  * 解析配置指令中的布尔值 */
 char *
 ngx_conf_set_flag_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -948,13 +1023,17 @@ ngx_conf_set_flag_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_flag_t       *fp;
     ngx_conf_post_t  *post;
 
+    /* 获取要设置变量的地址 */
     fp = (ngx_flag_t *) (p + cmd->offset);
 
+    /* 如果不是初始值，则表示已经解析过 */
     if (*fp != NGX_CONF_UNSET) {
         return "is duplicate";
     }
 
     value = cf->args->elts;
+
+    /* value[0]就是daemon */
 
     if (ngx_strcasecmp(value[1].data, (u_char *) "on") == 0) {
         *fp = 1;
@@ -978,7 +1057,7 @@ ngx_conf_set_flag_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/* 解析字符配置指令 */
 char *
 ngx_conf_set_str_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {

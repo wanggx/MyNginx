@@ -12,22 +12,25 @@
 static void *ngx_palloc_block(ngx_pool_t *pool, size_t size);
 static void *ngx_palloc_large(ngx_pool_t *pool, size_t size);
 
-
+/* 创建一个大小为size的内存池 */
 ngx_pool_t *
 ngx_create_pool(size_t size, ngx_log_t *log)
 {
     ngx_pool_t  *p;
 
+    /* 分配size大小内存 */
     p = ngx_memalign(NGX_POOL_ALIGNMENT, size, log);
     if (p == NULL) {
         return NULL;
     }
 
+    /* 留出内存池头部的空间，并初始化内存池的相关信息 */
     p->d.last = (u_char *) p + sizeof(ngx_pool_t);
     p->d.end = (u_char *) p + size;
     p->d.next = NULL;
     p->d.failed = 0;
 
+    /* 获取减小内存池首部剩下的空间 */
     size = size - sizeof(ngx_pool_t);
     p->max = (size < NGX_MAX_ALLOC_FROM_POOL) ? size : NGX_MAX_ALLOC_FROM_POOL;
 
@@ -40,7 +43,7 @@ ngx_create_pool(size_t size, ngx_log_t *log)
     return p;
 }
 
-
+/* 销毁内存池 */
 void
 ngx_destroy_pool(ngx_pool_t *pool)
 {
@@ -56,6 +59,7 @@ ngx_destroy_pool(ngx_pool_t *pool)
         }
     }
 
+    /* 释放大块内存 */
     for (l = pool->large; l; l = l->next) {
 
         ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, pool->log, 0, "free: %p", l->alloc);
@@ -83,6 +87,7 @@ ngx_destroy_pool(ngx_pool_t *pool)
 
 #endif
 
+    /* 将内存池依次释放 */
     for (p = pool, n = pool->d.next; /* void */; p = n, n = n->d.next) {
         ngx_free(p);
 
@@ -99,17 +104,19 @@ ngx_reset_pool(ngx_pool_t *pool)
     ngx_pool_t        *p;
     ngx_pool_large_t  *l;
 
+    /* 将内存池的所有大块内存都释放 */
     for (l = pool->large; l; l = l->next) {
         if (l->alloc) {
             ngx_free(l->alloc);
         }
     }
 
+    /* 重置内存池下一次可分配位置 */
     for (p = pool; p; p = p->d.next) {
         p->d.last = (u_char *) p + sizeof(ngx_pool_t);
         p->d.failed = 0;
     }
-
+    
     pool->current = pool;
     pool->chain = NULL;
     pool->large = NULL;
@@ -122,19 +129,26 @@ ngx_palloc(ngx_pool_t *pool, size_t size)
     u_char      *m;
     ngx_pool_t  *p;
 
+    /* 如果没有超过内存池最大大小 */
     if (size <= pool->max) {
 
         p = pool->current;
 
         do {
+
+            /* 将指针进行对齐 */
             m = ngx_align_ptr(p->d.last, NGX_ALIGNMENT);
 
+            /* 如果剩下的够分配，则在last之后进行分配 */
             if ((size_t) (p->d.end - m) >= size) {
+
+                /* 设置last的下一个位置 */
                 p->d.last = m + size;
 
                 return m;
             }
 
+            /* 如果当前内存池不够，则从下一个内存池分配内存 */
             p = p->d.next;
 
         } while (p);
@@ -142,10 +156,11 @@ ngx_palloc(ngx_pool_t *pool, size_t size)
         return ngx_palloc_block(pool, size);
     }
 
+    /* 需要的内存超过内存池的最大大小 */
     return ngx_palloc_large(pool, size);
 }
 
-
+/* 和ngx_palloc函数功能基本相同，只不过是没有将指针进行对齐 */
 void *
 ngx_pnalloc(ngx_pool_t *pool, size_t size)
 {
@@ -175,7 +190,10 @@ ngx_pnalloc(ngx_pool_t *pool, size_t size)
     return ngx_palloc_large(pool, size);
 }
 
-
+/* 在pool内存池所在的链表末尾添加一个新的内存池，该新的
+ * 内存池的大小和pool的大小相同，然后在新的内存池中先分配
+ * 一个size大小 
+ */
 static void *
 ngx_palloc_block(ngx_pool_t *pool, size_t size)
 {
@@ -183,8 +201,10 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
     size_t       psize;
     ngx_pool_t  *p, *new;
 
+    /* 获取内存池的总大小，包括内存池的头部 */
     psize = (size_t) (pool->d.end - (u_char *) pool);
 
+    /* 在申请一个和当前内存池大小相同的内存池 */
     m = ngx_memalign(NGX_POOL_ALIGNMENT, psize, pool->log);
     if (m == NULL) {
         return NULL;
@@ -192,26 +212,33 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
 
     new = (ngx_pool_t *) m;
 
+    /* 设置内存池的结束位置 */
     new->d.end = m + psize;
     new->d.next = NULL;
     new->d.failed = 0;
 
     m += sizeof(ngx_pool_data_t);
     m = ngx_align_ptr(m, NGX_ALIGNMENT);
+    /* 设置内存池分配的下一个位置，因为新建一个内存池之后
+      * 将需求的size大小内存先分配出去
+      */
     new->d.last = m + size;
 
+    /* 扫描内存池的链表 */
     for (p = pool->current; p->d.next; p = p->d.next) {
+        /* 如果分配失败次数超过4，则将当前current指针指向p的下一个 */
         if (p->d.failed++ > 4) {
             pool->current = p->d.next;
         }
     }
 
+    /* 将新的内存池添加到内存池链表的最后 */
     p->d.next = new;
 
     return m;
 }
 
-
+/* 给内存池分配一个大的数据块 */
 static void *
 ngx_palloc_large(ngx_pool_t *pool, size_t size)
 {
@@ -219,6 +246,7 @@ ngx_palloc_large(ngx_pool_t *pool, size_t size)
     ngx_uint_t         n;
     ngx_pool_large_t  *large;
 
+    /* 分配size大小的一块内存，并返回指针p */
     p = ngx_alloc(size, pool->log);
     if (p == NULL) {
         return NULL;
@@ -226,23 +254,28 @@ ngx_palloc_large(ngx_pool_t *pool, size_t size)
 
     n = 0;
 
+    /* 扫描内存池的大块数据链 */
     for (large = pool->large; large; large = large->next) {
+        /* 如果数据指针为NULL，则直接将分配的内存赋值给alloc */
         if (large->alloc == NULL) {
             large->alloc = p;
             return p;
         }
 
+        /* 如果扫描三个节点则停止扫描 */
         if (n++ > 3) {
             break;
         }
     }
 
+    /* 从内存池当中分配一个大块数据的结构 */
     large = ngx_palloc(pool, sizeof(ngx_pool_large_t));
     if (large == NULL) {
         ngx_free(p);
         return NULL;
     }
 
+    /* 设置大数据块的指针，同时将该大块内存结构插入到large链表的头部 */
     large->alloc = p;
     large->next = pool->large;
     pool->large = large;
@@ -250,13 +283,14 @@ ngx_palloc_large(ngx_pool_t *pool, size_t size)
     return p;
 }
 
-
+/* 给内存池分配一个大的内存块 */
 void *
 ngx_pmemalign(ngx_pool_t *pool, size_t size, size_t alignment)
 {
     void              *p;
     ngx_pool_large_t  *large;
 
+    /* 分配一个size大小的内存块给p指针 */
     p = ngx_memalign(alignment, size, pool->log);
     if (p == NULL) {
         return NULL;
@@ -276,6 +310,7 @@ ngx_pmemalign(ngx_pool_t *pool, size_t size, size_t alignment)
 }
 
 
+/* 释放内存池中大块数据，只释放了内存，并没有更改链表顺序 */
 ngx_int_t
 ngx_pfree(ngx_pool_t *pool, void *p)
 {
@@ -295,7 +330,7 @@ ngx_pfree(ngx_pool_t *pool, void *p)
     return NGX_DECLINED;
 }
 
-
+/* 从内存池中分配一个size大小的内存块，并将数据清0 */
 void *
 ngx_pcalloc(ngx_pool_t *pool, size_t size)
 {
@@ -309,7 +344,7 @@ ngx_pcalloc(ngx_pool_t *pool, size_t size)
     return p;
 }
 
-
+/* 给内存池添加一个回调 */
 ngx_pool_cleanup_t *
 ngx_pool_cleanup_add(ngx_pool_t *p, size_t size)
 {
@@ -340,7 +375,7 @@ ngx_pool_cleanup_add(ngx_pool_t *p, size_t size)
     return c;
 }
 
-
+/* 通过回调将日志文件关闭 */
 void
 ngx_pool_run_cleanup_file(ngx_pool_t *p, ngx_fd_t fd)
 {
@@ -361,7 +396,7 @@ ngx_pool_run_cleanup_file(ngx_pool_t *p, ngx_fd_t fd)
     }
 }
 
-
+/* 关闭一个日志文件 */
 void
 ngx_pool_cleanup_file(void *data)
 {

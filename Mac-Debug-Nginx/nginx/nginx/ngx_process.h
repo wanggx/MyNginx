@@ -20,15 +20,17 @@ typedef pid_t       ngx_pid_t;
 typedef void (*ngx_spawn_proc_pt) (ngx_cycle_t *cycle, void *data);
 
 typedef struct {
-    ngx_pid_t           pid;
-    int                 status;
-    ngx_socket_t        channel[2];
+    ngx_pid_t           pid;        /* 进程id*/
+    int                 status;     /* 进程退出状态 */
 
-    ngx_spawn_proc_pt   proc;
-    void               *data;
-    char               *name;
+    /* 进程的channel，通过socketpair创建的，主要用来进程通信 */
+    ngx_socket_t        channel[2]; 
 
-    unsigned            respawn:1;
+    ngx_spawn_proc_pt   proc; /* 进程的初始化函数，在每次创建完worker时调用 */
+    void               *data; /* 进程初始化传递的参数 */
+    char               *name; /* 进程的名称如worker process或者master process*/
+
+    unsigned            respawn:1;  /* 记录进程的创建方式 */
     unsigned            just_spawn:1;
     unsigned            detached:1;
     unsigned            exiting:1;
@@ -46,9 +48,10 @@ typedef struct {
 
 #define NGX_MAX_PROCESSES         1024
 
-#define NGX_PROCESS_NORESPAWN     -1
+#define NGX_PROCESS_NORESPAWN     -1   /* 子进程退出时，父进程不会再次创建 */
 #define NGX_PROCESS_JUST_SPAWN    -2
-#define NGX_PROCESS_RESPAWN       -3
+/* 子进程异常退出时，master会重新创建它，如当worker和cache manager异常退出时，父进程会重新创建它 */
+#define NGX_PROCESS_RESPAWN       -3   
 #define NGX_PROCESS_JUST_RESPAWN  -4
 #define NGX_PROCESS_DETACHED      -5
 

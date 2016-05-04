@@ -39,7 +39,7 @@ struct ngx_queue_s {
 
 #define ngx_queue_insert_after   ngx_queue_insert_head
 
-
+/* 将h插到x的后面 */
 #define ngx_queue_insert_tail(h, x)                                           \
     (x)->prev = (h)->prev;                                                    \
     (x)->prev->next = x;                                                      \
@@ -69,6 +69,7 @@ struct ngx_queue_s {
 
 #if (NGX_DEBUG)
 
+/* 将x从队列中删除 */
 #define ngx_queue_remove(x)                                                   \
     (x)->next->prev = (x)->prev;                                              \
     (x)->prev->next = (x)->next;                                              \
@@ -100,6 +101,7 @@ struct ngx_queue_s {
     (h)->prev->next = h;
 
 
+/* 取出队列中的数据，注意内存模型 */
 #define ngx_queue_data(q, type, link)                                         \
     (type *) ((u_char *) q - offsetof(type, link))
 

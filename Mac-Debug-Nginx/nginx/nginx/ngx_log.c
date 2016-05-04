@@ -67,7 +67,9 @@ ngx_module_t  ngx_errlog_module = {
 };
 
 
+/* 全局的日志变量，file指针指向ngx_log_file */
 static ngx_log_t        ngx_log;
+/* 变量在ngx_log_init中初始化为错误日志文件 */
 static ngx_open_file_t  ngx_log_file;
 ngx_uint_t              ngx_use_stderr = 1;
 
@@ -86,7 +88,7 @@ static ngx_str_t err_levels[] = {
 
 static const char *debug_levels[] = {
     "debug_core", "debug_alloc", "debug_mutex", "debug_event",
-    "debug_http", "debug_mail", "debug_mysql"
+    "debug_http", "debug_mail", "debug_mysql", "debug_stream"
 };
 
 
@@ -313,7 +315,7 @@ ngx_log_errno(u_char *buf, u_char *last, ngx_err_t err)
     return buf;
 }
 
-
+/* 日志初始化 */
 ngx_log_t *
 ngx_log_init(u_char *prefix)
 {
@@ -358,6 +360,7 @@ ngx_log_init(u_char *prefix)
         }
 
         if (plen) {
+            /* 安装路径+错误日志文件子路径，就是错误日志文件的绝对路径  */
             name = malloc(plen + nlen + 2);
             if (name == NULL) {
                 return NULL;
@@ -375,6 +378,7 @@ ngx_log_init(u_char *prefix)
         }
     }
 
+    /* 打开日志文件，并设置日志文件的描述符 */
     ngx_log_file.fd = ngx_open_file(name, NGX_FILE_APPEND,
                                     NGX_FILE_CREATE_OR_OPEN,
                                     NGX_FILE_DEFAULT_ACCESS);
@@ -463,6 +467,7 @@ ngx_log_redirect_stderr(ngx_cycle_t *cycle)
 }
 
 
+/* 获取日志队列中file指针不为NULL的日志对象 */
 ngx_log_t *
 ngx_log_get_file_log(ngx_log_t *head)
 {
@@ -609,7 +614,7 @@ ngx_log_set_log(ngx_conf_t *cf, ngx_log_t **head)
             return NGX_CONF_ERROR;
         }
 
-        buf = ngx_palloc(cf->pool, sizeof(ngx_log_memory_buf_t));
+        buf = ngx_pcalloc(cf->pool, sizeof(ngx_log_memory_buf_t));
         if (buf == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -681,6 +686,7 @@ ngx_log_insert(ngx_log_t *log, ngx_log_t *new_log)
 {
     ngx_log_t  tmp;
 
+    /* 如果新的日志级别大于log队首的级别，则将新的日志插入到队首 */
     if (new_log->log_level > log->log_level) {
 
         /*
@@ -696,6 +702,7 @@ ngx_log_insert(ngx_log_t *log, ngx_log_t *new_log)
         return;
     }
 
+    /* 否则按照日志级别按照从大到小的顺序插入 */
     while (log->next) {
         if (new_log->log_level > log->next->log_level) {
             new_log->next = log->next;
@@ -705,7 +712,7 @@ ngx_log_insert(ngx_log_t *log, ngx_log_t *new_log)
 
         log = log->next;
     }
-
+    /* 否则就插入到最后一个 */
     log->next = new_log;
 }
 

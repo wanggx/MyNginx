@@ -36,7 +36,7 @@ typedef struct {
     off_t          size;
 } ngx_http_autoindex_entry_t;
 
-
+/* autoindex模块的location配置 */
 typedef struct {
     ngx_flag_t     enable;
     ngx_uint_t     format;

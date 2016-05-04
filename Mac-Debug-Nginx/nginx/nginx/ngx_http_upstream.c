@@ -250,6 +250,11 @@ ngx_http_upstream_header_t  ngx_http_upstream_headers_in[] = {
                  ngx_http_upstream_copy_allow_ranges,
                  offsetof(ngx_http_headers_out_t, accept_ranges), 1 },
 
+    { ngx_string("Content-Range"),
+                 ngx_http_upstream_ignore_header_line, 0,
+                 ngx_http_upstream_copy_header_line,
+                 offsetof(ngx_http_headers_out_t, content_range), 0 },
+
     { ngx_string("Connection"),
                  ngx_http_upstream_process_connection, 0,
                  ngx_http_upstream_ignore_header_line, 0, 0 },
@@ -301,7 +306,10 @@ ngx_http_upstream_header_t  ngx_http_upstream_headers_in[] = {
     { ngx_null_string, NULL, 0, NULL, 0, 0 }
 };
 
-
+/* upstram模块主要是用来进行反向代理和集群的负载均衡
+  * upstream表示以下是upstream模块的集群配置 
+  * server表示集群中的服务器配置  
+  */
 static ngx_command_t  ngx_http_upstream_commands[] = {
 
     { ngx_string("upstream"),
@@ -361,6 +369,10 @@ static ngx_http_variable_t  ngx_http_upstream_vars[] = {
 
     { ngx_string("upstream_status"), NULL,
       ngx_http_upstream_status_variable, 0,
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+
+    { ngx_string("upstream_connect_time"), NULL,
+      ngx_http_upstream_response_time_variable, 2,
       NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
     { ngx_string("upstream_header_time"), NULL,
@@ -461,6 +473,7 @@ ngx_http_upstream_create(ngx_http_request_t *r)
 }
 
 
+/* upstream请求初始化函数 */
 void
 ngx_http_upstream_init(ngx_http_request_t *r)
 {
@@ -471,8 +484,8 @@ ngx_http_upstream_init(ngx_http_request_t *r)
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http init upstream, client timer: %d", c->read->timer_set);
 
-#if (NGX_HTTP_SPDY)
-    if (r->spdy_stream) {
+#if (NGX_HTTP_V2)
+    if (r->stream) {
         ngx_http_upstream_init_request(r);
         return;
     }
@@ -497,7 +510,7 @@ ngx_http_upstream_init(ngx_http_request_t *r)
     ngx_http_upstream_init_request(r);
 }
 
-
+/* upstream模块请求的初始化 */
 static void
 ngx_http_upstream_init_request(ngx_http_request_t *r)
 {
@@ -629,7 +642,19 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
         u->ssl_name = u->resolved->host;
 #endif
 
+        host = &u->resolved->host;
+
         if (u->resolved->sockaddr) {
+
+            if (u->resolved->port == 0
+                && u->resolved->sockaddr->sa_family != AF_UNIX)
+            {
+                ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                              "no port in upstream \"%V\"", host);
+                ngx_http_upstream_finalize_request(r, u,
+                                               NGX_HTTP_INTERNAL_SERVER_ERROR);
+                return;
+            }
 
             if (ngx_http_upstream_create_round_robin_peer(r, u->resolved)
                 != NGX_OK)
@@ -643,8 +668,6 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
 
             return;
         }
-
-        host = &u->resolved->host;
 
         umcf = ngx_http_get_module_main_conf(r, ngx_http_upstream_module);
 
@@ -760,7 +783,7 @@ ngx_http_upstream_cache(ngx_http_request_t *r, ngx_http_upstream_t *u)
             return rc;
         }
 
-        if (r->method & NGX_HTTP_HEAD) {
+        if (r->method == NGX_HTTP_HEAD && u->conf->cache_convert_head) {
             u->method = ngx_http_core_get_method;
         }
 
@@ -1147,8 +1170,8 @@ ngx_http_upstream_check_broken_connection(ngx_http_request_t *r,
         return;
     }
 
-#if (NGX_HTTP_SPDY)
-    if (r->spdy_stream) {
+#if (NGX_HTTP_V2)
+    if (r->stream) {
         return;
     }
 #endif
@@ -1303,15 +1326,12 @@ static void
 ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 {
     ngx_int_t          rc;
-    ngx_time_t        *tp;
     ngx_connection_t  *c;
 
     r->connection->log->action = "connecting to upstream";
 
-    if (u->state && u->state->response_sec) {
-        tp = ngx_timeofday();
-        u->state->response_sec = tp->sec - u->state->response_sec;
-        u->state->response_msec = tp->msec - u->state->response_msec;
+    if (u->state && u->state->response_time) {
+        u->state->response_time = ngx_current_msec - u->state->response_time;
     }
 
     u->state = ngx_array_push(r->upstream_states);
@@ -1323,10 +1343,9 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     ngx_memzero(u->state, sizeof(ngx_http_upstream_state_t));
 
-    tp = ngx_timeofday();
-    u->state->response_sec = tp->sec;
-    u->state->response_msec = tp->msec;
-    u->state->header_sec = (time_t) NGX_ERROR;
+    u->state->response_time = ngx_current_msec;
+    u->state->connect_time = (ngx_msec_t) -1;
+    u->state->header_time = (ngx_msec_t) -1;
 
     rc = ngx_event_connect_peer(&u->peer);
 
@@ -1426,6 +1445,7 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     }
 
     u->request_sent = 0;
+    u->request_body_sent = 0;
 
     if (rc == NGX_AGAIN) {
         ngx_add_timer(c->write, u->conf->connect_timeout);
@@ -1768,6 +1788,10 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http upstream send request");
 
+    if (u->state->connect_time == (ngx_msec_t) -1) {
+        u->state->connect_time = ngx_current_msec - u->state->response_time;
+    }
+
     if (!u->request_sent && ngx_http_upstream_test_connect(c) != NGX_OK) {
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);
         return;
@@ -1805,6 +1829,8 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
     }
 
     /* rc == NGX_OK */
+
+    u->request_body_sent = 1;
 
     if (c->write->timer_set) {
         ngx_del_timer(c->write);
@@ -2020,7 +2046,6 @@ ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
 {
     ssize_t            n;
     ngx_int_t          rc;
-    ngx_time_t        *tp;
     ngx_connection_t  *c;
 
     c = u->peer.connection;
@@ -2141,9 +2166,7 @@ ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     /* rc == NGX_OK */
 
-    tp = ngx_timeofday();
-    u->state->header_sec = tp->sec - u->state->response_sec;
-    u->state->header_msec = tp->msec - u->state->response_msec;
+    u->state->header_time = ngx_current_msec - u->state->response_time;
 
     if (u->headers_in.status_n >= NGX_HTTP_SPECIAL_RESPONSE) {
 
@@ -2480,6 +2503,7 @@ ngx_http_upstream_process_headers(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
             if (r->method != NGX_HTTP_HEAD) {
                 r->method = NGX_HTTP_GET;
+                r->method_name = ngx_http_core_get_method;
             }
 
             ngx_http_internal_redirect(r, &uri, &args);
@@ -2914,7 +2938,7 @@ ngx_http_upstream_send_response(ngx_http_request_t *r, ngx_http_upstream_t *u)
         p->buf_to_file->temporary = 1;
     }
 
-    if (ngx_event_flags & NGX_USE_AIO_EVENT) {
+    if (ngx_event_flags & NGX_USE_IOCP_EVENT) {
         /* the posted aio operation may corrupt a shadow buffer */
         p->single_buf = 1;
     }
@@ -3733,7 +3757,7 @@ ngx_http_upstream_store(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     if (u->headers_in.last_modified) {
 
-        lm = ngx_http_parse_time(u->headers_in.last_modified->value.data,
+        lm = ngx_parse_http_time(u->headers_in.last_modified->value.data,
                                  u->headers_in.last_modified->value.len);
 
         if (lm != NGX_ERROR) {
@@ -3926,8 +3950,7 @@ static void
 ngx_http_upstream_finalize_request(ngx_http_request_t *r,
     ngx_http_upstream_t *u, ngx_int_t rc)
 {
-    ngx_uint_t   flush;
-    ngx_time_t  *tp;
+    ngx_uint_t  flush;
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "finalize http upstream request: %i", rc);
@@ -3946,10 +3969,8 @@ ngx_http_upstream_finalize_request(ngx_http_request_t *r,
         u->resolved->ctx = NULL;
     }
 
-    if (u->state && u->state->response_sec) {
-        tp = ngx_timeofday();
-        u->state->response_sec = tp->sec - u->state->response_sec;
-        u->state->response_msec = tp->msec - u->state->response_msec;
+    if (u->state && u->state->response_time) {
+        u->state->response_time = ngx_current_msec - u->state->response_time;
 
         if (u->pipe && u->pipe->read_length) {
             u->state->response_length = u->pipe->read_length;
@@ -4133,7 +4154,7 @@ ngx_http_upstream_process_last_modified(ngx_http_request_t *r,
 #if (NGX_HTTP_CACHE)
 
     if (u->cacheable) {
-        u->headers_in.last_modified_time = ngx_http_parse_time(h->value.data,
+        u->headers_in.last_modified_time = ngx_parse_http_time(h->value.data,
                                                                h->value.len);
     }
 
@@ -4297,7 +4318,7 @@ ngx_http_upstream_process_expires(ngx_http_request_t *r, ngx_table_elt_t *h,
         return NGX_OK;
     }
 
-    expires = ngx_http_parse_time(h->value.data, h->value.len);
+    expires = ngx_parse_http_time(h->value.data, h->value.len);
 
     if (expires == NGX_ERROR || expires < ngx_time()) {
         u->cacheable = 0;
@@ -5023,15 +5044,14 @@ ngx_http_upstream_response_time_variable(ngx_http_request_t *r,
     for ( ;; ) {
         if (state[i].status) {
 
-            if (data
-                && state[i].header_sec != (time_t) NGX_ERROR)
-            {
-                ms = (ngx_msec_int_t)
-                      (state[i].header_sec * 1000 + state[i].header_msec);
+            if (data == 1 && state[i].header_time != (ngx_msec_t) -1) {
+                ms = state[i].header_time;
+
+            } else if (data == 2 && state[i].connect_time != (ngx_msec_t) -1) {
+                ms = state[i].connect_time;
 
             } else {
-                ms = (ngx_msec_int_t)
-                      (state[i].response_sec * 1000 + state[i].response_msec);
+                ms = state[i].response_time;
             }
 
             ms = ngx_max(ms, 0);
@@ -5256,7 +5276,7 @@ ngx_http_upstream_cache_etag(ngx_http_request_t *r,
 
 #endif
 
-
+/* 解析http模块中的集群配置，并且集群配置是一个复杂配置 */
 static char *
 ngx_http_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 {
@@ -5352,6 +5372,7 @@ ngx_http_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 
     pcf = *cf;
     cf->ctx = ctx;
+    /* 表明是http的upstream的配置 */
     cf->cmd_type = NGX_HTTP_UPS_CONF;
 
     rv = ngx_conf_parse(cf, NULL);
@@ -5371,7 +5392,7 @@ ngx_http_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     return rv;
 }
 
-
+/* 解析集群的server配置 */
 static char *
 ngx_http_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {

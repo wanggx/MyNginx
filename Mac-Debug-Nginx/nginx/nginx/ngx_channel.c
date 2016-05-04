@@ -10,6 +10,7 @@
 #include <ngx_channel.h>
 
 
+/* 将长度为size的ngx_channel_t信息发送到s文件描述符当中 */
 ngx_int_t
 ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
     ngx_log_t *log)
@@ -194,7 +195,7 @@ ngx_read_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size, ngx_log_t *log)
     return n;
 }
 
-
+/* 将文件描述符添加到相应event事件监听集当中，事件的回调处理函数为handle */
 ngx_int_t
 ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd, ngx_int_t event,
     ngx_event_handler_pt handler)

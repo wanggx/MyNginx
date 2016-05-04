@@ -16,26 +16,23 @@ static ngx_int_t ngx_init_zone_pool(ngx_cycle_t *cycle,
 static ngx_int_t ngx_test_lockfile(u_char *file, ngx_log_t *log);
 static void ngx_clean_old_cycles(ngx_event_t *ev);
 
-
+/* 全局的cycle */
 volatile ngx_cycle_t  *ngx_cycle;
 ngx_array_t            ngx_old_cycles;
 
 static ngx_pool_t     *ngx_temp_pool;
 static ngx_event_t     ngx_cleaner_event;
 
-ngx_uint_t             ngx_test_config;
+ngx_uint_t             ngx_test_config;   /* 是否需要测试配置文件 */
+ngx_uint_t             ngx_dump_config;   /* 是否需要拷贝配置文件 */
 ngx_uint_t             ngx_quiet_mode;
-
-#if (NGX_OLD_THREADS)
-ngx_tls_key_t          ngx_core_tls_key;
-#endif
 
 
 /* STUB NAME */
 static ngx_connection_t  dumb;
 /* STUB */
 
-
+/* 系统cycle的初始化 */
 ngx_cycle_t *
 ngx_init_cycle(ngx_cycle_t *old_cycle)
 {
@@ -55,6 +52,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     ngx_core_module_t   *module;
     char                 hostname[NGX_MAXHOSTNAMELEN];
 
+    /* 更新时区和时间 */
     ngx_timezone_update();
 
     /* force localtime update with a new timezone */
@@ -64,15 +62,17 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     ngx_time_update();
 
-
+    /* 获取老的日志 */
     log = old_cycle->log;
 
+    /* 创建16kb大小的内存池 */
     pool = ngx_create_pool(NGX_CYCLE_POOL_SIZE, log);
     if (pool == NULL) {
         return NULL;
     }
     pool->log = log;
 
+    /* 在内存池中分配一个ngx_cycle_t的空间 */
     cycle = ngx_pcalloc(pool, sizeof(ngx_cycle_t));
     if (cycle == NULL) {
         ngx_destroy_pool(pool);
@@ -128,6 +128,13 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     cycle->paths.pool = pool;
 
 
+    if (ngx_array_init(&cycle->config_dump, pool, 1, sizeof(ngx_conf_dump_t))
+        != NGX_OK)
+    {
+        ngx_destroy_pool(pool);
+        return NULL;
+    }
+
     if (old_cycle->open_files.part.nelts) {
         n = old_cycle->open_files.part.nelts;
         for (part = old_cycle->open_files.part.next; part; part = part->next) {
@@ -180,7 +187,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     ngx_queue_init(&cycle->reusable_connections_queue);
 
-
+    /* 从pool中分配配置上下文，有多少个模块就要分配多少个指针类型的空间 */
     cycle->conf_ctx = ngx_pcalloc(pool, ngx_max_module * sizeof(void *));
     if (cycle->conf_ctx == NULL) {
         ngx_destroy_pool(pool);
@@ -196,6 +203,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     /* on Linux gethostname() silently truncates name that does not fit */
 
+    /* 设置主机名 */
     hostname[NGX_MAXHOSTNAMELEN - 1] = '\0';
     cycle->hostname.len = ngx_strlen(hostname);
 
@@ -207,20 +215,26 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     ngx_strlow(cycle->hostname.data, (u_char *) hostname, cycle->hostname.len);
 
-
+	/* 创建核心模块的配置的内存空间 */
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->type != NGX_CORE_MODULE) {
             continue;
         }
 
+		/* 获取核心模块的模块上下文，
+		 * 从这里就可以知道核心模块的上下文结构是相同的
+		 */
         module = ngx_modules[i]->ctx;
 
         if (module->create_conf) {
+            /* 分配配置的空间和部分数据的初始化,返回ngx_core_conf_t结构 */
+			
             rv = module->create_conf(cycle);
             if (rv == NULL) {
                 ngx_destroy_pool(pool);
                 return NULL;
             }
+            /* 配置模块文件的配置上下文 */
             cycle->conf_ctx[ngx_modules[i]->index] = rv;
         }
     }
@@ -228,7 +242,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     senv = environ;
 
-
+    /* 配置文件数据清空 */
     ngx_memzero(&conf, sizeof(ngx_conf_t));
     /* STUB: init array ? */
     conf.args = ngx_array_create(pool, 10, sizeof(ngx_str_t));
@@ -243,7 +257,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         return NULL;
     }
 
-
+    /* 设置配置文件的数据 */
     conf.ctx = cycle->conf_ctx;
     conf.cycle = cycle;
     conf.pool = pool;
@@ -261,6 +275,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         return NULL;
     }
 
+    /* 配置文件解析 */
     if (ngx_conf_parse(&conf, &cycle->conf_file) != NGX_CONF_OK) {
         environ = senv;
         ngx_destroy_cycle_pools(&conf);
@@ -272,6 +287,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
                        cycle->conf_file.data);
     }
 
+    /* 根据配置文件初始化模块 */
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->type != NGX_CORE_MODULE) {
             continue;
@@ -341,6 +357,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     /* open the new files */
 
+    /* 打开cycle->open_files中的文件 */
     part = &cycle->open_files.part;
     file = part->elts;
 
@@ -441,9 +458,13 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
             }
 
             if (shm_zone[i].tag == oshm_zone[n].tag
-                && shm_zone[i].shm.size == oshm_zone[n].shm.size)
+                && shm_zone[i].shm.size == oshm_zone[n].shm.size
+                && !shm_zone[i].noreuse)
             {
                 shm_zone[i].shm.addr = oshm_zone[n].shm.addr;
+#if (NGX_WIN32)
+                shm_zone[i].shm.handle = oshm_zone[n].shm.handle;
+#endif
 
                 if (shm_zone[i].init(&shm_zone[i], oshm_zone[n].data)
                     != NGX_OK)
@@ -490,6 +511,10 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
             for (i = 0; i < old_cycle->listening.nelts; i++) {
                 if (ls[i].ignore) {
+                    continue;
+                }
+
+                if (ls[i].remain) {
                     continue;
                 }
 
@@ -540,6 +565,13 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
                         nls[n].add_deferred = 1;
                     }
 #endif
+
+#if (NGX_HAVE_REUSEPORT)
+                    if (nls[n].reuseport && !ls[i].reuseport) {
+                        nls[n].add_reuseport = 1;
+                    }
+#endif
+
                     break;
                 }
             }
@@ -576,10 +608,12 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         }
     }
 
+    /* 开始真正的listen所有的监听套接字 */
     if (ngx_open_listening_sockets(cycle) != NGX_OK) {
         goto failed;
     }
 
+    /* 配置监听套接字的一些相关属性 */
     if (!ngx_test_config) {
         ngx_configure_listening_sockets(cycle);
     }
@@ -593,6 +627,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     pool->log = cycle->log;
 
+    /* 模块初始化 */
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->init_module) {
             if (ngx_modules[i]->init_module(cycle) != NGX_OK) {
@@ -863,6 +898,22 @@ ngx_init_zone_pool(ngx_cycle_t *cycle, ngx_shm_zone_t *zn)
             return NGX_OK;
         }
 
+#if (NGX_WIN32)
+
+        /* remap at the required address */
+
+        if (ngx_shm_remap(&zn->shm, sp->addr) != NGX_OK) {
+            return NGX_ERROR;
+        }
+
+        sp = (ngx_slab_pool_t *) zn->shm.addr;
+
+        if (sp == sp->addr) {
+            return NGX_OK;
+        }
+
+#endif
+
         ngx_log_error(NGX_LOG_EMERG, cycle->log, 0,
                       "shared zone \"%V\" has no equal addresses: %p vs %p",
                       &zn->shm.name, sp->addr, sp);
@@ -898,6 +949,7 @@ ngx_init_zone_pool(ngx_cycle_t *cycle, ngx_shm_zone_t *zn)
 }
 
 
+/* 创建PID文件 */
 ngx_int_t
 ngx_create_pidfile(ngx_str_t *name, ngx_log_t *log)
 {
@@ -906,6 +958,7 @@ ngx_create_pidfile(ngx_str_t *name, ngx_log_t *log)
     ngx_file_t  file;
     u_char      pid[NGX_INT64_LEN + 2];
 
+    /* 不是master进程就不创建这个文件 */
     if (ngx_process > NGX_PROCESS_MASTER) {
         return NGX_OK;
     }
@@ -959,7 +1012,7 @@ ngx_delete_pidfile(ngx_cycle_t *cycle)
     }
 }
 
-
+/* 向主进程发送信号 */
 ngx_int_t
 ngx_signal_process(ngx_cycle_t *cycle, char *sig)
 {
@@ -1210,6 +1263,10 @@ ngx_shared_memory_add(ngx_conf_t *cf, ngx_str_t *name, size_t size, void *tag)
             return NULL;
         }
 
+        if (shm_zone[i].shm.size == 0) {
+            shm_zone[i].shm.size = size;
+        }
+
         if (size && size != shm_zone[i].shm.size) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                             "the size %uz of shared memory zone \"%V\" "
@@ -1234,6 +1291,7 @@ ngx_shared_memory_add(ngx_conf_t *cf, ngx_str_t *name, size_t size, void *tag)
     shm_zone->shm.exists = 0;
     shm_zone->init = NULL;
     shm_zone->tag = tag;
+    shm_zone->noreuse = 0;
 
     return shm_zone;
 }

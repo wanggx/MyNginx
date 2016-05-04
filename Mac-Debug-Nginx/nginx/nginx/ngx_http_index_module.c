@@ -17,6 +17,7 @@ typedef struct {
 } ngx_http_index_t;
 
 
+/* index模块的location配置 */
 typedef struct {
     ngx_array_t             *indices;    /* array of ngx_http_index_t */
     size_t                   max_index_len;
