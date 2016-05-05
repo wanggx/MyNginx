@@ -36,7 +36,10 @@ ngx_os_init(ngx_log_t *log)
     ngx_uint_t  n;
 
 #if (NGX_HAVE_OS_SPECIFIC_INIT)
-    /* 操作系统的特殊初始化，如ngx_os_io等等的初始化 */
+    /* 操作系统的特殊初始化，如ngx_os_io等等的初始化
+      * 注意该函数的具体实现在不同平台上进行./configure时，就在 
+      * Makefile文件中指定了 
+      */
     if (ngx_os_specific_init(log) != NGX_OK) {
         return NGX_ERROR;
     }

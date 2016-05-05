@@ -909,9 +909,13 @@ ngx_http_range_header_filter_init(ngx_conf_t *cf)
 }
 
 
+/* ngx_http_range_body_filter模块的后期初始化函数 */
 static ngx_int_t
 ngx_http_range_body_filter_init(ngx_conf_t *cf)
 {
+    /* 注意在每个过滤模块当中，ngx_http_next_body_filter变量都是static的
+      * 所以构成链表关系就是顺理成章的
+      */
     ngx_http_next_body_filter = ngx_http_top_body_filter;
     ngx_http_top_body_filter = ngx_http_range_body_filter;
 

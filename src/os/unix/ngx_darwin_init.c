@@ -86,6 +86,7 @@ ngx_debug_init(void)
 }
 
 
+/* 不同系统平台都有特定的初始化函数 */
 ngx_int_t
 ngx_os_specific_init(ngx_log_t *log)
 {

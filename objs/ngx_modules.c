@@ -94,7 +94,13 @@ ngx_module_t *ngx_modules[] = {
     &ngx_http_upstream_least_conn_module,
     &ngx_http_upstream_keepalive_module,
     &ngx_http_upstream_zone_module,
-    &ngx_http_write_filter_module,
+    /* 在过滤模块中这个模块是最先执行的，
+      * 也就是初始化ngx_http_top_body_filter变量 
+      * 在这里过滤模块的顺序，也影响着过滤的顺序 
+      * 过滤分为响应头的过滤和响应体的过滤，过滤链表                                                           ?
+      * 的构建在ngx_http_block函数中的模块后期初始化过程中完成                                                                                                                              ?
+      */
+    &ngx_http_write_filter_module,               
     &ngx_http_header_filter_module,
     &ngx_http_chunked_filter_module,
     &ngx_http_range_header_filter_module,
