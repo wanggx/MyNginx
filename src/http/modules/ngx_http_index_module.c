@@ -440,6 +440,7 @@ ngx_http_index_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 }
 
 
+/* index模块的后期初始化 */
 static ngx_int_t
 ngx_http_index_init(ngx_conf_t *cf)
 {

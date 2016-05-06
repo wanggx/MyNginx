@@ -806,7 +806,7 @@ ngx_http_handler(ngx_http_request_t *r)
 
         r->lingering_close = (r->headers_in.content_length_n > 0
                               || r->headers_in.chunked);
-        r->phase_handler = 0;
+        r->phase_handler = 0;              /* 注意在这里初始化开始执行阶段的索引 */
 
     } else {
         cmcf = ngx_http_get_module_main_conf(r, ngx_http_core_module);
@@ -836,6 +836,10 @@ ngx_http_core_run_phases(ngx_http_request_t *r)
 
     ph = cmcf->phase_engine.handlers;
 
+    /* 注意循环是通过r->phase_handler这个变量来确定的，
+      * 当在执行checker的时候，会在checker回调函数中更改 
+      * r->phase_handler的值，通过这样来达到一次循环处理的目的 
+      */
     while (ph[r->phase_handler].checker) {
 
         rc = ph[r->phase_handler].checker(r, &ph[r->phase_handler]);
@@ -1001,6 +1005,11 @@ ngx_http_core_find_config_phase(ngx_http_request_t *r,
         return NGX_OK;
     }
 
+    /* 注意这一点很重要，如果是在同一个阶段，
+      * 则是连续执行同一个阶段中的其他handler, 
+      * 如果不是同一个阶段，则执行的是在内存中相邻 
+      * 的下一个阶段的第一个handler 
+      */
     r->phase_handler++;
     return NGX_AGAIN;
 }
@@ -1359,6 +1368,9 @@ ngx_http_core_content_phase(ngx_http_request_t *r,
     ngx_int_t  rc;
     ngx_str_t  path;
 
+    /* 如果生成内容的回调处理函数为为空，
+      * 则调用该回调处理函数
+      */
     if (r->content_handler) {
         r->write_event_handler = ngx_http_request_empty_handler;
         ngx_http_finalize_request(r, r->content_handler(r));
@@ -1480,6 +1492,7 @@ ngx_http_update_location_config(ngx_http_request_t *r)
         r->limit_rate = clcf->limit_rate;
     }
 
+    /* 如果在自定义模块中设置了本地化回到处理 */
     if (clcf->handler) {
         r->content_handler = clcf->handler;
     }
@@ -1494,6 +1507,9 @@ ngx_http_update_location_config(ngx_http_request_t *r)
  * NGX_DECLINED - no match
  */
 
+/* 查找请求的location，注意它这里有一个查找的顺序，
+  * 先是从静态location中查找 
+  */
 static ngx_int_t
 ngx_http_core_find_location(ngx_http_request_t *r)
 {

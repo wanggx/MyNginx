@@ -128,11 +128,12 @@ typedef enum {
 
     NGX_HTTP_PREACCESS_PHASE,
 
-    NGX_HTTP_ACCESS_PHASE,
+    NGX_HTTP_ACCESS_PHASE,               /* 该阶段对应两个回调处理句柄 */
     NGX_HTTP_POST_ACCESS_PHASE,
 
     NGX_HTTP_TRY_FILES_PHASE,
-    NGX_HTTP_CONTENT_PHASE,          /* 生成http响应 */
+    /* 生成http响应，在这个阶段checker总共对应了四个处理句柄 */
+    NGX_HTTP_CONTENT_PHASE,          
 
     NGX_HTTP_LOG_PHASE                     /* log模块 */
 } ngx_http_phases;
@@ -158,7 +159,7 @@ typedef struct {
 
 
 typedef struct {
-    ngx_array_t                handlers;
+    ngx_array_t                handlers;                /* ngx_http_handler_pt */
 } ngx_http_phase_t;
 
 
@@ -361,6 +362,7 @@ struct ngx_http_core_loc_conf_s {
     uint32_t      limit_except;
     void        **limit_except_loc_conf;
 
+    /* location的回调处理句柄，在定义地方放时会根据需要设置 */
     ngx_http_handler_pt  handler;
 
     /* location name length for inclusive location with inherited alias */

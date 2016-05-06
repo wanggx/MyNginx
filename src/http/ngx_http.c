@@ -387,7 +387,7 @@ failed:
     return rv;
 }
 
-
+/* 初始化每个阶段的处理数组 */
 static ngx_int_t
 ngx_http_init_phases(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 {
@@ -503,10 +503,12 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 
     n = use_rewrite + use_access + cmcf->try_files + 1 /* find config phase */;
 
+    /* 先累加所有阶段处理句柄的个数 */
     for (i = 0; i < NGX_HTTP_LOG_PHASE; i++) {
         n += cmcf->phases[i].handlers.nelts;
     }
 
+    /* 注意此处分配的内存大小为n个ngx_http_phase_handler_t和一个指针大小 */
     ph = ngx_pcalloc(cf->pool,
                      n * sizeof(ngx_http_phase_handler_t) + sizeof(void *));
     if (ph == NULL) {
@@ -515,6 +517,7 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 
     /* 设置指针关系 */
     cmcf->phase_engine.handlers = ph;
+    /* 注意这里的n是从0开始的 */
     n = 0;
 
     /* 初始化请求各个阶段的checker */
@@ -523,7 +526,7 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 
         switch (i) {
 
-        case NGX_HTTP_SERVER_REWRITE_PHASE:
+        case NGX_HTTP_SERVER_REWRITE_PHASE:         /* 1 */
             if (cmcf->phase_engine.server_rewrite_index == (ngx_uint_t) -1) {
                 cmcf->phase_engine.server_rewrite_index = n;
             }
@@ -531,7 +534,7 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 
             break;
 
-        case NGX_HTTP_FIND_CONFIG_PHASE:
+        case NGX_HTTP_FIND_CONFIG_PHASE:               /* 2 */
             find_config_index = n;
 
             ph->checker = ngx_http_core_find_config_phase;
@@ -540,7 +543,7 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 
             continue;
 
-        case NGX_HTTP_REWRITE_PHASE:
+        case NGX_HTTP_REWRITE_PHASE:                     /* 3 */
             if (cmcf->phase_engine.location_rewrite_index == (ngx_uint_t) -1) {
                 cmcf->phase_engine.location_rewrite_index = n;
             }
@@ -548,7 +551,9 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 
             break;
 
-        case NGX_HTTP_POST_REWRITE_PHASE:
+
+            /* 4 */   /* 只有在4，7阶段更改phase的执行流程 */
+        case NGX_HTTP_POST_REWRITE_PHASE:          
             if (use_rewrite) {
                 ph->checker = ngx_http_core_post_rewrite_phase;
                 ph->next = find_config_index;
@@ -558,12 +563,12 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 
             continue;
 
-        case NGX_HTTP_ACCESS_PHASE:
+        case NGX_HTTP_ACCESS_PHASE:                    /* 6 */
             checker = ngx_http_core_access_phase;
             n++;
             break;
 
-        case NGX_HTTP_POST_ACCESS_PHASE:
+        case NGX_HTTP_POST_ACCESS_PHASE:         /* 7 */
             if (use_access) {
                 ph->checker = ngx_http_core_post_access_phase;
                 ph->next = n;
@@ -572,7 +577,7 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 
             continue;
 
-        case NGX_HTTP_TRY_FILES_PHASE:
+        case NGX_HTTP_TRY_FILES_PHASE:             /* 8 */
             if (cmcf->try_files) {
                 ph->checker = ngx_http_core_try_files_phase;
                 n++;
@@ -581,14 +586,17 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 
             continue;
 
-        case NGX_HTTP_CONTENT_PHASE:
+        case NGX_HTTP_CONTENT_PHASE:            /* 9 */
             checker = ngx_http_core_content_phase;
             break;
 
-        default:
+        default:                /* 只有0，5阶段执行到此 */
             checker = ngx_http_core_generic_phase;
         }
 
+        /* 执行到这里就是for循环没有被中断掉，
+          * 所以n要增加当前阶段处理句柄的个数 
+          */
         n += cmcf->phases[i].handlers.nelts;
 
         for (j = cmcf->phases[i].handlers.nelts - 1; j >=0; j--) {
