@@ -213,6 +213,7 @@ ngx_http_init_connection(ngx_connection_t *c)
         return;
     }
 
+    /* 设置连接的携带的数据为ngx_http_connect_t */
     c->data = hc;
 
     /* find the server configuration for the address:port */

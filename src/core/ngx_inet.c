@@ -526,7 +526,9 @@ ngx_parse_addr(ngx_pool_t *pool, ngx_addr_t *addr, u_char *text, size_t len)
     return NGX_OK;
 }
 
-
+/* 根据listen后面的字符来判断使用的是什么协议，默认就是inet协议
+  * unix协议在是[unix]:开头
+  */
 ngx_int_t
 ngx_parse_url(ngx_pool_t *pool, ngx_url_t *u)
 {
@@ -534,14 +536,17 @@ ngx_parse_url(ngx_pool_t *pool, ngx_url_t *u)
 
     p = u->url.data;
 
+    /* 使用unix域协议 */
     if (ngx_strncasecmp(p, (u_char *) "unix:", 5) == 0) {
         return ngx_parse_unix_domain_url(pool, u);
     }
 
+    /* 使用的是ipv6协议 */
     if (p[0] == '[') {
         return ngx_parse_inet6_url(pool, u);
     }
 
+    /* 默认使用inet协议 */
     return ngx_parse_inet_url(pool, u);
 }
 

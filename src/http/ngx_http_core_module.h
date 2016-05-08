@@ -73,7 +73,7 @@ typedef struct {
     socklen_t                  socklen;
 
     unsigned                   set:1;
-    unsigned                   default_server:1;
+    unsigned                   default_server:1;     /* 表示该监听套接口是否为默认服务 */
     unsigned                   bind:1;
     unsigned                   wildcard:1;
 #if (NGX_HTTP_SSL)
@@ -183,6 +183,7 @@ typedef struct {
 
     ngx_hash_keys_arrays_t    *variables_keys;
 
+    /* 监听的所有端口号 */
     ngx_array_t               *ports;  /* 以[port,addr]的形式存放 */
 
     ngx_uint_t                 try_files;       /* unsigned  try_files:1 */
@@ -213,7 +214,7 @@ typedef struct {
     ngx_flag_t                  merge_slashes;
     ngx_flag_t                  underscores_in_headers;
 
-    unsigned                    listen:1;
+    unsigned                    listen:1;               /* 表示服务器是否已经被监听 */
 #if (NGX_PCRE)
     unsigned                    captures:1;
 #endif
@@ -281,7 +282,7 @@ typedef struct {
 } ngx_http_port_t;
 
 
-/* http监听地址结构 */
+/* http监听地址结构，一个端口号可以对应多个地址  */
 typedef struct {
     ngx_int_t                  family;  /* 协议族 */
     in_port_t                  port;    /* 端口号 */
@@ -465,7 +466,8 @@ struct ngx_http_core_loc_conf_s {
     ngx_uint_t    types_hash_max_size;
     ngx_uint_t    types_hash_bucket_size;
 
-    ngx_queue_t  *locations;  /* 其实就是一个ngx_http_location_queue_t队列 */
+    /* 记录一个server里面所有的location队列 */
+    ngx_queue_t  *locations;  
 
 #if 0
     ngx_http_core_loc_conf_t  *prev_location;
@@ -475,8 +477,8 @@ struct ngx_http_core_loc_conf_s {
 /* location的队列 */
 typedef struct {
     ngx_queue_t                      queue;
-    ngx_http_core_loc_conf_t        *exact;
-    ngx_http_core_loc_conf_t        *inclusive;
+    ngx_http_core_loc_conf_t        *exact;          /* 表明是精确匹配 */
+    ngx_http_core_loc_conf_t        *inclusive;     /* 表明包含匹配 */
     ngx_str_t                       *name;
     u_char                          *file_name;
     ngx_uint_t                       line;

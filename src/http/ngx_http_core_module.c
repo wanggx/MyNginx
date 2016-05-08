@@ -2950,7 +2950,10 @@ ngx_http_get_forwarded_addr_internal(ngx_http_request_t *r, ngx_addr_t *addr,
     return NGX_DECLINED;
 }
 
-/* 解析http模块的server */
+/* 解析http模块的server，这里在解析server块，
+  * 如果正常的情况下，会成功添加一个服务器 
+  * 而每一个服务器都相应的需要一个ngx_http_conf_ctx_t配置结构  
+  */
 static char *
 ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 {
@@ -2974,10 +2977,12 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
       * 这样就保证了在解析http块、server块和location块时，使用的main_conf是同一份。
       */
     http_ctx = cf->ctx;
+    /* 多个服务共享全局配置 */
     ctx->main_conf = http_ctx->main_conf;
 
     /* the server{}'s srv_conf */
 
+    /* 一个新的服务器配置 */
     ctx->srv_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_http_max_module);
     if (ctx->srv_conf == NULL) {
         return NGX_CONF_ERROR;
@@ -3036,6 +3041,7 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 
     /* cscf得到的只是一个默认值，通过create_srv_conf创建的 */
     cscf = ctx->srv_conf[ngx_http_core_module.ctx_index];
+    /* 指向当前服务对应的全局配置 */
     cscf->ctx = ctx;
 
     cmcf = ctx->main_conf[ngx_http_core_module.ctx_index];
@@ -3053,6 +3059,7 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     /* parse inside server{} */
 
     pcf = *cf;
+    /* 注意此时的ctx配置上下文为当前的服务上下文 */
     cf->ctx = ctx;
     /* 指明是解析http模块的server复杂配置项 */
     cf->cmd_type = NGX_HTTP_SRV_CONF;
@@ -3494,7 +3501,7 @@ ngx_http_core_create_main_conf(ngx_conf_t *cf)
     return cmcf;
 }
 
-
+/* 初始化core_main_conf变量的部分值 */
 static char *
 ngx_http_core_init_main_conf(ngx_conf_t *cf, void *conf)
 {
@@ -4078,11 +4085,13 @@ ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     (void) ngx_sock_ntop(&lsopt.u.sockaddr, lsopt.socklen, lsopt.addr,
                          NGX_SOCKADDR_STRLEN, 1);
 
+    /* 依次处理listen port后面的关键字 */
     for (n = 2; n < cf->args->nelts; n++) {
 
         if (ngx_strcmp(value[n].data, "default_server") == 0
             || ngx_strcmp(value[n].data, "default") == 0)
         {
+            /* 设置当前服务是默认服务器 */
             lsopt.default_server = 1;
             continue;
         }

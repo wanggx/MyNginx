@@ -426,9 +426,9 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             /* set up the directive's configuration context */
 
             conf = NULL;
-			/* 获取相应模块的配置上下文，在ngx_init_cycle函数中已经为所有的模块分配了指针空间
-			 * 同时核心模块通过ceate_conf回调来创建了模块指针指向的内存空间
-			 */
+            /* 获取相应模块的配置上下文，在ngx_init_cycle函数中已经为所有的模块分配了指针空间
+             * 同时核心模块通过ceate_conf回调来创建了模块指针指向的内存空间
+             */
             if (cmd->type & NGX_DIRECT_CONF) {
                 conf = ((void **) cf->ctx)[ngx_modules[i]->index];
 
@@ -444,8 +444,8 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             }
 
             /* 执行到这里表示已经找到配置解释执行 
-			 * conf指向每个模块的配置内容的指针
-			 */
+	      * conf指向每个模块的配置内容的指针
+	      */
             rv = cmd->set(cf, cmd, conf);/* 调用命令的set函数 */
 
             if (rv == NGX_CONF_OK) {

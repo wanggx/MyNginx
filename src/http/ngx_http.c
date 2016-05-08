@@ -1259,7 +1259,7 @@ ngx_http_add_listen(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
             continue;
         }
 
-        /* 表明端口和地址已经在端口列表当中 */
+        /* 表明端口和协议已经在端口列表当中 */
         /* a port is already in the port list */
 
         return ngx_http_add_addresses(cf, cscf, &port[i], lsopt);
@@ -1383,6 +1383,7 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
             }
 
             default_server = 1;
+            /* 设置地址的默认服务器 */
             addr[i].default_server = cscf;
         }
 
@@ -1416,6 +1417,7 @@ ngx_http_add_address(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 {
     ngx_http_conf_addr_t  *addr;
 
+    /* 初始化端口对应的地址 */
     if (port->addrs.elts == NULL) {
         if (ngx_array_init(&port->addrs, cf->temp_pool, 4,
                            sizeof(ngx_http_conf_addr_t))
@@ -1915,7 +1917,7 @@ ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
     return ls;
 }
 
-
+/* 设置默认服务器 */
 static ngx_int_t
 ngx_http_add_addrs(ngx_conf_t *cf, ngx_http_port_t *hport,
     ngx_http_conf_addr_t *addr)
