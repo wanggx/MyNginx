@@ -1081,7 +1081,7 @@ ngx_http_process_request_line(ngx_event_t *rev)
     }
 }
 
-
+/* 处理请求的URL */
 ngx_int_t
 ngx_http_process_request_uri(ngx_http_request_t *r)
 {
@@ -2029,7 +2029,7 @@ ngx_http_validate_host(ngx_str_t *host, ngx_pool_t *pool, ngx_uint_t alloc)
     return NGX_OK;
 }
 
-
+/* 注意这里的host就是127.0.0.1:8000 */
 static ngx_int_t
 ngx_http_set_virtual_server(ngx_http_request_t *r, ngx_str_t *host)
 {

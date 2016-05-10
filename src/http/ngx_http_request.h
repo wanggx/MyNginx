@@ -381,7 +381,7 @@ struct ngx_http_request_s {
                                          /* of ngx_http_upstream_state_t */
 
     ngx_pool_t                       *pool;
-    ngx_buf_t                        *header_in;
+    ngx_buf_t                        *header_in;           /* 存放读取的请求头 */
 
     /* 代表请求头部 */
     ngx_http_headers_in_t             headers_in;
@@ -397,14 +397,14 @@ struct ngx_http_request_s {
     ngx_uint_t                        method;
     ngx_uint_t                        http_version;
 
-    ngx_str_t                         request_line;
-    ngx_str_t                         uri;
+    ngx_str_t                         request_line;              /* 请求行 */
+    ngx_str_t                         uri;                            /* 请求资源的uri 如/index.html*/
     ngx_str_t                         args;
     ngx_str_t                         exten;
     ngx_str_t                         unparsed_uri;
 
-    ngx_str_t                         method_name;
-    ngx_str_t                         http_protocol;
+    ngx_str_t                         method_name;           /* 请求的方法如get，put */
+    ngx_str_t                         http_protocol;           /* 请求的协议 */
 
     ngx_chain_t                      *out;
     ngx_http_request_t               *main;
@@ -472,7 +472,9 @@ struct ngx_http_request_s {
     unsigned                          add_uri_to_alias:1;
     unsigned                          valid_location:1;
     unsigned                          valid_unparsed_uri:1;
+    /* 标志位：为1时表示URL发生过rewrite重写  */
     unsigned                          uri_changed:1;
+    /* 表示使用rewrite重写URL的次数 */
     unsigned                          uri_changes:4;
 
     unsigned                          request_body_in_single_buf:1;
@@ -519,18 +521,21 @@ struct ngx_http_request_s {
     unsigned                          lingering_close:1;
     unsigned                          discard_body:1;
     unsigned                          reading_body:1;
+    /* 标志位：为1表示请求的当前状态是在做内部跳转  */
     unsigned                          internal:1;
     unsigned                          error_page:1;
     unsigned                          filter_finalize:1;
     unsigned                          post_action:1;
     unsigned                          request_complete:1;
     unsigned                          request_output:1;
+    /* 标志位：为1表示发送给客户端的http响应头已经发送 */
     unsigned                          header_sent:1;
     unsigned                          expect_tested:1;
     unsigned                          root_tested:1;
     unsigned                          done:1;
     unsigned                          logged:1;
 
+    /* 标志位，表示缓冲中是否有待发送内容 */
     unsigned                          buffered:4;
 
     unsigned                          main_filter_need_in_memory:1;

@@ -9,7 +9,7 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
-
+/* 重写模块的loc配置*/
 typedef struct {
     ngx_array_t  *codes;        /* uintptr_t */
 
@@ -132,7 +132,7 @@ ngx_module_t  ngx_http_rewrite_module = {
     NGX_MODULE_V1_PADDING
 };
 
-
+/* 在http阶段处理的过程当中，重定向的处理句柄 */
 static ngx_int_t
 ngx_http_rewrite_handler(ngx_http_request_t *r)
 {
@@ -152,8 +152,10 @@ ngx_http_rewrite_handler(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
+    /* 获取重定向请求模块的loc配置 */
     rlcf = ngx_http_get_module_loc_conf(r, ngx_http_rewrite_module);
 
+    /* 如果没有重定向规则，则进行到下一个阶段 */
     if (rlcf->codes == NULL) {
         return NGX_DECLINED;
     }
@@ -301,7 +303,7 @@ ngx_http_rewrite_init(ngx_conf_t *cf)
     return NGX_OK;
 }
 
-
+/* rewrite模块的命令回调函数 */
 static char *
 ngx_http_rewrite(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {

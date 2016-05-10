@@ -914,7 +914,7 @@ ngx_http_core_rewrite_phase(ngx_http_request_t *r, ngx_http_phase_handler_t *ph)
     return NGX_OK;
 }
 
-
+/* 在第三方自定义模块时，会查找请求的location */
 ngx_int_t
 ngx_http_core_find_config_phase(ngx_http_request_t *r,
     ngx_http_phase_handler_t *ph)
@@ -1640,8 +1640,10 @@ ngx_http_core_find_static_location(ngx_http_request_t *r,
             continue;
         }
 
+        /* 如果找到了静态的location */
         if (len == (size_t) node->len) {
 
+            /* 静态的是定是精确匹配，同时设置location的loc配置 */
             if (node->exact) {
                 r->loc_conf = node->exact->loc_conf;
                 return NGX_OK;

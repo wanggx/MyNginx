@@ -859,7 +859,7 @@ ngx_dns_strcmp(u_char *s1, u_char *s2)
     }
 }
 
-
+/* 比对两个字符串  */
 ngx_int_t
 ngx_filename_cmp(u_char *s1, u_char *s2, size_t n)
 {
