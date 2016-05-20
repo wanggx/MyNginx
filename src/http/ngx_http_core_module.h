@@ -203,8 +203,8 @@ typedef struct {
     ngx_str_t                   server_name;   /* 相当于一个域名如 www.baidu.com */
 
     size_t                      connection_pool_size;    /* 连接的内存池大小 */
-    size_t                      request_pool_size;  /* 请求的内存池的大小 */
-    size_t                      client_header_buffer_size;
+    size_t                      request_pool_size;         /* 请求的内存池的大小 */
+    size_t                      client_header_buffer_size;  /* 请求头缓存的大小 */
 
     ngx_bufs_t                  large_client_header_buffers;
 

@@ -2571,7 +2571,7 @@ ngx_http_subrequest(ngx_http_request_t *r,
     return ngx_http_post_request(sr, NULL);
 }
 
-
+/* 服务器内部重定向，第二个参数为重定向的路径  */
 ngx_int_t
 ngx_http_internal_redirect(ngx_http_request_t *r,
     ngx_str_t *uri, ngx_str_t *args)
@@ -2590,6 +2590,7 @@ ngx_http_internal_redirect(ngx_http_request_t *r,
         return NGX_DONE;
     }
 
+    /* 设置请求的URI */
     r->uri = *uri;
 
     if (args) {
@@ -2610,12 +2611,16 @@ ngx_http_internal_redirect(ngx_http_request_t *r,
     cscf = ngx_http_get_module_srv_conf(r, ngx_http_core_module);
     r->loc_conf = cscf->ctx->loc_conf;
 
+    /* 因为在重定向的过程当中，可能从一个location定向到另外一个location当中
+      * 既然location都不一样，那么location相应的模块处理函数就不一样
+      */
     ngx_http_update_location_config(r);
 
 #if (NGX_HTTP_CACHE)
     r->cache = NULL;
 #endif
 
+    /* 表示当前是在做内部跳转 */
     r->internal = 1;
     r->valid_unparsed_uri = 0;
     r->add_uri_to_alias = 0;

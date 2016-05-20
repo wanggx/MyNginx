@@ -38,7 +38,7 @@ typedef struct {
 
 /* autoindex模块的location配置 */
 typedef struct {
-    ngx_flag_t     enable;
+    ngx_flag_t     enable;            /* 是否开启文件自动索引 */
     ngx_uint_t     format;
     ngx_flag_t     localtime;
     ngx_flag_t     exact_size;
@@ -83,7 +83,9 @@ static ngx_conf_enum_t  ngx_http_autoindex_format[] = {
     { ngx_null_string, 0 }
 };
 
-
+/* 自动索引模块，当用户访问localhost:port的时候，一遍会默认的带有index.html
+  * 如果在目录当中找不到该文件，则会显示出该目录中的所有文件 
+  */
 static ngx_command_t  ngx_http_autoindex_commands[] = {
 
     { ngx_string("autoindex"),
@@ -1030,7 +1032,7 @@ ngx_http_autoindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     return NGX_CONF_OK;
 }
 
-
+/* 自动索引模块的初始化，设置自动索引模块的处理句柄  */
 static ngx_int_t
 ngx_http_autoindex_init(ngx_conf_t *cf)
 {

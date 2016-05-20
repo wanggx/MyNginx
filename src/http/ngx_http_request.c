@@ -409,6 +409,7 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
 
     size = cscf->client_header_buffer_size;
 
+    /* 如果在非忙状态下，该缓冲就是请求头对应的缓冲 */
     b = c->buffer;
 
     if (b == NULL) {
@@ -563,6 +564,7 @@ ngx_http_create_request(ngx_connection_t *c)
 
     ngx_set_connection_log(r->connection, clcf->error_log);
 
+    /* 注意这里设置请求头的缓存 */
     r->header_in = hc->nbusy ? hc->busy[0] : c->buffer;
 
     if (ngx_list_init(&r->headers_out.headers, r->pool, 20,
@@ -612,6 +614,7 @@ ngx_http_create_request(ngx_connection_t *c)
     r->uri_changes = NGX_HTTP_MAX_URI_CHANGES + 1;
     r->subrequests = NGX_HTTP_MAX_SUBREQUESTS + 1;
 
+    /* 设置请求为读取请求头状态 */
     r->http_state = NGX_HTTP_READING_REQUEST_STATE;
 
     ctx = c->log->data;
@@ -1397,6 +1400,7 @@ ngx_http_read_request_header(ngx_http_request_t *r)
     c = r->connection;
     rev = c->read;
 
+    /* 计算buf中是否还有数据没有处理 */
     n = r->header_in->last - r->header_in->pos;
 
     /* 如果有读取的数据则直接返回 */
@@ -1405,6 +1409,9 @@ ngx_http_read_request_header(ngx_http_request_t *r)
     }
 
     if (rev->ready) {
+        /* 注意这里读取的数据紧邻last一次向后存储，读取的字节数
+          * 通过缓存结束位置减去当前存储位置 
+          */
         n = c->recv(c, r->header_in->last,
                     r->header_in->end - r->header_in->last);
     } else {
@@ -1439,6 +1446,7 @@ ngx_http_read_request_header(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
+    /* 设置内存处理结束位置 */
     r->header_in->last += n;
 
     return n;

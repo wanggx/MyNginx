@@ -141,7 +141,7 @@
 #define NGX_HTTP_SUB_BUFFERED              0x02
 #define NGX_HTTP_COPY_BUFFERED             0x04
 
-
+/* 请求处理的不同状态 */
 typedef enum {
     NGX_HTTP_INITING_REQUEST_STATE = 0,
     NGX_HTTP_READING_REQUEST_STATE,
@@ -304,8 +304,8 @@ typedef struct {
 #endif
 #endif
 
-    ngx_buf_t                       **busy;
-    ngx_int_t                         nbusy;
+    ngx_buf_t                       **busy;       /* 如果为忙，则接收到的buf数组 */
+    ngx_int_t                         nbusy;       /* 表示http连接是否为忙 */
 
     ngx_buf_t                       **free;
     ngx_int_t                         nfree;
@@ -453,7 +453,7 @@ struct ngx_http_request_s {
 
     unsigned                          aio:1;
 
-    unsigned                          http_state:4;
+    unsigned                          http_state:4;              /* http请求的状态 */
 
     /* URI with "/." and on Win32 with "//" */
     unsigned                          complex_uri:1;

@@ -37,6 +37,7 @@ ngx_daemon(ngx_log_t *log)
 
     umask(0);
 
+    /* 注意这里通过操作系统的黑洞文件，来禁止系统中标准输入和输出 */
     fd = open("/dev/null", O_RDWR);
     if (fd == -1) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
@@ -61,6 +62,9 @@ ngx_daemon(ngx_log_t *log)
     }
 #endif
 
+    /* 然后将黑洞文件给关闭，但是此时标准输入和输出都是指向的
+      * 黑洞文件
+      */
     if (fd > STDERR_FILENO) {
         if (close(fd) == -1) {
             ngx_log_error(NGX_LOG_EMERG, log, ngx_errno, "close() failed");

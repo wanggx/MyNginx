@@ -40,6 +40,7 @@ ngx_create_temp_buf(ngx_pool_t *pool, size_t size)
     b->pos = b->start;
     b->last = b->start;
     b->end = b->last + size;
+    /* 设置内存是零时的，并且是可以修改的 */
     b->temporary = 1;
 
     return b;

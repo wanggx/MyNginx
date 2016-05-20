@@ -129,10 +129,12 @@ ngx_http_index_handler(ngx_http_request_t *r)
     path.data = NULL;
 
     index = ilcf->indices->elts;
+    /* 开始扫描index的每个页面 */
     for (i = 0; i < ilcf->indices->nelts; i++) {
 
         if (index[i].lengths == NULL) {
 
+            /* 如果是以‘/'开头则是服务器的内部重定向 */
             if (index[i].name.data[0] == '/') {
                 return ngx_http_internal_redirect(r, &index[i].name, &r->args);
             }

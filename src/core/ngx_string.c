@@ -984,6 +984,7 @@ ngx_atofp(u_char *line, size_t n, size_t point)
 }
 
 
+/* ½«×Ö·û×ª»»³Éssize_t */
 ssize_t
 ngx_atosz(u_char *line, size_t n)
 {

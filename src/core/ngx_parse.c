@@ -8,7 +8,7 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-
+/* 将字符串解析成字节大小如1k就会返回1024 */
 ssize_t
 ngx_parse_size(ngx_str_t *line)
 {
