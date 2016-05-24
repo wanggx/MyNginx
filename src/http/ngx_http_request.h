@@ -26,7 +26,7 @@
 #define NGX_HTTP_VERSION_20                2000
 
 #define NGX_HTTP_UNKNOWN                   0x0001
-#define NGX_HTTP_GET                       0x0002
+#define NGX_HTTP_GET                       0x0002             /* 2表示get请求 */
 #define NGX_HTTP_HEAD                      0x0004
 #define NGX_HTTP_POST                      0x0008
 #define NGX_HTTP_PUT                       0x0010
@@ -244,7 +244,7 @@ typedef struct {
 typedef struct {
     ngx_list_t                        headers;
 
-    ngx_uint_t                        status;
+    ngx_uint_t                        status;          /* http的响应状态 */
     ngx_str_t                         status_line;
 
     ngx_table_elt_t                  *server;

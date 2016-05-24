@@ -369,7 +369,7 @@ struct ngx_http_core_loc_conf_s {
 
     /* location name length for inclusive location with inherited alias */
     size_t        alias;
-    ngx_str_t     root;                    /* root, alias */
+    ngx_str_t     root;                    /* root, alias */ /* 服务器的根目录也就是指向html的这个目录 */
     ngx_str_t     post_action;
 
     ngx_array_t  *root_lengths;

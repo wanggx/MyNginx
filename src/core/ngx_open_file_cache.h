@@ -43,7 +43,7 @@ typedef struct {
     unsigned                 errors:1;
     unsigned                 events:1;
 
-    unsigned                 is_dir:1;
+    unsigned                 is_dir:1;          /* 代表是不是目录 */
     unsigned                 is_file:1;
     unsigned                 is_link:1;
     unsigned                 is_exec:1;

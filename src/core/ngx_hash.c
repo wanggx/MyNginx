@@ -67,6 +67,7 @@ ngx_hash_find_wc_head(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
 
     n = len;
 
+    /* 反向找到第一个.字符 */
     while (n) {
         if (name[n - 1] == '.') {
             break;
@@ -76,7 +77,7 @@ ngx_hash_find_wc_head(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
     }
 
     key = 0;
-
+    /* 计算name对应的key */
     for (i = n; i < len; i++) {
         key = ngx_hash(key, name[i]);
     }
@@ -90,7 +91,7 @@ ngx_hash_find_wc_head(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
 #if 0
     ngx_log_error(NGX_LOG_ALERT, ngx_cycle->log, 0, "value:\"%p\"", value);
 #endif
-
+    /* 如果找到的有值 */
     if (value) {
 
         /*
@@ -148,7 +149,7 @@ ngx_hash_find_wc_head(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
     return hwc->value;
 }
 
-
+/* 和wc_head的方向相反 */
 void *
 ngx_hash_find_wc_tail(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
 {
@@ -219,6 +220,7 @@ ngx_hash_find_combined(ngx_hash_combined_t *hash, ngx_uint_t key, u_char *name,
 {
     void  *value;
 
+    /* 从不包含通配符的hash中查找 */
     if (hash->hash.buckets) {
         value = ngx_hash_find(&hash->hash, key, name, len);
 
@@ -231,6 +233,7 @@ ngx_hash_find_combined(ngx_hash_combined_t *hash, ngx_uint_t key, u_char *name,
         return NULL;
     }
 
+    /* 从头查 */
     if (hash->wc_head && hash->wc_head->hash.buckets) {
         value = ngx_hash_find_wc_head(hash->wc_head, name, len);
 
@@ -239,6 +242,7 @@ ngx_hash_find_combined(ngx_hash_combined_t *hash, ngx_uint_t key, u_char *name,
         }
     }
 
+    /* 从尾巴查 */
     if (hash->wc_tail && hash->wc_tail->hash.buckets) {
         value = ngx_hash_find_wc_tail(hash->wc_tail, name, len);
 
@@ -529,6 +533,7 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
         return NGX_ERROR;
     }
 
+    /* 循环扫描nelts个key */
     for (n = 0; n < nelts; n = i) {
 
 #if 0
@@ -536,7 +541,7 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
                       "wc0: \"%V\"", &names[n].key);
 #endif
 
-        /* dot记录第一个.的位置 */
+        /* 标记是否有.字符出现 */
         dot = 0;
 
         for (len = 0; len < names[n].key.len; len++) {
@@ -564,13 +569,16 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
         /* dot_len表示第一个.之后的位置 */
         dot_len = len + 1;
 
+        /* 此时len表示到.字符的长度 */
         if (dot) {
             len++;
         }
 
         next_names.nelts = 0;
 
-        /* 如果长度不同，也就是.之后还有字符，则将其添加到next_names数组当中  */
+        /* 如果长度不同，也就是.之后还有字符，
+          * 则将后面的字符添加到next_names数组当中
+          */
         if (names[n].key.len != len) {
             next_name = ngx_array_push(&next_names);
             if (next_name == NULL) {
@@ -590,10 +598,13 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
 
         /* 处理上下的key */
         for (i = n + 1; i < nelts; i++) {
+            /* 判断后面的key前len个字符和names中第n个key的前len字符是否相同
+              * 如果不相同，则停止循环
+              */
             if (ngx_strncmp(names[n].key.data, names[i].key.data, len) != 0) {
                 break;
             }
-
+            /* 如果相同，但没有出现.字符，如abc何abcd这种情况 */
             if (!dot
                 && names[i].key.len > len
                 && names[i].key.data[len] != '.')
@@ -601,6 +612,7 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
                 break;
             }
 
+            /* 如abc.和abc.*等 */
             next_name = ngx_array_push(&next_names);
             if (next_name == NULL) {
                 return NGX_ERROR;
@@ -617,11 +629,13 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
 #endif
         }
 
+        /* 如果next_names中存在元素 */
         if (next_names.nelts) {
 
             h = *hinit;
             h.hash = NULL;
 
+            /* 用next_names递归初始化一个hash */
             if (ngx_hash_wildcard_init(&h, (ngx_hash_key_t *) next_names.elts,
                                        next_names.nelts)
                 != NGX_OK)
@@ -631,17 +645,19 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
 
             wdc = (ngx_hash_wildcard_t *) h.hash;
 
+            /* 如果第n个key的长度和len相同，如abc和abc.这两种情况下 */
             if (names[n].key.len == len) {
                 wdc->value = names[n].value;
             }
-
+            /* 将递归初始化的hash设置为当前key的value，这里就很精巧了。 */
             name->value = (void *) ((uintptr_t) wdc | (dot ? 3 : 2));
 
-        } else if (dot) {
+        } else if (dot) { /* 如果存在.字符 */
             name->value = (void *) ((uintptr_t) name->value | 1);
         }
     }
 
+    /* 像正常一样的初始化hash */
     if (ngx_hash_init(hinit, (ngx_hash_key_t *) curr_names.elts,
                       curr_names.nelts)
         != NGX_OK)

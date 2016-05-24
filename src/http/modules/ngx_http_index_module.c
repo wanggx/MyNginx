@@ -93,7 +93,7 @@ ngx_module_t  ngx_http_index_module = {
  * Unix has ENOTDIR error; however, it's less helpful than Win32's one:
  * it only indicates that path points to a regular file, not a directory.
  */
-
+/* index模块处理函数 */
 static ngx_int_t
 ngx_http_index_handler(ngx_http_request_t *r)
 {

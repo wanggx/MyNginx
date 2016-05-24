@@ -64,6 +64,7 @@ ngx_http_static_handler(ngx_http_request_t *r)
         return NGX_HTTP_NOT_ALLOWED;
     }
 
+    /* 如果是http://127.0.0.1:8000，则此时的r->uri为/index.html */
     if (r->uri.data[r->uri.len - 1] == '/') {
         return NGX_DECLINED;
     }
@@ -100,6 +101,7 @@ ngx_http_static_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
+    /* 打开需要发送的文件 */
     if (ngx_open_cached_file(clcf->open_file_cache, &path, &of, r->pool)
         != NGX_OK)
     {
@@ -269,6 +271,7 @@ ngx_http_static_handler(ngx_http_request_t *r)
     out.buf = b;
     out.next = NULL;
 
+    /* 开始对输出进行过滤 */
     return ngx_http_output_filter(r, &out);
 }
 

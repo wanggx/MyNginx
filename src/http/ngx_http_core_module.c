@@ -2021,6 +2021,7 @@ ngx_http_map_uri_to_path(ngx_http_request_t *r, ngx_str_t *path,
             return NULL;
         }
 
+        /* ¿½±´¸ùÄ¿Â¼Â·¾¶ */
         last = ngx_copy(path->data, clcf->root.data, clcf->root.len);
 
     } else {
