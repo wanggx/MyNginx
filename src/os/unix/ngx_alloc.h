@@ -37,7 +37,9 @@ void *ngx_memalign(size_t alignment, size_t size, ngx_log_t *log);
 #endif
 
 
+/* 一页物理内存的大小 */
 extern ngx_uint_t  ngx_pagesize;
+/* 一页的位移，如4Kb就是12 */
 extern ngx_uint_t  ngx_pagesize_shift;
 extern ngx_uint_t  ngx_cacheline_size;
 

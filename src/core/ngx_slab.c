@@ -69,6 +69,7 @@ static ngx_uint_t  ngx_slab_exact_size;
 static ngx_uint_t  ngx_slab_exact_shift;
 
 
+/* slab的初始化 */
 void
 ngx_slab_init(ngx_slab_pool_t *pool)
 {
@@ -90,11 +91,14 @@ ngx_slab_init(ngx_slab_pool_t *pool)
 
     pool->min_size = 1 << pool->min_shift;
 
+    /* 取ngx_slab_pool_t之后的首地址  */
     p = (u_char *) pool + sizeof(ngx_slab_pool_t);
+    /* 设置实际可用字节长度 */
     size = pool->end - p;
 
     ngx_slab_junk(p, size);
 
+    /* 将p格式化为ngx_slab_page_t */
     slots = (ngx_slab_page_t *) p;
     n = ngx_pagesize_shift - pool->min_shift;
 
@@ -106,24 +110,33 @@ ngx_slab_init(ngx_slab_pool_t *pool)
 
     p += n * sizeof(ngx_slab_page_t);
 
+    /* 计算总共有多少页，注意页头并不在页内  */
     pages = (ngx_uint_t) (size / (ngx_pagesize + sizeof(ngx_slab_page_t)));
 
+    /* 将所有的ngx_slab_page_t结构清0 */
     ngx_memzero(p, pages * sizeof(ngx_slab_page_t));
 
+    /* 设置页数组 */
     pool->pages = (ngx_slab_page_t *) p;
 
     pool->free.prev = 0;
+    /* 设置所有的都为空闲 */
     pool->free.next = (ngx_slab_page_t *) p;
 
     pool->pages->slab = pages;
+    /* 将pool->pages节点和pool->free连接起来 */
     pool->pages->next = &pool->free;
     pool->pages->prev = (uintptr_t) &pool->free;
 
+    /* 设置实际给对象分配空间的首地址，这里有可能内存不对齐，
+      * 所以下面的才有if(m>0)判断 
+      */
     pool->start = (u_char *)
                   ngx_align_ptr((uintptr_t) p + pages * sizeof(ngx_slab_page_t),
                                  ngx_pagesize);
 
     m = pages - (pool->end - pool->start) / ngx_pagesize;
+    /* 如果存在不对齐，则把最后面的m页给去掉了 */
     if (m > 0) {
         pages -= m;
         pool->pages->slab = pages;

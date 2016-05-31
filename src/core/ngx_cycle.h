@@ -26,6 +26,7 @@ typedef struct ngx_shm_zone_s  ngx_shm_zone_t;
 
 typedef ngx_int_t (*ngx_shm_zone_init_pt) (ngx_shm_zone_t *zone, void *data);
 
+/* 内存共享区结构 */
 struct ngx_shm_zone_s {
     void                     *data;
     ngx_shm_t                 shm;
@@ -60,7 +61,7 @@ struct ngx_cycle_s {
     ngx_array_t               paths;             /* 路径数组 */
     ngx_array_t               config_dump;
     ngx_list_t                open_files;        /* 打开文件列表 */
-    ngx_list_t                shared_memory;     /* 共享内存链 */
+    ngx_list_t                shared_memory;     /* 共享内存链，ngx_shm_zone_t结构  */
 
     /* 连接数，该连接数通过nginx.conf中的worker_connections来指定 */
     ngx_uint_t                connection_n;      
@@ -106,7 +107,7 @@ typedef struct {
      ngx_str_t                working_directory;
      ngx_str_t                lock_file;
 
-     ngx_str_t                pid;
+     ngx_str_t                pid;           /* 进程的pid文件路径 */
      ngx_str_t                oldpid;
 
      ngx_array_t              env;

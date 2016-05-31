@@ -153,6 +153,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
 
 
+    /* 添加旧的cycle中的内存共享链的数量 */
     if (old_cycle->shared_memory.part.nelts) {
         n = old_cycle->shared_memory.part.nelts;
         for (part = old_cycle->shared_memory.part.next; part; part = part->next)
@@ -164,6 +165,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         n = 1;
     }
 
+    /* 初始化cycle中的内存共享链 */
     if (ngx_list_init(&cycle->shared_memory, pool, n, sizeof(ngx_shm_zone_t))
         != NGX_OK)
     {
@@ -411,8 +413,10 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     part = &cycle->shared_memory.part;
     shm_zone = part->elts;
 
+    /* 开始处理共享内存链表 */
     for (i = 0; /* void */ ; i++) {
 
+        /* 如果链表中某个part中的元素已经用完，则继续使用下一个 */
         if (i >= part->nelts) {
             if (part->next == NULL) {
                 break;
@@ -429,14 +433,20 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
             goto failed;
         }
 
+        /* 设置共享内存的日志 */
         shm_zone[i].shm.log = cycle->log;
 
+        /* 开始处理久的cycle中的共享内存 */
         opart = &old_cycle->shared_memory.part;
         oshm_zone = opart->elts;
 
+        /* 在久的共享内存链表中查找和当前cycle中
+          * 共享链的元素条件相同的链表节点，同时删除 
+          */
         for (n = 0; /* void */ ; n++) {
 
             if (n >= opart->nelts) {
+                /* 如果久的内存共享链表已使用完 */
                 if (opart->next == NULL) {
                     break;
                 }
@@ -445,6 +455,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
                 n = 0;
             }
 
+            /* 对共享内存的名称进行长度和名称比较 */
             if (shm_zone[i].shm.name.len != oshm_zone[n].shm.name.len) {
                 continue;
             }
@@ -890,6 +901,7 @@ ngx_init_zone_pool(ngx_cycle_t *cycle, ngx_shm_zone_t *zn)
     u_char           *file;
     ngx_slab_pool_t  *sp;
 
+    /* 内存头初始化为一个ngx_slab_pool_t头部 */
     sp = (ngx_slab_pool_t *) zn->shm.addr;
 
     if (zn->shm.exists) {
