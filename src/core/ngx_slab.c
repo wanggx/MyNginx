@@ -64,6 +64,7 @@ static void ngx_slab_error(ngx_slab_pool_t *pool, ngx_uint_t level,
     char *text);
 
 
+/* 为一页的一半 */
 static ngx_uint_t  ngx_slab_max_size;
 static ngx_uint_t  ngx_slab_exact_size;
 static ngx_uint_t  ngx_slab_exact_shift;
@@ -98,13 +99,21 @@ ngx_slab_init(ngx_slab_pool_t *pool)
 
     ngx_slab_junk(p, size);
 
-    /* 将p格式化为ngx_slab_page_t */
+    /* 将p格式化为ngx_slab_page_t，
+      * 设置slot占用的内存空间 
+      */
     slots = (ngx_slab_page_t *) p;
     n = ngx_pagesize_shift - pool->min_shift;
 
+    /* 初始化每个slot中的数据
+      * 0   <= 8    3 
+      * 1   9~16    4 
+      * 2   17~32   5 
+      * 8   1025~2047   11 
+      */
     for (i = 0; i < n; i++) {
         slots[i].slab = 0;
-        slots[i].next = &slots[i];
+        slots[i].next = &slots[i];     /* 指向自己的地址 */
         slots[i].prev = 0;
     }
 
@@ -123,8 +132,11 @@ ngx_slab_init(ngx_slab_pool_t *pool)
     /* 设置所有的都为空闲 */
     pool->free.next = (ngx_slab_page_t *) p;
 
+    /* 设置第一个ngx_slab_page_t中slab数量，*/
     pool->pages->slab = pages;
-    /* 将pool->pages节点和pool->free连接起来 */
+    /* 将pool->pages节点和pool->free连接起来
+      * 此时pool->free.next指向p，p->next指向pool->free
+      */
     pool->pages->next = &pool->free;
     pool->pages->prev = (uintptr_t) &pool->free;
 
@@ -150,6 +162,7 @@ ngx_slab_init(ngx_slab_pool_t *pool)
 }
 
 
+/* 从slab池中分配一个size大小的对象 */
 void *
 ngx_slab_alloc(ngx_slab_pool_t *pool, size_t size)
 {
@@ -173,6 +186,7 @@ ngx_slab_alloc_locked(ngx_slab_pool_t *pool, size_t size)
     ngx_uint_t        i, slot, shift, map;
     ngx_slab_page_t  *page, *prev, *slots;
 
+    /* 如果超过页的一半，则需要整页或几页一起分配  */
     if (size > ngx_slab_max_size) {
 
         ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, ngx_cycle->log, 0,
@@ -181,6 +195,7 @@ ngx_slab_alloc_locked(ngx_slab_pool_t *pool, size_t size)
         page = ngx_slab_alloc_pages(pool, (size >> ngx_pagesize_shift)
                                           + ((size % ngx_pagesize) ? 1 : 0));
         if (page) {
+            /* 获取分配页的数据首地址 */
             p = (page - pool->pages) << ngx_pagesize_shift;
             p += (uintptr_t) pool->start;
 
@@ -191,6 +206,7 @@ ngx_slab_alloc_locked(ngx_slab_pool_t *pool, size_t size)
         goto done;
     }
 
+    /* 确定slot的位置 */
     if (size > pool->min_size) {
         shift = 1;
         for (s = size - 1; s >>= 1; shift++) { /* void */ }
@@ -205,9 +221,11 @@ ngx_slab_alloc_locked(ngx_slab_pool_t *pool, size_t size)
     ngx_log_debug2(NGX_LOG_DEBUG_ALLOC, ngx_cycle->log, 0,
                    "slab alloc: %uz slot: %ui", size, slot);
 
+    /* 获取slot所在的起始位置 */
     slots = (ngx_slab_page_t *) ((u_char *) pool + sizeof(ngx_slab_pool_t));
     page = slots[slot].next;
 
+    /* 在初始化的时候，两值相同 */
     if (page->next != page) {
 
         if (shift < ngx_slab_exact_shift) {
@@ -660,19 +678,33 @@ fail:
 }
 
 
+/* 给对应的slot分配一页
+  * pages是需要分配多少页 
+  * 如果分配的大小不超过页的一半，则pages为1 
+  */
 static ngx_slab_page_t *
 ngx_slab_alloc_pages(ngx_slab_pool_t *pool, ngx_uint_t pages)
 {
     ngx_slab_page_t  *page, *p;
 
+    /* 扫描空闲链表 */
     for (page = pool->free.next; page != &pool->free; page = page->next) {
 
+        /* 初始化的时候，page->slab变量都被清0，
+          * 但是pool->pages中的第一个元素的slab为总页数
+          */
         if (page->slab >= pages) {
-
+            
+            /* 如果剩下的空闲页超过要分配的页数 */
             if (page->slab > pages) {
                 page[page->slab - 1].prev = (uintptr_t) &page[pages];
-
+                /* 将分配的页给割走，然后紧接着设置下一个页
+                  * 描述符中空闲的页的数量
+                  */
                 page[pages].slab = page->slab - pages;
+                /* 将page[pages]代替page在双向链表中的位置，
+                  * 也就是4个指针的指向
+                  */
                 page[pages].next = page->next;
                 page[pages].prev = page->prev;
 
@@ -681,6 +713,7 @@ ngx_slab_alloc_pages(ngx_slab_pool_t *pool, ngx_uint_t pages)
                 page->next->prev = (uintptr_t) &page[pages];
 
             } else {
+                /* 将page从空闲双向链表中移除 */
                 p = (ngx_slab_page_t *) page->prev;
                 p->next = page->next;
                 page->next->prev = page->prev;
@@ -690,6 +723,7 @@ ngx_slab_alloc_pages(ngx_slab_pool_t *pool, ngx_uint_t pages)
             page->next = NULL;
             page->prev = NGX_SLAB_PAGE;
 
+            /* 如果只是一页，则直接返回 */
             if (--pages == 0) {
                 return page;
             }

@@ -894,7 +894,7 @@ ngx_destroy_cycle_pools(ngx_conf_t *conf)
     ngx_destroy_pool(conf->pool);
 }
 
-
+/* 将共享内存初始化为slab对象池 */
 static ngx_int_t
 ngx_init_zone_pool(ngx_cycle_t *cycle, ngx_shm_zone_t *zn)
 {
@@ -932,6 +932,7 @@ ngx_init_zone_pool(ngx_cycle_t *cycle, ngx_shm_zone_t *zn)
         return NGX_ERROR;
     }
 
+    /* 设置slab池的结束为止，最小对象偏移 */
     sp->end = zn->shm.addr + zn->shm.size;
     sp->min_shift = 3;
     sp->addr = zn->shm.addr;
@@ -1236,6 +1237,7 @@ ngx_reopen_files(ngx_cycle_t *cycle, ngx_uid_t user)
 }
 
 
+/* 添加共享内存，只是添加了一个共享内存区的结构 */
 ngx_shm_zone_t *
 ngx_shared_memory_add(ngx_conf_t *cf, ngx_str_t *name, size_t size, void *tag)
 {
@@ -1246,6 +1248,7 @@ ngx_shared_memory_add(ngx_conf_t *cf, ngx_str_t *name, size_t size, void *tag)
     part = &cf->cycle->shared_memory.part;
     shm_zone = part->elts;
 
+    /* 扫描内存共享链表 */
     for (i = 0; /* void */ ; i++) {
 
         if (i >= part->nelts) {

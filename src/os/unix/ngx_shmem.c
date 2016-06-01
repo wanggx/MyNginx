@@ -11,6 +11,9 @@
 
 #if (NGX_HAVE_MAP_ANON)
 
+/* 该方法直接采用匿名映射，
+  * 在有的系统当中，也就是/dev/zero
+  */
 ngx_int_t
 ngx_shm_alloc(ngx_shm_t *shm)
 {
@@ -39,6 +42,7 @@ ngx_shm_free(ngx_shm_t *shm)
 
 #elif (NGX_HAVE_MAP_DEVZERO)
 
+/* 该方法默认映射/dev/zero文件 */
 ngx_int_t
 ngx_shm_alloc(ngx_shm_t *shm)
 {
@@ -84,7 +88,9 @@ ngx_shm_free(ngx_shm_t *shm)
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-/* 传统的共享内存创建 */
+/* 传统的共享内存创建，仅仅是根据共享内存的大小来得到
+  * 共享内存的地址
+  */
 ngx_int_t
 ngx_shm_alloc(ngx_shm_t *shm)
 {

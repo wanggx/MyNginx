@@ -271,6 +271,7 @@ ngx_shmtx_trylock(ngx_shmtx_t *mtx)
 }
 
 
+/* 锁住共享内存的锁 */
 void
 ngx_shmtx_lock(ngx_shmtx_t *mtx)
 {

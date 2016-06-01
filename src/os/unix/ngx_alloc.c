@@ -9,7 +9,9 @@
 #include <ngx_core.h>
 
 
+/* 系统中一页的大小 */
 ngx_uint_t  ngx_pagesize;
+/* 系统中一页的位移变量，如4kb是12*/
 ngx_uint_t  ngx_pagesize_shift;
 ngx_uint_t  ngx_cacheline_size;
 
