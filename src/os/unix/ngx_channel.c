@@ -241,6 +241,7 @@ ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd, ngx_int_t event,
 }
 
 
+/* 关闭两个使用sockpair创建的socket描述符 */
 void
 ngx_close_channel(ngx_fd_t *fd, ngx_log_t *log)
 {

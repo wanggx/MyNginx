@@ -365,7 +365,10 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
 
         ch.pid = ngx_processes[ngx_process_slot].pid;
         ch.slot = ngx_process_slot;
-        /* 将子进程的0通道通知其他在前创建的进程，1通道是接收信息的 */
+        /* 将子进程的0通道通知其他在前创建的进程，1通道是接收信息的，
+          * 注意这个通知动作是由master进程来完成的，当master在创建子进程的之后， 
+          * master会保有子进程的0通道描述符 
+          */
         ch.fd = ngx_processes[ngx_process_slot].channel[0];
 
         /* 把创建的子进程的相关信息通知前面已经生成的子进程，
@@ -434,6 +437,9 @@ ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn)
 }
 
 
+/* 将刚创建的子进程的消息发送给其他的子进程，特别是进程的pid
+  * 和进程通信的socket文件描述符以及进程在进程数组中的索引
+  */
 static void
 ngx_pass_open_channel(ngx_cycle_t *cycle, ngx_channel_t *ch)
 {
@@ -456,7 +462,10 @@ ngx_pass_open_channel(ngx_cycle_t *cycle, ngx_channel_t *ch)
                       ngx_processes[i].channel[0]);
 
         /* TODO: NGX_AGAIN */
-        /* 为啥是向其他进程的0通道发送? */
+        /* 为啥是向其他进程的0通道发送?
+          * 进程的1通道都是用来读取的，0通道都是其他进程用来写的， 
+          * 和进程进行通信的 
+          */
         ngx_write_channel(ngx_processes[i].channel[0],
                           ch, sizeof(ngx_channel_t), cycle->log);
     }
@@ -795,7 +804,9 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
     }
 }
 
-/* 工作进程初始化 */
+/* 工作进程初始化，
+  * worker表示创建的是第几个进程
+  */
 static void
 ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 {
@@ -911,6 +922,9 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
         ls[i].previous = NULL;
     }
 
+    /* 在worker进程初始化的时候，会调用相应模块的进程初始化回调
+      * 注意模块数组也是每个进程都保有一份的
+      */
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->init_process) {
             if (ngx_modules[i]->init_process(cycle) == NGX_ERROR) {
@@ -920,6 +934,9 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
         }
     }
 
+    /* 扫描所有的进程，在后续创建的子进程要通知
+      * 之前创建的子进程通信的socket文件描述符
+      */
     for (n = 0; n < ngx_last_process; n++) {
 
         /* 判断进程是否存活 */
@@ -936,12 +953,16 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
             continue;
         }
 
+        /* 将其他子进程的1通道关闭 */
         if (close(ngx_processes[n].channel[1]) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "close() channel failed");
         }
     }
 
+    /*  把自己的0通道给关闭，所以其他子进程和当前进程通信的时候
+      *  就是和当前进程的1通道通信
+      */
     if (close(ngx_processes[ngx_process_slot].channel[0]) == -1) {
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                       "close() channel failed");

@@ -258,6 +258,7 @@ static ngx_command_t  ngx_http_proxy_commands[] = {
       0,
       NULL },
 
+    /* NGINX的proxy_redirect功能比较强大,其作用是对发送给客户端的URL进行修改 */
     { ngx_string("proxy_redirect"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE12,
       ngx_http_proxy_redirect,
@@ -3625,7 +3626,7 @@ ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     value = cf->args->elts;
-
+    /* 此处就是配置当中的https://baidu.com */
     url = &value[1];
 
     n = ngx_http_script_variables_count(url);
@@ -3684,6 +3685,7 @@ ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     u.uri_part = 1;
     u.no_resolve = 1;
 
+    /* */
     plcf->upstream.upstream = ngx_http_upstream_add(cf, &u, 0);
     if (plcf->upstream.upstream == NULL) {
         return NGX_CONF_ERROR;

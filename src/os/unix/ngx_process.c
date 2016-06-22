@@ -30,10 +30,21 @@ int              ngx_argc;
 char           **ngx_argv;
 char           **ngx_os_argv;
 
-ngx_int_t        ngx_process_slot;   /* 进程数组中的索引 */
+/* 进程数组中的索引，这是一个全局变量，在执行fork之后，
+  * 每个子进程都会有这一个全局变量，当然ngx_processes数组也会拷贝一份
+  */
+ngx_int_t        ngx_process_slot;   
+/*  该变量记录其他进程和当前进程通信的socket描述符，
+  *  也就是当前进程的1通道，并且当前进程会监听该通道方便通信
+  */ 
 ngx_socket_t     ngx_channel;
 ngx_int_t        ngx_last_process;   /* 最后一个进程的索引值 */
-ngx_process_t    ngx_processes[NGX_MAX_PROCESSES];  /* 系统中进程数组 */
+
+/* 系统中进程数组，存放所有的worker进程，但是master并不在当中，
+  * 因为master进程持有该数组，当master进程需要和子进程通信时， 
+  * 找到特定索引位置的进程，然后和进程的1通道进行通信 
+  */
+ngx_process_t    ngx_processes[NGX_MAX_PROCESSES];  
 
 
 ngx_signal_t  signals[] = {
@@ -95,7 +106,9 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         s = respawn;
 
     } else {
-        /* 获取一个合适的进程数组索引，新建的子进程信息就放在全局进程结构的s索引处 */
+        /* 获取一个合适的进程数组索引，新建的子进程信息就放在全局进程结构的s索引处，
+          * 
+          */
         for (s = 0; s < ngx_last_process; s++) {
             if (ngx_processes[s].pid == -1) {
                 break;
@@ -114,7 +127,11 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     if (respawn != NGX_PROCESS_DETACHED) {
 
         /* Solaris 9 still has no AF_LOCAL */
-        /* 创建AF_UNIX套接字用于两个进程通信 */
+        /* 创建AF_UNIX套接字用于两个进程通信，
+          * 注意创建的文件描述符存放在对应ngx_process_t结构当中， 
+          * 注意当前的情景，是master进程创建worker进程，而master进程并不在ngx_processes 
+          * 数组当中， 
+          */
         if (socketpair(AF_UNIX, SOCK_STREAM, 0, ngx_processes[s].channel) == -1)
         {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
@@ -127,6 +144,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
                        ngx_processes[s].channel[0],
                        ngx_processes[s].channel[1]);
 
+        /* 设置相应的非阻塞标记 */
         if (ngx_nonblocking(ngx_processes[s].channel[0]) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           ngx_nonblocking_n " failed while spawning \"%s\"",
@@ -175,9 +193,9 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         }
 
         /* 父进程创建一对通道，父进程使用的是0通道，子进程使用的是1通道，
-            * 在worker进程的初始化过程当中会将该文件描述符添加到读监听集里面，
-            * 主要目的是两个子进程之间通信 
-            */
+          * 在worker进程的初始化过程当中会将该文件描述符添加到读监听集里面，
+          * 主要目的是两个子进程之间通信 
+          */
         ngx_channel = ngx_processes[s].channel[1];
 
     } else {
@@ -185,7 +203,11 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         ngx_processes[s].channel[1] = -1;
     }
 
-    /* 设置创建子进程在全局进程结构中的索引 */
+    /* 设置创建子进程在全局进程结构中的索引，
+      * 执行fork之后，该全局变量就被拷贝到子进程当中了， 
+      * 而且子进程可以通过该变量知道自己在ngx_processes 
+      * 数组中的位置 
+      */
     ngx_process_slot = s;
 
     /* 错误返回-1
@@ -224,6 +246,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         return pid;
     }
 
+    /* 设置刚刚创建子进程的信息 */
     ngx_processes[s].proc = proc;
     ngx_processes[s].data = data;   /* 数据其实就是1，2，3 */
     ngx_processes[s].name = name;
