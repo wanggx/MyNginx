@@ -48,13 +48,15 @@ typedef void (*ngx_path_loader_pt) (void *data);
 typedef struct {
     ngx_str_t                  name;
     size_t                     len;
-    size_t                     level[3];
+    size_t                     level[3];       /* 路径缓存的3个级别 */
 
+    /* 缓存管理回调 */
     ngx_path_manager_pt        manager;
+    /* 缓存加载回调句柄 */
     ngx_path_loader_pt         loader;
-    void                      *data;
+    void                      *data;           /* 指向自己 */
 
-    u_char                    *conf_file;
+    u_char                    *conf_file;   /* 指向nginx.conf文件的路径 */
     ngx_uint_t                 line;
 } ngx_path_t;
 

@@ -272,6 +272,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
                                         ngx_signal_value(NGX_REOPEN_SIGNAL));
         }
 
+        /* 热代码替换 */
         if (ngx_change_binary) {
             ngx_change_binary = 0;
             ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "changing binary");
@@ -395,10 +396,12 @@ ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn)
     path = ngx_cycle->paths.elts;
     for (i = 0; i < ngx_cycle->paths.nelts; i++) {
 
+        /* 判断管理句柄 */
         if (path[i]->manager) {
             manager = 1;
         }
 
+        /* 判断加载句柄 */
         if (path[i]->loader) {
             loader = 1;
         }
@@ -408,6 +411,7 @@ ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn)
         return;
     }
 
+    /* 启动缓存管理进程 */
     ngx_spawn_process(cycle, ngx_cache_manager_process_cycle,
                       &ngx_cache_manager_ctx, "cache manager process",
                       respawn ? NGX_PROCESS_JUST_RESPAWN : NGX_PROCESS_RESPAWN);
@@ -419,12 +423,14 @@ ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn)
     ch.slot = ngx_process_slot;
     ch.fd = ngx_processes[ngx_process_slot].channel[0];
 
+    /* 通知其他worker进程和缓存管理进程的通信fd */
     ngx_pass_open_channel(cycle, &ch);
 
     if (loader == 0) {
         return;
     }
 
+    /* 启动缓存加载进程 */
     ngx_spawn_process(cycle, ngx_cache_manager_process_cycle,
                       &ngx_cache_loader_ctx, "cache loader process",
                       respawn ? NGX_PROCESS_JUST_SPAWN : NGX_PROCESS_NORESPAWN);
@@ -838,6 +844,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
 
     if (worker >= 0 && ccf->priority != 0) {
+        /* 设置进程的优先级 */
         if (setpriority(PRIO_PROCESS, 0, ccf->priority) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "setpriority(%d) failed", ccf->priority);
@@ -1150,7 +1157,7 @@ ngx_channel_handler(ngx_event_t *ev)
     }
 }
 
-
+/* 缓存管理进程 */
 static void
 ngx_cache_manager_process_cycle(ngx_cycle_t *cycle, void *data)
 {
@@ -1165,6 +1172,7 @@ ngx_cache_manager_process_cycle(ngx_cycle_t *cycle, void *data)
      */
     ngx_process = NGX_PROCESS_HELPER;
 
+    /* 缓存进程不需要监听 */
     ngx_close_listening_sockets(cycle);
 
     /* Set a moderate number of connections for a helper process. */
@@ -1197,11 +1205,12 @@ ngx_cache_manager_process_cycle(ngx_cycle_t *cycle, void *data)
             ngx_reopen_files(cycle, -1);
         }
 
+        /* 处理时钟和事件 */
         ngx_process_events_and_timers(cycle);
     }
 }
 
-
+/* 缓存管理的事件回调 */
 static void
 ngx_cache_manager_process_handler(ngx_event_t *ev)
 {
@@ -1230,7 +1239,7 @@ ngx_cache_manager_process_handler(ngx_event_t *ev)
     ngx_add_timer(ev, next * 1000);
 }
 
-
+/* 缓存加载进程的回调处理 */
 static void
 ngx_cache_loader_process_handler(ngx_event_t *ev)
 {
@@ -1241,6 +1250,7 @@ ngx_cache_loader_process_handler(ngx_event_t *ev)
     cycle = (ngx_cycle_t *) ngx_cycle;
 
     path = cycle->paths.elts;
+    /* 将所有路径的缓存加载之后，进程就退出 */
     for (i = 0; i < cycle->paths.nelts; i++) {
 
         if (ngx_terminate || ngx_quit) {

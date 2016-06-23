@@ -28,9 +28,9 @@
 
 
 typedef struct {
-    ngx_event_handler_pt       handler;
-    char                      *name;
-    ngx_msec_t                 delay;
+    ngx_event_handler_pt       handler;           /* 缓存管理的回调 */
+    char                      *name;                         /* 名称表示管理还是加载 */
+    ngx_msec_t                 delay;                     /* 延迟多长时间执行回调 */
 } ngx_cache_manager_ctx_t;
 
 

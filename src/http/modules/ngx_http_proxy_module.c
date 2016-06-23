@@ -248,7 +248,7 @@ static ngx_conf_enum_t  ngx_http_proxy_http_version[] = {
 
 ngx_module_t  ngx_http_proxy_module;
 
-
+/*  代理模块的命令 */
 static ngx_command_t  ngx_http_proxy_commands[] = {
 
     { ngx_string("proxy_pass"),

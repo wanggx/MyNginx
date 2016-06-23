@@ -140,7 +140,11 @@ typedef struct {
     off_t                            size;
 } ngx_http_file_cache_sh_t;
 
-
+/* 文件缓存结构，如果nginx启动缓存功能时，
+  * nginx会缓存已请求过页面的内容，当该请求再次到来时， 
+  * 就直接放缓存发送给客户端，因为处理每次请求的worker进程可能
+  * 不一样， 所以会有内存共享区域
+  */
 struct ngx_http_file_cache_s {
     ngx_http_file_cache_sh_t        *sh;
     ngx_slab_pool_t                 *shpool;

@@ -1885,7 +1885,7 @@ ngx_http_file_cache_delete(ngx_http_file_cache_t *cache, ngx_queue_t *q,
     }
 }
 
-
+/* 某个路径的缓存管理回调 */
 static time_t
 ngx_http_file_cache_manager(void *data)
 {
@@ -1925,7 +1925,10 @@ ngx_http_file_cache_manager(void *data)
     }
 }
 
-
+/* 具体path缓存加载的回调，这里面有一个比较麻烦的问题就是
+  * 如果开启缓存，则会有很多页面的缓存，如果缓存过多，怎么快速的 
+  * 查找页面的缓存这也是一个问题 
+  */
 static void
 ngx_http_file_cache_loader(void *data)
 {
@@ -2165,6 +2168,7 @@ ngx_http_file_cache_valid(ngx_array_t *cache_valid, ngx_uint_t status)
 }
 
 
+/* proxy模块缓存设置 */
 char *
 ngx_http_file_cache_set_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -2187,6 +2191,7 @@ ngx_http_file_cache_set_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
+    /* 分配一个path结构 */
     cache->path = ngx_pcalloc(cf->pool, sizeof(ngx_path_t));
     if (cache->path == NULL) {
         return NGX_CONF_ERROR;
@@ -2207,10 +2212,12 @@ ngx_http_file_cache_set_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     cache->path->name = value[1];
 
+    /* 出掉最后一个/ */
     if (cache->path->name.data[cache->path->name.len - 1] == '/') {
         cache->path->name.len--;
     }
 
+    /* 获取缓存文件的全路径 */
     if (ngx_conf_full_name(cf->cycle, &cache->path->name, 0) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -2382,6 +2389,7 @@ ngx_http_file_cache_set_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
+    /* 设置路径的缓存管理和加载回调 */
     cache->path->manager = ngx_http_file_cache_manager;
     cache->path->loader = ngx_http_file_cache_loader;
     cache->path->data = cache;
@@ -2391,6 +2399,7 @@ ngx_http_file_cache_set_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     cache->loader_sleep = loader_sleep;
     cache->loader_threshold = loader_threshold;
 
+    /* 将该路径添加到cycle当中 */
     if (ngx_add_path(cf, &cache->path) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -2426,6 +2435,7 @@ ngx_http_file_cache_set_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
     }
 
+    /* 创建共享内存 */
     cache->shm_zone = ngx_shared_memory_add(cf, &name, size, cmd->post);
     if (cache->shm_zone == NULL) {
         return NGX_CONF_ERROR;

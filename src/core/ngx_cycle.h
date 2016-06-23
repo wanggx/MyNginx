@@ -94,7 +94,7 @@ typedef struct {
      ngx_int_t                rlimit_nofile;
      off_t                    rlimit_core;
 
-     int                      priority;
+     int                      priority;         /* 进程的优先级 */
 
      ngx_uint_t               cpu_affinity_auto;
      ngx_uint_t               cpu_affinity_n;
