@@ -36,11 +36,11 @@ sig_atomic_t  ngx_reap;
 sig_atomic_t  ngx_sigio;
 sig_atomic_t  ngx_sigalrm;
 sig_atomic_t  ngx_terminate;
-sig_atomic_t  ngx_quit;
+sig_atomic_t  ngx_quit;             /* worker退出 */
 sig_atomic_t  ngx_debug_quit;
 ngx_uint_t    ngx_exiting;
 sig_atomic_t  ngx_reconfigure;
-sig_atomic_t  ngx_reopen;
+sig_atomic_t  ngx_reopen;        /* worker重新打开 */
 
 sig_atomic_t  ngx_change_binary;
 ngx_pid_t     ngx_new_binary;
@@ -203,6 +203,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
             continue;
         }
 
+        /* 如果是master退出，则通知所有的worker进程退出 */
         if (ngx_quit) {
             ngx_signal_worker_processes(cycle,
                                         ngx_signal_value(NGX_SHUTDOWN_SIGNAL));
@@ -437,7 +438,7 @@ ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn)
 }
 
 
-/* 将刚创建的子进程的消息发送给其他的子进程，特别是进程的pid
+/* 将刚创建的子进程的消息发送给其他所有的子进程，特别是进程的pid
   * 和进程通信的socket文件描述符以及进程在进程数组中的索引
   */
 static void
@@ -472,6 +473,7 @@ ngx_pass_open_channel(ngx_cycle_t *cycle, ngx_channel_t *ch)
 }
 
 
+/* 向所有的worker进程发送信号 */
 static void
 ngx_signal_worker_processes(ngx_cycle_t *cycle, int signo)
 {
@@ -526,11 +528,13 @@ ngx_signal_worker_processes(ngx_cycle_t *cycle, int signo)
             continue;
         }
 
+        /* 如果是刚刚创建的子进程，则不作处理，然后就修改当前worker进程 */
         if (ngx_processes[i].just_spawn) {
             ngx_processes[i].just_spawn = 0;
             continue;
         }
 
+        /* 如果是正在退出，并且收到关闭信号 */
         if (ngx_processes[i].exiting
             && signo == ngx_signal_value(NGX_SHUTDOWN_SIGNAL))
         {
@@ -538,10 +542,12 @@ ngx_signal_worker_processes(ngx_cycle_t *cycle, int signo)
         }
 
         if (ch.command) {
+            /* 向索引为i的进程发送信号 */
             if (ngx_write_channel(ngx_processes[i].channel[0],
                                   &ch, sizeof(ngx_channel_t), cycle->log)
                 == NGX_OK)
             {
+                /* 如果不是重新打开信号，则标记相应的进程为正在退出状态 */
                 if (signo != ngx_signal_value(NGX_REOPEN_SIGNAL)) {
                     ngx_processes[i].exiting = 1;
                 }
@@ -588,6 +594,7 @@ ngx_reap_children(ngx_cycle_t *cycle)
     ch.fd = -1;
 
     live = 0;
+    /* 扫描所有子进程 */
     for (i = 0; i < ngx_last_process; i++) {
 
         ngx_log_debug7(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
@@ -600,6 +607,7 @@ ngx_reap_children(ngx_cycle_t *cycle)
                        ngx_processes[i].respawn,
                        ngx_processes[i].just_spawn);
 
+        /* 进程无效 */
         if (ngx_processes[i].pid == -1) {
             continue;
         }
@@ -701,6 +709,7 @@ ngx_reap_children(ngx_cycle_t *cycle)
 }
 
 
+/* master进程退出 */
 static void
 ngx_master_process_exit(ngx_cycle_t *cycle)
 {
@@ -760,7 +769,9 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
     /* worker进程的主循环 */
     for ( ;; ) {
 
-        /* 处理nginx退出 */
+        /*  如果通过通道接受到退出的命令，则worker进程会退出，
+          *  注意这里的退出，是会有序的释放资源
+          */
         if (ngx_exiting) {
             ngx_event_cancel_timers();
 
@@ -787,6 +798,7 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
             ngx_quit = 0;
             ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0,
                           "gracefully shutting down");
+            /* 设置进程的title */
             ngx_setproctitle("worker process is shutting down");
 
             if (!ngx_exiting) {
@@ -990,6 +1002,7 @@ ngx_worker_process_exit(ngx_cycle_t *cycle)
     ngx_uint_t         i;
     ngx_connection_t  *c;
 
+    /* 执行每个模块的进程退出回调函数，相当于是释放资源 */
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->exit_process) {
             ngx_modules[i]->exit_process(cycle);
@@ -1064,6 +1077,7 @@ ngx_channel_handler(ngx_event_t *ev)
 
     for ( ;; ) {
 
+        /* 从连接中的socket文件描述符中读取通道数据 */
         n = ngx_read_channel(c->fd, &ch, sizeof(ngx_channel_t), ev->log);
 
         ngx_log_debug1(NGX_LOG_DEBUG_CORE, ev->log, 0, "channel: %i", n);
@@ -1094,7 +1108,7 @@ ngx_channel_handler(ngx_event_t *ev)
         switch (ch.command) {
 
         case NGX_CMD_QUIT:
-            ngx_quit = 1;
+            ngx_quit = 1;   /* 如果worker进程通过通道接收到退出命令，则设置全局变量ngx_quit为1 */
             break;
 
         case NGX_CMD_TERMINATE:
@@ -1104,7 +1118,9 @@ ngx_channel_handler(ngx_event_t *ev)
         case NGX_CMD_REOPEN:
             ngx_reopen = 1;
             break;
-        /* 子进程之间的通信打开通道 */
+        /* 子进程之间的通信打开通道，如master进程将后续创建的子进程的
+          *  pid，fd，以及slot发送过来，高速之前创建的进程怎么和后续创建的进程通信 
+          */
         case NGX_CMD_OPEN_CHANNEL:
 
             ngx_log_debug3(NGX_LOG_DEBUG_CORE, ev->log, 0,
@@ -1117,7 +1133,7 @@ ngx_channel_handler(ngx_event_t *ev)
             break;
 
         case NGX_CMD_CLOSE_CHANNEL:
-
+            /* 关闭与相应进程(也就是索引为ch.slot的这个进程的通信信道 */
             ngx_log_debug4(NGX_LOG_DEBUG_CORE, ev->log, 0,
                            "close channel s:%i pid:%P our:%P fd:%d",
                            ch.slot, ch.pid, ngx_processes[ch.slot].pid,

@@ -324,7 +324,7 @@ main(int argc, char *const *argv)
 
 #if !(NGX_WIN32)
 
-    /* 初始化信号处理 */
+    /* 初始化信号处理，后续创建的所有子进程都会继承该函数注册的信号处理 */
     if (ngx_init_signals(cycle->log) != NGX_OK) {
         return 1;
     }

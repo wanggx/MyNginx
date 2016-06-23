@@ -881,6 +881,7 @@ ngx_configure_listening_sockets(ngx_cycle_t *cycle)
 }
 
 
+/* worker进程退出时，关闭监听套接字 */
 void
 ngx_close_listening_sockets(ngx_cycle_t *cycle)
 {
@@ -896,6 +897,9 @@ ngx_close_listening_sockets(ngx_cycle_t *cycle)
     ngx_use_accept_mutex = 0;
 
     ls = cycle->listening.elts;
+    /* 循环扫描所有监听套接字，将监听套接字的所有连接给释放掉，
+      * 然后再依次关闭监听套接字本身
+      */
     for (i = 0; i < cycle->listening.nelts; i++) {
 
         c = ls[i].connection;
@@ -932,6 +936,7 @@ ngx_close_listening_sockets(ngx_cycle_t *cycle)
 
 #if (NGX_HAVE_UNIX_DOMAIN)
 
+        /* 如果是unix域套接字，则删除对应的地址文件 */
         if (ls[i].sockaddr->sa_family == AF_UNIX
             && ngx_process <= NGX_PROCESS_MASTER
             && ngx_new_binary == 0)
@@ -946,6 +951,7 @@ ngx_close_listening_sockets(ngx_cycle_t *cycle)
 
 #endif
 
+        /* 设置监听套接字的文件描述符无效 */
         ls[i].fd = (ngx_socket_t) -1;
     }
 

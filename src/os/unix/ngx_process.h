@@ -30,11 +30,12 @@ typedef struct {
     void               *data; /* 进程初始化传递的参数 */
     char               *name; /* 进程的名称如worker process或者master process*/
 
-    unsigned            respawn:1;  /* 记录进程的创建方式 */
+    /* 记录进程的创建方式，如果worker进程死掉，则master会再次创建一个worker进程 */
+    unsigned            respawn:1;  
     unsigned            just_spawn:1;
     unsigned            detached:1;
-    unsigned            exiting:1;
-    unsigned            exited:1;
+    unsigned            exiting:1;         /* 正在退出 */
+    unsigned            exited:1;          /* 已经退出，1表示已退出 */
 } ngx_process_t;
 
 
@@ -47,12 +48,16 @@ typedef struct {
 
 
 #define NGX_MAX_PROCESSES         1024
-
-#define NGX_PROCESS_NORESPAWN     -1   /* 子进程退出时，父进程不会再次创建 */
+/* 子进程退出时，父进程不会再次创建 */
+#define NGX_PROCESS_NORESPAWN     -1   
+/* master重新load的时候，会重新创建worker进程，
+  * 然后将之前的worker进程都给关闭掉，JUST就是表示进程是刚刚创建的
+  */
 #define NGX_PROCESS_JUST_SPAWN    -2
 /* 子进程异常退出时，master会重新创建它，如当worker和cache manager异常退出时，父进程会重新创建它 */
 #define NGX_PROCESS_RESPAWN       -3   
 #define NGX_PROCESS_JUST_RESPAWN  -4
+/* 热代码替换，就是不重启nginx的情况下进行软件升级 */
 #define NGX_PROCESS_DETACHED      -5
 
 

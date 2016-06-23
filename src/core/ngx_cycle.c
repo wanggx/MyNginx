@@ -1111,6 +1111,7 @@ ngx_test_lockfile(u_char *file, ngx_log_t *log)
 }
 
 
+/* 重新打开cycle中的已经打开的文件 */
 void
 ngx_reopen_files(ngx_cycle_t *cycle, ngx_uid_t user)
 {

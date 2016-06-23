@@ -46,7 +46,7 @@ ngx_int_t        ngx_last_process;   /* 最后一个进程的索引值 */
   */
 ngx_process_t    ngx_processes[NGX_MAX_PROCESSES];  
 
-
+/* 进程的信号数组，进程之间相互发送的信号以及信号处理句柄 */
 ngx_signal_t  signals[] = {
     { ngx_signal_value(NGX_RECONFIGURE_SIGNAL),
       "SIG" ngx_value(NGX_RECONFIGURE_SIGNAL),
@@ -101,7 +101,9 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     u_long     on;
     ngx_pid_t  pid;
     ngx_int_t  s;
-    /* 如果respawn参数大于0，则相当于创建某个指定的进程 */
+    /* 如果respawn参数大于0，则相当于创建某个指定的进程，
+      * 也就是直接使用respawn作为数组中的索引
+      */
     if (respawn >= 0) {
         s = respawn;
 
@@ -240,8 +242,10 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
 
     /* 设置子进程的相关信息 */
     ngx_processes[s].pid = pid;
+    /* 表示进程没有退出 */
     ngx_processes[s].exited = 0;
 
+    /* 如果启动的是指定进程，则直接返回 */
     if (respawn >= 0) {
         return pid;
     }
@@ -273,7 +277,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         ngx_processes[s].detached = 0;
         break;
 
-    case NGX_PROCESS_JUST_RESPAWN:
+    case NGX_PROCESS_JUST_RESPAWN:   /*  注意这个标记对应了两个值 */
         ngx_processes[s].respawn = 1;
         ngx_processes[s].just_spawn = 1;
         ngx_processes[s].detached = 0;
@@ -346,6 +350,7 @@ ngx_init_signals(ngx_log_t *log)
 }
 
 
+/* 信号处理句柄 */
 void
 ngx_signal_handler(int signo)
 {
@@ -430,6 +435,10 @@ ngx_signal_handler(int signo)
             break;
 
         case SIGCHLD:
+            /*  worker进程退出后，会给master进程发送SIGCHLD信号，
+              *  然后master进程开始回收worker进程资源，如ngx_processes
+              *  数组中内容 
+              */
             ngx_reap = 1;
             break;
         }
@@ -481,6 +490,9 @@ ngx_signal_handler(int signo)
                       "before either old or new binary's process");
     }
 
+    /* 如果master进程收到了worker进程的的退出信号，
+      * 则master进程就会去获取worker进程的退出状态以做相应的处理
+      */
     if (signo == SIGCHLD) {
         ngx_process_get_status();
     }
@@ -502,6 +514,7 @@ ngx_process_get_status(void)
     one = 0;
 
     for ( ;; ) {
+        /* 等待所有的子进程，非阻塞 */
         pid = waitpid(-1, &status, WNOHANG);
 
         if (pid == 0) {
@@ -570,6 +583,7 @@ ngx_process_get_status(void)
                           process, pid, WEXITSTATUS(status));
         }
 
+        /* 如果进程退出返回值是2，则worker进程就不用重新启动了 */
         if (WEXITSTATUS(status) == 2 && ngx_processes[i].respawn) {
             ngx_log_error(NGX_LOG_ALERT, ngx_cycle->log, 0,
                           "%s %P exited with fatal code %d "
@@ -582,7 +596,7 @@ ngx_process_get_status(void)
     }
 }
 
-
+/* 将进程占用的锁资源给释放掉 */
 static void
 ngx_unlock_mutexes(ngx_pid_t pid)
 {
