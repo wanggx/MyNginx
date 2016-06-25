@@ -50,10 +50,24 @@ ngx_atomic_t         *ngx_connection_counter = &connection_counter;
 
 
 ngx_atomic_t         *ngx_accept_mutex_ptr;
+
+/* 进程accept的锁，规定一个进程一次可以accept多次，
+  * 还是每次只能accept一次，nginx规定在同一时刻只有唯一 
+  * 一个worker子进程监听web端口，这就不会发生惊群现象了， 
+  * 此时新连接时间只能唤醒唯一的正在监听端口的worker子进程 
+  * 只有调用ngx_trylock_accept_mutex方法之后，当前的worker进程才会 
+  * 去试着监听web端口  
+  */
 ngx_shmtx_t           ngx_accept_mutex;
+/* 表示用accept锁来解决惊群现象
+  */
 ngx_uint_t            ngx_use_accept_mutex;
 ngx_uint_t            ngx_accept_events;
+/* 表明当前worker进程是否持有ngx_accept_mutex锁
+  */
 ngx_uint_t            ngx_accept_mutex_held;
+/* 该变量通过配置文件中来获取值，worker抢锁失败后，多久再去抢锁
+  */
 ngx_msec_t            ngx_accept_mutex_delay;
 ngx_int_t             ngx_accept_disabled;
 
@@ -216,19 +230,34 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 #endif
     }
 
+    /* 如果使用accept锁，则需要处理锁竞争  */
     if (ngx_use_accept_mutex) {
+
+        /* 负载均衡处理，表示当前worker进程并不会再一次去获取accept锁，
+          * 而是继续处理之前的事件
+          */
         if (ngx_accept_disabled > 0) {
             ngx_accept_disabled--;
 
         } else {
+            /* 试图获取accept的机会，此时是多个进程是互斥的获取连接套接字，
+              * 只有调用ngx_trylock_accept_mutex方法后，当前的worker进程才会去试着监听web端口。
+              */
             if (ngx_trylock_accept_mutex(cycle) == NGX_ERROR) {
                 return;
             }
 
             if (ngx_accept_mutex_held) {
+                /* 给flag增加NGX_POST_EVENTS标记，这个标记作为处理事件核心函数
+                  * ngx_process_events的一个参数，这个函数中的所有事件将延后处理，会把accept事件 
+                  * 都放到ngx_posted_accept_events链表中 
+                  */
                 flags |= NGX_POST_EVENTS;
 
             } else {
+                /* 获取锁失败，意味着既不能让当前进程频繁的试图抢锁，也不能让它经过太长时间
+                  * 再去抢
+                  */
                 if (timer == NGX_TIMER_INFINITE
                     || timer > ngx_accept_mutex_delay)
                 {
@@ -238,6 +267,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
         }
     }
 
+    /* 计算ngx_process_events消耗的时间 */
     delta = ngx_current_msec;
 
     /* 开始处理事件 */
@@ -248,13 +278,21 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                    "timer delta: %M", delta);
 
-    /* 处理接受队列中的事件 */
+    /* 处理接受队列中的事件，此处ngx_posted_accept_events队列中的
+      * 事件是在ngx_process_events函数当中flags为NGX_POST_EVENTS时 
+      * 添加的，唯一影响的是对事件处理的时间计算，如delta的计算 
+      */
     ngx_event_process_posted(cycle, &ngx_posted_accept_events);
 
+    /* 注意这里是放开锁，但是并没有修改持有锁的标记
+      * 因为在下一次，如果当前进程再一次连续的获取锁时， 
+      * 就没有必要在进行添加监听套接字的操作  
+      */
     if (ngx_accept_mutex_held) {
         ngx_shmtx_unlock(&ngx_accept_mutex);
     }
 
+    /* 如果延迟大于0 */
     if (delta) {
         ngx_event_expire_timers();
     }
@@ -519,6 +557,7 @@ ngx_event_module_init(ngx_cycle_t *cycle)
     ngx_accept_mutex_ptr = (ngx_atomic_t *) shared;
     ngx_accept_mutex.spin = (ngx_uint_t) -1;
 
+    /* 创建accept锁 */
     if (ngx_shmtx_create(&ngx_accept_mutex, (ngx_shmtx_sh_t *) shared,
                          cycle->lock_file.data)
         != NGX_OK)
@@ -891,7 +930,7 @@ ngx_send_lowat(ngx_connection_t *c, size_t lowat)
     return NGX_OK;
 }
 
-
+/* 时间模型的解析，就相当于http大模块的解析 */
 static char *
 ngx_events_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {

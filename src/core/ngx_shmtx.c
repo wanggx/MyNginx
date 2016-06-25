@@ -28,6 +28,7 @@ ngx_shmtx_create(ngx_shmtx_t *mtx, ngx_shmtx_sh_t *addr, u_char *name)
 
 #if (NGX_HAVE_POSIX_SEM)
 
+    /* 如果有信号量的支持 */
     mtx->wait = &addr->wait;
 
     if (sem_init(&mtx->sem, 1, 0) == -1) {
@@ -199,6 +200,7 @@ ngx_shmtx_wakeup(ngx_shmtx_t *mtx)
 #else
 
 
+/* 共享锁的创建，利用文件来达到目的  */
 ngx_int_t
 ngx_shmtx_create(ngx_shmtx_t *mtx, ngx_shmtx_sh_t *addr, u_char *name)
 {
@@ -241,7 +243,7 @@ ngx_shmtx_destroy(ngx_shmtx_t *mtx)
     }
 }
 
-
+/* 视图锁住锁，返回1表示成功锁住 */
 ngx_uint_t
 ngx_shmtx_trylock(ngx_shmtx_t *mtx)
 {

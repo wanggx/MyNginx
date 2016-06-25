@@ -50,7 +50,7 @@ ngx_event_find_timer(void)
     return (ngx_msec_t) (timer > 0 ? timer : 0);
 }
 
-
+/* 触发时钟事件 */
 void
 ngx_event_expire_timers(void)
 {

@@ -610,6 +610,7 @@ ngx_trylock_fd(ngx_fd_t fd)
     fl.l_type = F_WRLCK;
     fl.l_whence = SEEK_SET;
 
+    /* 如果无法建立锁，则立即返回 */
     if (fcntl(fd, F_SETLK, &fl) == -1) {
         return ngx_errno;
     }
@@ -627,6 +628,7 @@ ngx_lock_fd(ngx_fd_t fd)
     fl.l_type = F_WRLCK;
     fl.l_whence = SEEK_SET;
 
+    /* 如果当前无法获取锁，则一直等待 */
     if (fcntl(fd, F_SETLKW, &fl) == -1) {
         return ngx_errno;
     }

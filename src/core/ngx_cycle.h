@@ -58,7 +58,7 @@ struct ngx_cycle_s {
     ngx_queue_t               reusable_connections_queue;
 
     ngx_array_t               listening;         /* 监听数组 */
-    ngx_array_t               paths;             /* 路径数组 */
+    ngx_array_t               paths;             /* 路径数组，设定的缓存路径 */
     ngx_array_t               config_dump;
     ngx_list_t                open_files;        /* 打开文件列表 */
     ngx_list_t                shared_memory;     /* 共享内存链，ngx_shm_zone_t结构  */

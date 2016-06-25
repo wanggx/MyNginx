@@ -32,7 +32,8 @@ struct ngx_event_s {
 
     unsigned         write:1;
 
-    unsigned         accept:1;
+    /* 表示事件是不是accept事件 */
+    unsigned         accept:1; 
 
     /* used to detect the stale events in kqueue and epoll */
     unsigned         instance:1;
@@ -41,6 +42,7 @@ struct ngx_event_s {
      * the event was passed or would be passed to a kernel;
      * in aio mode - operation was posted.
      */
+    /* 时间是否在活跃状态 */
     unsigned         active:1;
 
     unsigned         disabled:1;
@@ -441,6 +443,7 @@ typedef struct {
     ngx_flag_t    multi_accept;
     ngx_flag_t    accept_mutex;
 
+    /* worker抢锁失败后，隔多久再次抢锁 */
     ngx_msec_t    accept_mutex_delay;
 
     u_char       *name;

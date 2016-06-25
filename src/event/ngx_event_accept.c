@@ -70,7 +70,7 @@ ngx_event_accept(ngx_event_t *ev)
         s = accept(lc->fd, (struct sockaddr *) sa, &socklen);
 #endif
 
-        /* accept失败 */
+        /* accept失败，则会丢弃该链接  */
         if (s == (ngx_socket_t) -1) {
             err = ngx_socket_errno;
 
@@ -385,16 +385,20 @@ ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                        "accept mutex locked");
 
+        /* 表示之前一次抢到了锁，接着一次又抢到了锁 */
         if (ngx_accept_mutex_held && ngx_accept_events == 0) {
             return NGX_OK;
         }
 
+        /* 让work进程可以监听所有web端口 */
         if (ngx_enable_accept_events(cycle) == NGX_ERROR) {
             ngx_shmtx_unlock(&ngx_accept_mutex);
             return NGX_ERROR;
         }
 
         ngx_accept_events = 0;
+
+        /* 表示当前持有accept锁 */
         ngx_accept_mutex_held = 1;
 
         return NGX_OK;
@@ -403,18 +407,22 @@ ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                    "accept mutex lock failed: %ui", ngx_accept_mutex_held);
 
+    /* 如果无法获取accept锁，而且又持有锁，
+      * 则让当前worker进程不去监听套接字 
+      */
     if (ngx_accept_mutex_held) {
         if (ngx_disable_accept_events(cycle, 0) == NGX_ERROR) {
             return NGX_ERROR;
         }
 
+        /* 设置不持有锁 */
         ngx_accept_mutex_held = 0;
     }
 
     return NGX_OK;
 }
 
-
+/* 将所有监听套接字连接的读事件都添加到epoll监听当中 */
 static ngx_int_t
 ngx_enable_accept_events(ngx_cycle_t *cycle)
 {
@@ -439,7 +447,9 @@ ngx_enable_accept_events(ngx_cycle_t *cycle)
     return NGX_OK;
 }
 
-
+/* 将所有监听套接字的读事件从事件模型中移除，避免惊群现象发生
+  * 该函数只在两个地方调用ngx_trylock_accept_mutex和ngx_accept_event
+  */
 static ngx_int_t
 ngx_disable_accept_events(ngx_cycle_t *cycle, ngx_uint_t all)
 {
