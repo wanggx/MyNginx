@@ -34,7 +34,7 @@ struct ngx_http_proxy_rewrite_s {
     ngx_http_complex_value_t       replacement;
 };
 
-
+/* 代理中变量的结构 */
 typedef struct {
     ngx_str_t                      key_start;
     ngx_str_t                      schema;
@@ -75,12 +75,14 @@ typedef struct {
 
     ngx_str_t                      method;
     ngx_str_t                      location;
+    /* 如proxy_pass http://baidu.com，则url为http://baidu.com */
     ngx_str_t                      url;
 
 #if (NGX_HTTP_CACHE)
     ngx_http_complex_value_t       cache_key;
 #endif
 
+    /* 代理中的一些变量，也就是proxy_pass后面以$开头的变量 */
     ngx_http_proxy_vars_t          vars;
 
     ngx_flag_t                     redirect;
@@ -821,7 +823,7 @@ static ngx_path_init_t  ngx_http_proxy_temp_path = {
     ngx_string(NGX_HTTP_PROXY_TEMP_PATH), { 1, 2, 0 }
 };
 
-
+/* proxy_pass命令的回调处理句柄 */
 static ngx_int_t
 ngx_http_proxy_handler(ngx_http_request_t *r)
 {
@@ -1125,7 +1127,7 @@ ngx_http_proxy_create_key(ngx_http_request_t *r)
 
 #endif
 
-
+/* 创建向上游服务器发送的请求 */
 static ngx_int_t
 ngx_http_proxy_create_request(ngx_http_request_t *r)
 {
@@ -2889,7 +2891,7 @@ ngx_http_proxy_create_loc_conf(ngx_conf_t *cf)
     return conf;
 }
 
-
+/* 合并代理模块的本地化配置 */
 static char *
 ngx_http_proxy_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 {
@@ -2930,6 +2932,7 @@ ngx_http_proxy_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_uint_value(conf->upstream.next_upstream_tries,
                               prev->upstream.next_upstream_tries, 0);
 
+    /* 默认是开启缓存的 */
     ngx_conf_merge_value(conf->upstream.buffering,
                               prev->upstream.buffering, 1);
 
@@ -2960,6 +2963,7 @@ ngx_http_proxy_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_size_value(conf->upstream.send_lowat,
                               prev->upstream.send_lowat, 0);
 
+    /* 缓存大小默认为一页 */
     ngx_conf_merge_size_value(conf->upstream.buffer_size,
                               prev->upstream.buffer_size,
                               (size_t) ngx_pagesize);
@@ -3629,6 +3633,7 @@ ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     /* 此处就是配置当中的https://baidu.com */
     url = &value[1];
 
+    /* 获取url中变量个数 */
     n = ngx_http_script_variables_count(url);
 
     if (n) {
@@ -3724,6 +3729,7 @@ ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 
+/* proxy_redirect命令的解析函数 */
 static char *
 ngx_http_proxy_redirect(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -4360,7 +4366,7 @@ ngx_http_proxy_set_ssl(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *plcf)
 
 #endif
 
-
+/* 通过ngx_url_t来设置变量v的值 */
 static void
 ngx_http_proxy_set_vars(ngx_url_t *u, ngx_http_proxy_vars_t *v)
 {

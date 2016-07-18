@@ -163,7 +163,7 @@ typedef struct {
     ngx_uint_t                       next_upstream;
     ngx_uint_t                       store_access;
     ngx_uint_t                       next_upstream_tries;
-    ngx_flag_t                       buffering;
+    ngx_flag_t                       buffering;      /* nginx是否开启缓存 */
     ngx_flag_t                       request_buffering;
     ngx_flag_t                       pass_request_headers;
     ngx_flag_t                       pass_request_body;
@@ -303,19 +303,19 @@ struct ngx_http_upstream_s {
 
     ngx_event_pipe_t                *pipe;
 
-    ngx_chain_t                     *request_bufs;
+    ngx_chain_t                     *request_bufs;  /* 发给上游服务器的请求，由create_request()完成 */
 
     ngx_output_chain_ctx_t           output;
     ngx_chain_writer_ctx_t           writer;
 
-    ngx_http_upstream_conf_t        *conf;
+    ngx_http_upstream_conf_t        *conf;    /* 超时时间等限制性参数 */
 #if (NGX_HTTP_CACHE)
     ngx_array_t                     *caches;
 #endif
 
     ngx_http_upstream_headers_in_t   headers_in;
 
-    ngx_http_upstream_resolved_t    *resolved;
+    ngx_http_upstream_resolved_t    *resolved;  /* 用于直接指定的上游服务器地址 */
 
     ngx_buf_t                        from_client;
 
@@ -326,18 +326,18 @@ struct ngx_http_upstream_s {
     ngx_chain_t                     *busy_bufs;
     ngx_chain_t                     *free_bufs;
 
-    ngx_int_t                      (*input_filter_init)(void *data);
-    ngx_int_t                      (*input_filter)(void *data, ssize_t bytes);
+    ngx_int_t                      (*input_filter_init)(void *data);         /* 处理上游包体 */
+    ngx_int_t                      (*input_filter)(void *data, ssize_t bytes);  
     void                            *input_filter_ctx;
 
 #if (NGX_HTTP_CACHE)
     ngx_int_t                      (*create_key)(ngx_http_request_t *r);
 #endif
-    ngx_int_t                      (*create_request)(ngx_http_request_t *r);
-    ngx_int_t                      (*reinit_request)(ngx_http_request_t *r);
-    ngx_int_t                      (*process_header)(ngx_http_request_t *r);
+    ngx_int_t                      (*create_request)(ngx_http_request_t *r);   /* 构造向上游服务器发送的请求内容 */
+    ngx_int_t                      (*reinit_request)(ngx_http_request_t *r);    /* 第一次向上游服务器建立连接失败时调用 */
+    ngx_int_t                      (*process_header)(ngx_http_request_t *r);  /* 收到上游服务器后对包头进行处理的方法 */
     void                           (*abort_request)(ngx_http_request_t *r);
-    void                           (*finalize_request)(ngx_http_request_t *r,
+    void                           (*finalize_request)(ngx_http_request_t *r,     /* 销毁upstream请求时使用 */
                                          ngx_int_t rc);
     ngx_int_t                      (*rewrite_redirect)(ngx_http_request_t *r,
                                          ngx_table_elt_t *h, size_t prefix);
@@ -366,7 +366,7 @@ struct ngx_http_upstream_s {
     unsigned                         cache_status:3;
 #endif
 
-    unsigned                         buffering:1;
+    unsigned                         buffering:1;   /* 表示是否缓存 */
     unsigned                         keepalive:1;
     unsigned                         upgrade:1;
 

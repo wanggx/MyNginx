@@ -314,6 +314,7 @@ ngx_http_set_predicate_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 
+/*  判断value中变量的个数，也就是字符串中字符 $ 的个数  */
 ngx_uint_t
 ngx_http_script_variables_count(ngx_str_t *value)
 {

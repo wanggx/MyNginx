@@ -73,9 +73,9 @@ typedef struct {
     ngx_str_t                 name;
 } ngx_addr_t;
 
-
+/* url½á¹¹ */
 typedef struct {
-    ngx_str_t                 url;
+    ngx_str_t                 url;    /* url×Ö·û´® */
     ngx_str_t                 host;
     ngx_str_t                 port_text;
     ngx_str_t                 uri;

@@ -580,6 +580,7 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
         u->request_bufs = r->request_body->bufs;
     }
 
+    /* 创建nginx向上游服务器发送的请求 */
     if (u->create_request(r) != NGX_OK) {
         ngx_http_finalize_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;

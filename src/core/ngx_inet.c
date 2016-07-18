@@ -628,7 +628,7 @@ ngx_parse_unix_domain_url(ngx_pool_t *pool, ngx_url_t *u)
 #endif
 }
 
-
+/* 解析inet协议url也就是ipv4 */
 static ngx_int_t
 ngx_parse_inet_url(ngx_pool_t *pool, ngx_url_t *u)
 {
