@@ -64,7 +64,7 @@ typedef struct {
 #if (NGX_HTTP_CACHE)
     ngx_http_proxy_headers_t       headers_cache;
 #endif
-    ngx_array_t                   *headers_source;
+    ngx_array_t                   *headers_source;  /*  存放proxy_set_header设定的键值对 */
 
     ngx_array_t                   *proxy_lengths;
     ngx_array_t                   *proxy_values;
@@ -85,7 +85,7 @@ typedef struct {
     /* 代理中的一些变量，也就是proxy_pass后面以$开头的变量 */
     ngx_http_proxy_vars_t          vars;
 
-    ngx_flag_t                     redirect;
+    ngx_flag_t                     redirect;           /* 重定向标记 */
 
     ngx_uint_t                     http_version;
 
@@ -3364,7 +3364,7 @@ ngx_http_proxy_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     return NGX_CONF_OK;
 }
 
-
+/*  初始化代理的头部 */
 static ngx_int_t
 ngx_http_proxy_init_headers(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *conf,
     ngx_http_proxy_headers_t *headers, ngx_keyval_t *default_headers)

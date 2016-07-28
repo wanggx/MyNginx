@@ -18,7 +18,7 @@ typedef struct {
     u_char     *data;
 } ngx_str_t;
 
-
+/* proxy_set_header表示的变量的key/value */
 typedef struct {
     ngx_str_t   key;
     ngx_str_t   value;

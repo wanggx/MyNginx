@@ -928,7 +928,7 @@ ngx_http_core_find_config_phase(ngx_http_request_t *r,
     r->uri_changed = 0;
 
     rc = ngx_http_core_find_location(r);
-
+    /* 如果location查找失败，则返回服务器内部错误 */
     if (rc == NGX_ERROR) {
         ngx_http_finalize_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
         return NGX_OK;

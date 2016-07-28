@@ -501,6 +501,7 @@ ngx_event_module_init(ngx_cycle_t *cycle)
             && (ccf->rlimit_nofile == NGX_CONF_UNSET
                 || ecf->connections > (ngx_uint_t) ccf->rlimit_nofile))
         {
+            /* 获取当前进程能够打开的最大文件数 */
             limit = (ccf->rlimit_nofile == NGX_CONF_UNSET) ?
                          (ngx_int_t) rlmt.rlim_cur : ccf->rlimit_nofile;
 
@@ -1013,7 +1014,7 @@ ngx_events_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/* 设置工作进程的连接数 */
 static char *
 ngx_event_connections(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {

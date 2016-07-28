@@ -156,11 +156,11 @@ typedef enum {
     NGX_HTTP_KEEPALIVE_STATE
 } ngx_http_state_e;
 
-
+/* http协议头部变量结构 */
 typedef struct {
-    ngx_str_t                         name;
-    ngx_uint_t                        offset;
-    ngx_http_header_handler_pt        handler;
+    ngx_str_t                         name;        /* 变量名称 */
+    ngx_uint_t                        offset;      /* 变量在ngx_http_headers_in_t结构中的偏移 */
+    ngx_http_header_handler_pt        handler;  /* 头部对应的回调处理函数 */
 } ngx_http_header_t;
 
 
@@ -169,7 +169,7 @@ typedef struct {
     ngx_uint_t                        offset;
 } ngx_http_header_out_t;
 
-
+/* http协议头部结构 */
 typedef struct {
     ngx_list_t                        headers;
 
@@ -180,11 +180,11 @@ typedef struct {
     ngx_table_elt_t                  *if_match;
     ngx_table_elt_t                  *if_none_match;
     ngx_table_elt_t                  *user_agent;
-    ngx_table_elt_t                  *referer;
+    ngx_table_elt_t                  *referer;              /* 对于超链接，记录当前请求是从哪个页面的超链接指向的 */
     ngx_table_elt_t                  *content_length;
     ngx_table_elt_t                  *content_type;
 
-    ngx_table_elt_t                  *range;
+    ngx_table_elt_t                  *range;    /* http中的断点续传，指定第一个字节的位置和最后一个字节的位置  */
     ngx_table_elt_t                  *if_range;
 
     ngx_table_elt_t                  *transfer_encoding;
@@ -201,11 +201,11 @@ typedef struct {
     ngx_table_elt_t                  *keep_alive;
 
 #if (NGX_HTTP_X_FORWARDED_FOR)
-    ngx_array_t                       x_forwarded_for;
+    ngx_array_t                       x_forwarded_for;   /* 表示请求经过的代理 */
 #endif
 
 #if (NGX_HTTP_REALIP)
-    ngx_table_elt_t                  *x_real_ip;
+    ngx_table_elt_t                  *x_real_ip;          /* 表示请求的真实ip地址 */
 #endif
 
 #if (NGX_HTTP_HEADERS)
@@ -225,18 +225,18 @@ typedef struct {
 
     ngx_array_t                       cookies;
 
-    ngx_str_t                         server;
+    ngx_str_t                         server;           /* 请求的服务器 */
     off_t                             content_length_n;
     time_t                            keep_alive_n;
 
     unsigned                          connection_type:2;
     unsigned                          chunked:1;
-    unsigned                          msie:1;
+    unsigned                          msie:1;              /* ie标记 */
     unsigned                          msie6:1;
-    unsigned                          opera:1;
+    unsigned                          opera:1;           /* opera浏览器标记 */
     unsigned                          gecko:1;
-    unsigned                          chrome:1;
-    unsigned                          safari:1;
+    unsigned                          chrome:1;       /* chrome浏览器标记 */
+    unsigned                          safari:1;         /*  safari浏览器标记 */
     unsigned                          konqueror:1;
 } ngx_http_headers_in_t;
 
@@ -254,7 +254,7 @@ typedef struct {
     ngx_table_elt_t                  *location;
     ngx_table_elt_t                  *refresh;
     ngx_table_elt_t                  *last_modified;
-    ngx_table_elt_t                  *content_range;
+    ngx_table_elt_t                  *content_range;   /* 断点续传的响应 */
     ngx_table_elt_t                  *accept_ranges;
     ngx_table_elt_t                  *www_authenticate;
     ngx_table_elt_t                  *expires;

@@ -354,6 +354,7 @@ struct ngx_http_core_loc_conf_s {
     /* 静态location的数 */
     ngx_http_location_tree_node_t   *static_locations;
 #if (NGX_PCRE)
+    /* 对应的正则表达式的location */
     ngx_http_core_loc_conf_t       **regex_locations;
 #endif
 

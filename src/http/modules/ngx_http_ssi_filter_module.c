@@ -18,7 +18,7 @@
 
 
 typedef struct {
-    ngx_flag_t    enable;
+    ngx_flag_t    enable;             /* 表示ssi是否可用 */
     ngx_flag_t    silent_errors;
     ngx_flag_t    ignore_recycled_buffers;
     ngx_flag_t    last_modified;

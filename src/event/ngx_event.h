@@ -437,7 +437,7 @@ extern ngx_os_io_t  ngx_io;
 
 
 typedef struct {
-    ngx_uint_t    connections;
+    ngx_uint_t    connections;     /* 表示在nginx.conf中设置的工作进程的连接数 */
     ngx_uint_t    use;
 
     ngx_flag_t    multi_accept;
