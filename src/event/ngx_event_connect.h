@@ -33,7 +33,7 @@ typedef void (*ngx_event_save_peer_session_pt)(ngx_peer_connection_t *pc,
     void *data);
 #endif
 
-
+/* 代理当中和后端服务器的连接结构 */
 struct ngx_peer_connection_s {
     ngx_connection_t                *connection;
 

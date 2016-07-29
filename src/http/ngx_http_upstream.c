@@ -743,6 +743,7 @@ found:
     u->ssl_name = uscf->host;
 #endif
 
+    /* 初始化对等连接 */
     if (uscf->peer.init(r, uscf) != NGX_OK) {
         ngx_http_upstream_finalize_request(r, u,
                                            NGX_HTTP_INTERNAL_SERVER_ERROR);
@@ -1089,7 +1090,7 @@ failed:
     ngx_http_run_posted_requests(c);
 }
 
-
+/* nginx和后台集群连接的读写操作 */
 static void
 ngx_http_upstream_handler(ngx_event_t *ev)
 {
@@ -1361,6 +1362,7 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     u->state->peer = u->peer.name;
 
+    /* 判断后台集群的状态 */
     if (rc == NGX_BUSY) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "no live upstreams");
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_NOLIVE);
@@ -1381,6 +1383,7 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     c->write->handler = ngx_http_upstream_handler;
     c->read->handler = ngx_http_upstream_handler;
 
+    /* 设置集群读写事件的回调 */
     u->write_event_handler = ngx_http_upstream_send_request_handler;
     u->read_event_handler = ngx_http_upstream_process_header;
 
@@ -1776,7 +1779,7 @@ ngx_http_upstream_reinit(ngx_http_request_t *r, ngx_http_upstream_t *u)
     return NGX_OK;
 }
 
-
+/* nginx向后台集群服务器发送请求 */
 static void
 ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
     ngx_uint_t do_write)

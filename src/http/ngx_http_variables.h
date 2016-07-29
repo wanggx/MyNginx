@@ -64,7 +64,7 @@ typedef struct {
     ngx_int_t                     index;
 } ngx_http_regex_variable_t;
 
-
+/* 对正则表达式的封装 */
 typedef struct {
     ngx_regex_t                  *regex;
     ngx_uint_t                    ncaptures;

@@ -63,12 +63,12 @@ struct ngx_http_upstream_rr_peers_s {
 
     ngx_uint_t                      total_weight;
 
-    unsigned                        single:1;
+    unsigned                        single:1;           /* 表示后面的集群是否只有一个 */
     unsigned                        weighted:1;
 
     ngx_str_t                      *name;
 
-    ngx_http_upstream_rr_peers_t   *next;
+    ngx_http_upstream_rr_peers_t   *next;     /* 表示下一个 */
 
     ngx_http_upstream_rr_peer_t    *peer;
 };

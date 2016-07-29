@@ -150,6 +150,7 @@ static ngx_int_t ngx_http_variable_time_local(ngx_http_request_t *r,
  * they are handled using dedicated entries
  */
 
+/* http的核心变量 */
 static ngx_http_variable_t  ngx_http_core_variables[] = {
 
     { ngx_string("http_host"), NULL, ngx_http_variable_header,
@@ -185,6 +186,7 @@ static ngx_http_variable_t  ngx_http_core_variables[] = {
     { ngx_string("binary_remote_addr"), NULL,
       ngx_http_variable_binary_remote_addr, 0, 0, 0 },
 
+    /* 真正发起请求的地址 */
     { ngx_string("remote_addr"), NULL, ngx_http_variable_remote_addr, 0, 0, 0 },
 
     { ngx_string("remote_port"), NULL, ngx_http_variable_remote_port, 0, 0, 0 },

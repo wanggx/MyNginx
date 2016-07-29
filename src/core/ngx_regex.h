@@ -19,7 +19,7 @@
 
 #define NGX_REGEX_CASELESS    PCRE_CASELESS
 
-
+/* 正则表达式结构，通过该结构即可来完成匹配 */
 typedef struct {
     pcre        *code;
     pcre_extra  *extra;

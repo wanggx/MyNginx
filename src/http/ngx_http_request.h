@@ -223,7 +223,7 @@ typedef struct {
     ngx_str_t                         user;
     ngx_str_t                         passwd;
 
-    ngx_array_t                       cookies;
+    ngx_array_t                       cookies;           /* 头部携带的cookie */
 
     ngx_str_t                         server;           /* 请求的服务器 */
     off_t                             content_length_n;
@@ -377,7 +377,7 @@ struct ngx_http_request_s {
 #endif
 
     ngx_http_upstream_t              *upstream;
-    ngx_array_t                      *upstream_states;
+    ngx_array_t                      *upstream_states; /* 集群状态数组 */
                                          /* of ngx_http_upstream_state_t */
 
     ngx_pool_t                       *pool;

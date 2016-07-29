@@ -30,7 +30,7 @@ typedef struct {
 struct ngx_event_s {
     void            *data;   /* 事件携带数据 */
 
-    unsigned         write:1;
+    unsigned         write:1;       /* 标记写事件 */
 
     /* 表示事件是不是accept事件 */
     unsigned         accept:1; 

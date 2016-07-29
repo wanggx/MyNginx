@@ -52,7 +52,7 @@
 #define NGX_HTTP_UPSTREAM_IGN_XA_CHARSET     0x00000100
 #define NGX_HTTP_UPSTREAM_IGN_VARY           0x00000200
 
-
+/* 集群状态结构 */
 typedef struct {
     ngx_msec_t                       bl_time;
     ngx_uint_t                       bl_state;
@@ -69,7 +69,7 @@ typedef struct {
 
 typedef struct {
     ngx_hash_t                       headers_in_hash;
-    ngx_array_t                      upstreams;
+    ngx_array_t                      upstreams;   /* main配置记录了多个srv配置 */
                                              /* ngx_http_upstream_srv_conf_t */
 } ngx_http_upstream_main_conf_t;
 
@@ -108,7 +108,7 @@ typedef struct {
 #define NGX_HTTP_UPSTREAM_DOWN          0x0010
 #define NGX_HTTP_UPSTREAM_BACKUP        0x0020
 
-
+/* upstream模块的服务器配置 */
 struct ngx_http_upstream_srv_conf_s {
     ngx_http_upstream_peer_t         peer;
     void                           **srv_conf;

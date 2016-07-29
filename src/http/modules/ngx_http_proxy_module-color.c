@@ -1,4 +1,5 @@
 
+
 /*
  * Copyright (C) Igor Sysoev
  * Copyright (C) Nginx, Inc.
@@ -69,7 +70,7 @@ typedef struct {
     ngx_array_t                   *proxy_lengths;
     ngx_array_t                   *proxy_values;
 
-    ngx_array_t                   *redirects;
+    ngx_array_t                   *redirects;            /* 代理模块的重定向数组，也就是ngx_http_proxy_rewrite_t数组 */
     ngx_array_t                   *cookie_domains;
     ngx_array_t                   *cookie_paths;
 
@@ -913,6 +914,7 @@ ngx_http_proxy_handler(ngx_http_request_t *r)
         r->request_body_no_buffering = 1;
     }
 
+    /* 读取客户端请求体 */
     rc = ngx_http_read_client_request_body(r, ngx_http_upstream_init);
 
     if (rc >= NGX_HTTP_SPECIAL_RESPONSE) {
@@ -2387,6 +2389,7 @@ ngx_http_proxy_port_variable(ngx_http_request_t *r,
 }
 
 
+/* 设置请求经过的代理，也就是更改http协议头的x_forwarded_for字段  */
 static ngx_int_t
 ngx_http_proxy_add_x_forwarded_for_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data)
@@ -2405,6 +2408,7 @@ ngx_http_proxy_add_x_forwarded_for_variable(ngx_http_request_t *r,
 
     len = 0;
 
+    /* 计算所有代理地址的长度 */
     for (i = 0; i < n; i++) {
         len += h[i]->value.len + sizeof(", ") - 1;
     }
@@ -3783,6 +3787,7 @@ ngx_http_proxy_redirect(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
+    /* 如果是默认的重定向 */
     if (ngx_strcmp(value[1].data, "default") == 0) {
         if (plcf->proxy_lengths) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
