@@ -440,6 +440,7 @@ ngx_conf_bitmask_t  ngx_http_upstream_ignore_headers_masks[] = {
 };
 
 
+/* 主要分配一个集群结构 */
 ngx_int_t
 ngx_http_upstream_create(ngx_http_request_t *r)
 {
@@ -452,6 +453,7 @@ ngx_http_upstream_create(ngx_http_request_t *r)
         ngx_http_upstream_cleanup(r);
     }
 
+    /* 分配一个集群结构 */
     u = ngx_pcalloc(r->pool, sizeof(ngx_http_upstream_t));
     if (u == NULL) {
         return NGX_ERROR;

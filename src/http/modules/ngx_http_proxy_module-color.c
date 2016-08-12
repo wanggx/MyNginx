@@ -914,7 +914,7 @@ ngx_http_proxy_handler(ngx_http_request_t *r)
         r->request_body_no_buffering = 1;
     }
 
-    /* 读取客户端请求体 */
+    /* 读取客户端请求体，同时初始化到后台集群的请求  */
     rc = ngx_http_read_client_request_body(r, ngx_http_upstream_init);
 
     if (rc >= NGX_HTTP_SPECIAL_RESPONSE) {
