@@ -308,9 +308,9 @@ typedef struct {
     ngx_array_t                servers;  /* array of ngx_http_core_srv_conf_t */
 } ngx_http_conf_addr_t;
 
-
+/* nginx错误码对应返回的错误页 */
 typedef struct {
-    ngx_int_t                  status;
+    ngx_int_t                  status;          /* 对错误码进行判断 */
     ngx_int_t                  overwrite;
     ngx_http_complex_value_t   value;
     ngx_str_t                  args;
@@ -451,7 +451,7 @@ struct ngx_http_core_loc_conf_s {
     ngx_uint_t    disable_symlinks;        /* disable_symlinks */
     ngx_http_complex_value_t  *disable_symlinks_from;
 #endif
-
+    /* http核心模块的错误页面数组，在配置文件当中可以体现出来  */
     ngx_array_t  *error_pages;             /* error_page */
     ngx_http_try_file_t    *try_files;     /* try_files */
 

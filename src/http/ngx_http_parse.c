@@ -1578,7 +1578,7 @@ args:
     return NGX_OK;
 }
 
-
+/* 解析集群服务器的响应头 */
 ngx_int_t
 ngx_http_parse_status_line(ngx_http_request_t *r, ngx_buf_t *b,
     ngx_http_status_t *status)

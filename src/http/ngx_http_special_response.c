@@ -527,7 +527,7 @@ ngx_http_clean_header(ngx_http_request_t *r)
     r->headers_out.last_modified_time = -1;
 }
 
-
+/* 向客户端发送错误页面 */
 static ngx_int_t
 ngx_http_send_error_page(ngx_http_request_t *r, ngx_http_err_page_t *err_page)
 {

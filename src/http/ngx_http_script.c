@@ -207,7 +207,7 @@ ngx_http_compile_complex_value(ngx_http_compile_complex_value_t *ccv)
     return NGX_OK;
 }
 
-
+/* 解析一个包含nginx变量的字符串并保存在ngx_http_complex_value_t当中 */
 char *
 ngx_http_set_complex_value_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {

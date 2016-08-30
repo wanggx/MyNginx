@@ -172,7 +172,7 @@ static ngx_int_t ngx_http_upstream_ssl_name(ngx_http_request_t *r,
     ngx_http_upstream_t *u, ngx_connection_t *c);
 #endif
 
-
+/* nginx对后端集群的响应头部进行解析 */
 ngx_http_upstream_header_t  ngx_http_upstream_headers_in[] = {
 
     { ngx_string("Status"),
@@ -1111,6 +1111,7 @@ ngx_http_upstream_handler(ngx_event_t *ev)
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http upstream request: \"%V?%V\"", &r->uri, &r->args);
 
+    /* 判断是读还是写事件 */
     if (ev->write) {
         u->write_event_handler(r, u);
 
@@ -1325,7 +1326,7 @@ ngx_http_upstream_check_broken_connection(ngx_http_request_t *r,
     }
 }
 
-
+/* nginx去连接集群服务器 */
 static void
 ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 {
@@ -1987,7 +1988,7 @@ ngx_http_upstream_send_request_body(ngx_http_request_t *r,
     return rc;
 }
 
-
+/* 向后台集群发送数据 */
 static void
 ngx_http_upstream_send_request_handler(ngx_http_request_t *r,
     ngx_http_upstream_t *u)
@@ -2046,7 +2047,7 @@ ngx_http_upstream_read_request_handler(ngx_http_request_t *r)
     ngx_http_upstream_send_request(r, u, 0);
 }
 
-
+/* 从集群端读取数据 */
 static void
 ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
 {
@@ -2061,6 +2062,7 @@ ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     c->log->action = "reading response header from upstream";
 
+    /* 如果从其中一台服务器读取失败，则转而访问下一台合适的服务器 */
     if (c->read->timedout) {
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_TIMEOUT);
         return;
@@ -2104,6 +2106,7 @@ ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
 #endif
     }
 
+    /* 开始读取头部 */
     for ( ;; ) {
 
         n = c->recv(c, u->buffer.last, u->buffer.end - u->buffer.last);
@@ -2140,6 +2143,7 @@ ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
         u->peer.cached = 0;
 #endif
 
+        /* 开始处理集群发送过来的头部 */
         rc = u->process_header(r);
 
         if (rc == NGX_AGAIN) {
@@ -2190,6 +2194,7 @@ ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
     }
 
     if (!r->subrequest_in_memory) {
+        /* 回应后台集群 */
         ngx_http_upstream_send_response(r, u);
         return;
     }
@@ -2591,7 +2596,7 @@ ngx_http_upstream_process_headers(ngx_http_request_t *r, ngx_http_upstream_t *u)
     return NGX_OK;
 }
 
-
+/* 处理集群发送的响应体 */
 static void
 ngx_http_upstream_process_body_in_memory(ngx_http_request_t *r,
     ngx_http_upstream_t *u)
@@ -3806,7 +3811,7 @@ ngx_http_upstream_dummy_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
                    "http upstream dummy handler");
 }
 
-
+/* 选择下一台合适的服务器 */
 static void
 ngx_http_upstream_next(ngx_http_request_t *r, ngx_http_upstream_t *u,
     ngx_uint_t ft_type)
@@ -3983,6 +3988,7 @@ ngx_http_upstream_finalize_request(ngx_http_request_t *r,
         }
     }
 
+    /* 这句话啥也没干 */
     u->finalize_request(r, rc);
 
     if (u->peer.free && u->peer.sockaddr) {
@@ -4018,6 +4024,7 @@ ngx_http_upstream_finalize_request(ngx_http_request_t *r,
             ngx_destroy_pool(u->peer.connection->pool);
         }
 
+        /* 关闭和后面集群的连接 */
         ngx_close_connection(u->peer.connection);
     }
 

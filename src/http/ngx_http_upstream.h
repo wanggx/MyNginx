@@ -17,8 +17,8 @@
 #include <ngx_http.h>
 
 
-#define NGX_HTTP_UPSTREAM_FT_ERROR           0x00000002
-#define NGX_HTTP_UPSTREAM_FT_TIMEOUT         0x00000004
+#define NGX_HTTP_UPSTREAM_FT_ERROR           0x00000002      /* 集群服务器出错 */
+#define NGX_HTTP_UPSTREAM_FT_TIMEOUT         0x00000004   /* 集群服务器超时 */
 #define NGX_HTTP_UPSTREAM_FT_INVALID_HEADER  0x00000008
 #define NGX_HTTP_UPSTREAM_FT_HTTP_500        0x00000010
 #define NGX_HTTP_UPSTREAM_FT_HTTP_502        0x00000020
@@ -223,7 +223,9 @@ typedef struct {
     ngx_str_t                        module;
 } ngx_http_upstream_conf_t;
 
-
+/* 客户端向nginx请求的头部结构，在代理中会被保存下来
+  * 根据服务器的响应来相应客户端的请求 
+  */
 typedef struct {
     ngx_str_t                        name;
     ngx_http_header_handler_pt       handler;
@@ -320,7 +322,7 @@ struct ngx_http_upstream_s {
 
     ngx_buf_t                        from_client;
 
-    ngx_buf_t                        buffer;
+    ngx_buf_t                        buffer;       /* 从集群读取的数据存放在此 */
     off_t                            length;
 
     ngx_chain_t                     *out_bufs;

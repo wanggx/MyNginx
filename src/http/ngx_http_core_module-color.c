@@ -4885,6 +4885,7 @@ ngx_http_core_error_page(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_http_compile_complex_value_t   ccv;
 
     if (clcf->error_pages == NULL) {
+        /* 首先创建4个错误页面 */
         clcf->error_pages = ngx_array_create(cf->pool, 4,
                                              sizeof(ngx_http_err_page_t));
         if (clcf->error_pages == NULL) {

@@ -877,6 +877,7 @@ ngx_http_proxy_handler(ngx_http_request_t *r)
 
     u->create_request = ngx_http_proxy_create_request;
     u->reinit_request = ngx_http_proxy_reinit_request;
+    /* 设置从集群后台读取http头部之后，头部的解析函数 */
     u->process_header = ngx_http_proxy_process_status_line;
     u->abort_request = ngx_http_proxy_abort_request;
     u->finalize_request = ngx_http_proxy_finalize_request;
@@ -1673,7 +1674,7 @@ out:
     return rc;
 }
 
-
+/* 解析从集群后台发送的http头部 */
 static ngx_int_t
 ngx_http_proxy_process_status_line(ngx_http_request_t *r)
 {

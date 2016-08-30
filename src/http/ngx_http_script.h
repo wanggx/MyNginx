@@ -72,9 +72,9 @@ typedef struct {
 
 
 typedef struct {
-    ngx_conf_t                 *cf;
+    ngx_conf_t                 *cf;         /* 对应的配置文件指针 */
     ngx_str_t                  *value;
-    ngx_http_complex_value_t   *complex_value;
+    ngx_http_complex_value_t   *complex_value;   /* 复杂变量指针 */
 
     unsigned                    zero:1;
     unsigned                    conf_prefix:1;

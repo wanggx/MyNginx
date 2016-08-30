@@ -388,6 +388,7 @@ struct ngx_http_request_s {
     /* 代表响应头部 */
     ngx_http_headers_out_t            headers_out;
 
+    /* 代表请求体 */
     ngx_http_request_body_t          *request_body;
 
     time_t                            lingering_time;
@@ -443,6 +444,7 @@ struct ngx_http_request_s {
     ngx_http_v2_stream_t             *stream;
 #endif
 
+    /* http的日志回调句柄 */
     ngx_http_log_handler_pt           log_handler;
 
     ngx_http_cleanup_t               *cleanup;
